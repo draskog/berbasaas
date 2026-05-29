@@ -247,125 +247,125 @@ new class extends Component {
             <!-- Daily Summary Tab -->
             @if ($activeTab === 'daily')
                 <flux:table>
-                    <flux:columns>
-                        <flux:column>Date</flux:column>
-                        <flux:column>Buckets</flux:column>
-                        <flux:column>Total kg</flux:column>
-                    </flux:columns>
+                    <flux:table.columns>
+                        <flux:table.column>Date</flux:table.column>
+                        <flux:table.column>Buckets</flux:table.column>
+                        <flux:table.column>Total kg</flux:table.column>
+                    </flux:table.columns>
 
-                    <flux:rows>
+                    <flux:table.rows>
                         @forelse ($this->dailyData as $row)
-                            <flux:row>
-                                <flux:cell>{{ \Carbon\Carbon::parse($row['date'])->format('d.m.Y') }}</flux:cell>
-                                <flux:cell>{{ $row['bucket_count'] }}</flux:cell>
-                                <flux:cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:cell>
-                            </flux:row>
+                            <flux:table.row>
+                                <flux:table.cell>{{ \Carbon\Carbon::parse($row['date'])->format('d.m.Y') }}</flux:table.cell>
+                                <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
+                                <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
+                            </flux:table.row>
                         @empty
-                            <flux:row>
-                                <flux:cell colspan="3" class="text-center text-gray-500">No data</flux:cell>
-                            </flux:row>
+                            <flux:table.row>
+                                <flux:table.cell colspan="3" class="text-center text-gray-500">No data</flux:table.cell>
+                            </flux:table.row>
                         @endforelse
 
                         @if ($this->dailyData->isNotEmpty())
-                            <flux:row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                                <flux:cell>Total</flux:cell>
-                                <flux:cell>{{ $this->dailyTotals['buckets'] }}</flux:cell>
-                                <flux:cell>{{ number_format($this->dailyTotals['weight'], 3, '.', ',') }}</flux:cell>
-                            </flux:row>
+                            <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
+                                <flux:table.cell>Total</flux:table.cell>
+                                <flux:table.cell>{{ $this->dailyTotals['buckets'] }}</flux:table.cell>
+                                <flux:table.cell>{{ number_format($this->dailyTotals['weight'], 3, '.', ',') }}</flux:table.cell>
+                            </flux:table.row>
                         @endif
-                    </flux:rows>
+                    </flux:table.rows>
                 </flux:table>
             @endif
 
             <!-- Harvester Totals Tab -->
             @if ($activeTab === 'harvesters')
                 <flux:table>
-                    <flux:columns>
-                        <flux:column>#</flux:column>
-                        <flux:column>Name</flux:column>
-                        <flux:column>Buckets</flux:column>
-                        <flux:column>Total kg</flux:column>
-                        <flux:column>Earnings</flux:column>
-                    </flux:columns>
+                    <flux:table.columns>
+                        <flux:table.column>#</flux:table.column>
+                        <flux:table.column>Name</flux:table.column>
+                        <flux:table.column>Buckets</flux:table.column>
+                        <flux:table.column>Total kg</flux:table.column>
+                        <flux:table.column>Earnings</flux:table.column>
+                    </flux:table.columns>
 
-                    <flux:rows>
+                    <flux:table.rows>
                         @forelse ($this->harvesterData as $row)
-                            <flux:row>
-                                <flux:cell>{{ $row['number'] }}</flux:cell>
-                                <flux:cell>{{ $row['name'] }}</flux:cell>
-                                <flux:cell>{{ $row['bucket_count'] }}</flux:cell>
-                                <flux:cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:cell>
-                                <flux:cell>
+                            <flux:table.row>
+                                <flux:table.cell>{{ $row['number'] }}</flux:table.cell>
+                                <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
+                                <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
+                                <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
+                                <flux:table.cell>
                                     @if ($row['earnings'] !== null)
                                         €{{ number_format($row['earnings'], 2, ',', '.') }}
                                     @else
                                         —
                                     @endif
-                                </flux:cell>
-                            </flux:row>
+                                </flux:table.cell>
+                            </flux:table.row>
                         @empty
-                            <flux:row>
-                                <flux:cell colspan="5" class="text-center text-gray-500">No data</flux:cell>
-                            </flux:row>
+                            <flux:table.row>
+                                <flux:table.cell colspan="5" class="text-center text-gray-500">No data</flux:table.cell>
+                            </flux:table.row>
                         @endforelse
 
                         @if ($this->harvesterData->isNotEmpty())
-                            <flux:row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                                <flux:cell colspan="2">Total</flux:cell>
-                                <flux:cell>{{ $this->harvesterTotals['buckets'] }}</flux:cell>
-                                <flux:cell>{{ number_format($this->harvesterTotals['weight'], 3, '.', ',') }}</flux:cell>
-                                <flux:cell>€{{ number_format($this->harvesterTotals['earnings'], 2, ',', '.') }}</flux:cell>
-                            </flux:row>
+                            <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
+                                <flux:table.cell colspan="2">Total</flux:table.cell>
+                                <flux:table.cell>{{ $this->harvesterTotals['buckets'] }}</flux:table.cell>
+                                <flux:table.cell>{{ number_format($this->harvesterTotals['weight'], 3, '.', ',') }}</flux:table.cell>
+                                <flux:table.cell>€{{ number_format($this->harvesterTotals['earnings'], 2, ',', '.') }}</flux:table.cell>
+                            </flux:table.row>
                         @endif
-                    </flux:rows>
+                    </flux:table.rows>
                 </flux:table>
             @endif
 
             <!-- Product Totals Tab -->
             @if ($activeTab === 'products')
                 <flux:table>
-                    <flux:columns>
-                        <flux:column>Product</flux:column>
-                        <flux:column>Total kg</flux:column>
-                        <flux:column>Price/kg</flux:column>
-                        <flux:column>Total Earnings</flux:column>
-                    </flux:columns>
+                    <flux:table.columns>
+                        <flux:table.column>Product</flux:table.column>
+                        <flux:table.column>Total kg</flux:table.column>
+                        <flux:table.column>Price/kg</flux:table.column>
+                        <flux:table.column>Total Earnings</flux:table.column>
+                    </flux:table.columns>
 
-                    <flux:rows>
+                    <flux:table.rows>
                         @forelse ($this->productData as $row)
-                            <flux:row>
-                                <flux:cell>{{ $row['name'] }}</flux:cell>
-                                <flux:cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:cell>
-                                <flux:cell>
+                            <flux:table.row>
+                                <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
+                                <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
+                                <flux:table.cell>
                                     @if ($row['price_per_kg'])
                                         €{{ number_format($row['price_per_kg'], 4, ',', '.') }}
                                     @else
                                         —
                                     @endif
-                                </flux:cell>
-                                <flux:cell>
+                                </flux:table.cell>
+                                <flux:table.cell>
                                     @if ($row['earnings'] !== null)
                                         €{{ number_format($row['earnings'], 2, ',', '.') }}
                                     @else
                                         —
                                     @endif
-                                </flux:cell>
-                            </flux:row>
+                                </flux:table.cell>
+                            </flux:table.row>
                         @empty
-                            <flux:row>
-                                <flux:cell colspan="4" class="text-center text-gray-500">No data</flux:cell>
-                            </flux:row>
+                            <flux:table.row>
+                                <flux:table.cell colspan="4" class="text-center text-gray-500">No data</flux:table.cell>
+                            </flux:table.row>
                         @endforelse
 
                         @if ($this->productData->isNotEmpty())
-                            <flux:row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                                <flux:cell>Total</flux:cell>
-                                <flux:cell>{{ number_format($this->productTotals['weight'], 3, '.', ',') }}</flux:cell>
-                                <flux:cell>—</flux:cell>
-                                <flux:cell>€{{ number_format($this->productTotals['earnings'], 2, ',', '.') }}</flux:cell>
-                            </flux:row>
+                            <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
+                                <flux:table.cell>Total</flux:table.cell>
+                                <flux:table.cell>{{ number_format($this->productTotals['weight'], 3, '.', ',') }}</flux:table.cell>
+                                <flux:table.cell>—</flux:table.cell>
+                                <flux:table.cell>€{{ number_format($this->productTotals['earnings'], 2, ',', '.') }}</flux:table.cell>
+                            </flux:table.row>
                         @endif
-                    </flux:rows>
+                    </flux:table.rows>
                 </flux:table>
             @endif
         </div>

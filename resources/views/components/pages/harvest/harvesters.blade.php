@@ -53,27 +53,27 @@ new class extends Component {
             </div>
 
             <flux:table>
-                <flux:columns>
-                    <flux:column>Number</flux:column>
-                    <flux:column>Name</flux:column>
-                    <flux:column>Actions</flux:column>
-                </flux:columns>
+                <flux:table.columns>
+                    <flux:table.column>Number</flux:table.column>
+                    <flux:table.column>Name</flux:table.column>
+                    <flux:table.column>Actions</flux:table.column>
+                </flux:table.columns>
 
-                <flux:rows>
+                <flux:table.rows>
                     @forelse($this->allAssignments as $assignment)
-                        <flux:row>
-                            <flux:cell>{{ $assignment->number }}</flux:cell>
-                            <flux:cell>{{ $assignment->name }}</flux:cell>
-                            <flux:cell>
+                        <flux:table.row>
+                            <flux:table.cell>{{ $assignment->number }}</flux:table.cell>
+                            <flux:table.cell>{{ $assignment->name }}</flux:table.cell>
+                            <flux:table.cell>
                                 <button wire:click="deleteAssignment({{ $assignment->id }})" class="text-red-600 hover:text-red-900">Delete</button>
-                            </flux:cell>
-                        </flux:row>
+                            </flux:table.cell>
+                        </flux:table.row>
                     @empty
-                        <flux:row>
-                            <flux:cell colspan="3" class="text-center text-gray-500">No assignments for {{ $this->selectedYear }}</flux:cell>
-                        </flux:row>
+                        <flux:table.row>
+                            <flux:table.cell colspan="3" class="text-center text-gray-500">No assignments for {{ $this->selectedYear }}</flux:table.cell>
+                        </flux:table.row>
                     @endforelse
-                </flux:rows>
+                </flux:table.rows>
             </flux:table>
         </div>
     </flux:main>

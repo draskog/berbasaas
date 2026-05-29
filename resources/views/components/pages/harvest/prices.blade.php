@@ -71,29 +71,29 @@ new class extends Component {
 
             @if($this->selectedProductId)
                 <flux:table>
-                    <flux:columns>
-                        <flux:column>Price (per kg)</flux:column>
-                        <flux:column>Effective From</flux:column>
-                        <flux:column>Effective To</flux:column>
-                        <flux:column>Actions</flux:column>
-                    </flux:columns>
+                    <flux:table.columns>
+                        <flux:table.column>Price (per kg)</flux:table.column>
+                        <flux:table.column>Effective From</flux:table.column>
+                        <flux:table.column>Effective To</flux:table.column>
+                        <flux:table.column>Actions</flux:table.column>
+                    </flux:table.columns>
 
-                    <flux:rows>
+                    <flux:table.rows>
                         @forelse($this->pricesForProduct as $price)
-                            <flux:row>
-                                <flux:cell>{{ number_format($price->price_per_kg, 4) }}</flux:cell>
-                                <flux:cell>{{ $price->effective_from->format('d.m.Y') }}</flux:cell>
-                                <flux:cell>{{ $price->effective_to?->format('d.m.Y') ?? 'Current' }}</flux:cell>
-                                <flux:cell>
+                            <flux:table.row>
+                                <flux:table.cell>{{ number_format($price->price_per_kg, 4) }}</flux:table.cell>
+                                <flux:table.cell>{{ $price->effective_from->format('d.m.Y') }}</flux:table.cell>
+                                <flux:table.cell>{{ $price->effective_to?->format('d.m.Y') ?? 'Current' }}</flux:table.cell>
+                                <flux:table.cell>
                                     <button wire:click="deletePrice({{ $price->id }})" class="text-red-600 hover:text-red-900">Delete</button>
-                                </flux:cell>
-                            </flux:row>
+                                </flux:table.cell>
+                            </flux:table.row>
                         @empty
-                            <flux:row>
-                                <flux:cell colspan="4" class="text-center text-gray-500">No prices recorded</flux:cell>
-                            </flux:row>
+                            <flux:table.row>
+                                <flux:table.cell colspan="4" class="text-center text-gray-500">No prices recorded</flux:table.cell>
+                            </flux:table.row>
                         @endforelse
-                    </flux:rows>
+                    </flux:table.rows>
                 </flux:table>
             @endif
         </div>

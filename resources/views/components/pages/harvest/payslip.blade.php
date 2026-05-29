@@ -179,51 +179,51 @@ new class extends Component {
                     <!-- Payslip Table -->
                     <div class="mb-8">
                         <flux:table>
-                            <flux:columns>
-                                <flux:column>Date</flux:column>
-                                <flux:column>Buckets</flux:column>
-                                <flux:column>Total kg</flux:column>
-                                <flux:column>Price/kg</flux:column>
-                                <flux:column>Earnings</flux:column>
-                            </flux:columns>
+                            <flux:table.columns>
+                                <flux:table.column>Date</flux:table.column>
+                                <flux:table.column>Buckets</flux:table.column>
+                                <flux:table.column>Total kg</flux:table.column>
+                                <flux:table.column>Price/kg</flux:table.column>
+                                <flux:table.column>Earnings</flux:table.column>
+                            </flux:table.columns>
 
-                            <flux:rows>
+                            <flux:table.rows>
                                 @forelse ($this->payslipData as $row)
-                                    <flux:row>
-                                        <flux:cell>{{ \Carbon\Carbon::parse($row['date'])->format('d.m.Y') }}</flux:cell>
-                                        <flux:cell>{{ $row['bucket_count'] }}</flux:cell>
-                                        <flux:cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:cell>
-                                        <flux:cell>
+                                    <flux:table.row>
+                                        <flux:table.cell>{{ \Carbon\Carbon::parse($row['date'])->format('d.m.Y') }}</flux:table.cell>
+                                        <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
+                                        <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
+                                        <flux:table.cell>
                                             @if ($row['price_per_kg'])
                                                 €{{ number_format($row['price_per_kg'], 4, ',', '.') }}
                                             @else
                                                 —
                                             @endif
-                                        </flux:cell>
-                                        <flux:cell>
+                                        </flux:table.cell>
+                                        <flux:table.cell>
                                             @if ($row['earnings'] !== null)
                                                 €{{ number_format($row['earnings'], 2, ',', '.') }}
                                             @else
                                                 —
                                             @endif
-                                        </flux:cell>
-                                    </flux:row>
+                                        </flux:table.cell>
+                                    </flux:table.row>
                                 @empty
-                                    <flux:row>
-                                        <flux:cell colspan="5" class="text-center text-gray-500">No data for this harvester</flux:cell>
-                                    </flux:row>
+                                    <flux:table.row>
+                                        <flux:table.cell colspan="5" class="text-center text-gray-500">No data for this harvester</flux:table.cell>
+                                    </flux:table.row>
                                 @endforelse
 
                                 @if (!empty($this->payslipData))
-                                    <flux:row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                                        <flux:cell>Total</flux:cell>
-                                        <flux:cell>{{ $this->payslipTotals['buckets'] }}</flux:cell>
-                                        <flux:cell>{{ number_format($this->payslipTotals['weight'], 3, '.', ',') }}</flux:cell>
-                                        <flux:cell>—</flux:cell>
-                                        <flux:cell>€{{ number_format($this->payslipTotals['earnings'], 2, ',', '.') }}</flux:cell>
-                                    </flux:row>
+                                    <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
+                                        <flux:table.cell>Total</flux:table.cell>
+                                        <flux:table.cell>{{ $this->payslipTotals['buckets'] }}</flux:table.cell>
+                                        <flux:table.cell>{{ number_format($this->payslipTotals['weight'], 3, '.', ',') }}</flux:table.cell>
+                                        <flux:table.cell>—</flux:table.cell>
+                                        <flux:table.cell>€{{ number_format($this->payslipTotals['earnings'], 2, ',', '.') }}</flux:table.cell>
+                                    </flux:table.row>
                                 @endif
-                            </flux:rows>
+                            </flux:table.rows>
                         </flux:table>
                     </div>
 
