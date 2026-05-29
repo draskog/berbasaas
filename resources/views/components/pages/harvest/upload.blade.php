@@ -4,10 +4,11 @@ use App\Models\HarvestUpload;
 use App\Models\Product;
 use App\Services\HarvestImportService;
 use Livewire\Attributes\Computed;
-use Livewire\Volt\Component;
-use Livewire\WithFileUploads;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Flux\Flux;
+use Livewire\Volt\Component;
+use Livewire\WithFileUploads;
 
 new
 #[Layout('layouts.app')]
@@ -18,10 +19,10 @@ class extends Component {
     public int $selectedProductId = 0;
     public $uploadedFile;
     public array $uploads = [];
-    public ?string $successMessage = null;
+    public ?int $deletingUploadId = null;
 
     #[Computed]
-    public function products ()
+    public function products()
     {
         return Product::where('company_id', auth()->user()->company_id)
             ->where('active', true)
@@ -30,7 +31,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function recentUploads ()
+    public function recentUploads()
     {
         return HarvestUpload::where('company_id', auth()->user()->company_id)
             ->orderByDesc('created_at')
@@ -38,7 +39,7 @@ class extends Component {
             ->get();
     }
 
-    public function mount (): void
+    public function mount(): void
     {
         $product = $this->products->first();
         if ($product) {
@@ -46,7 +47,7 @@ class extends Component {
         }
     }
 
-    public function uploadFile (): void
+    public function uploadFile(): void
     {
         $this->validate([
             'selectedProductId' => 'required|exists:products,id',
@@ -61,13 +62,25 @@ class extends Component {
             auth()->id()
         );
 
-        $this->successMessage = "✓ Successfully imported {$upload->record_count} records from {$upload->original_filename} ({$upload->date_from} to {$upload->date_to})";
         $this->uploadedFile = null;
+        Flux::toast(
+            text: "Successfully imported {$upload->record_count} records from {$upload->original_filename} ({$upload->date_from} to {$upload->date_to})",
+            variant: 'success'
+        );
     }
 
-    public function deleteUpload ($id): void
+    public function confirmDeleteUpload(int $id): void
     {
-        HarvestUpload::find($id)->delete();
+        $this->deletingUploadId = $id;
+        $this->dispatch('open-modal', name: 'confirm-delete-upload');
+    }
+
+    public function deleteUpload(): void
+    {
+        HarvestUpload::find($this->deletingUploadId)?->delete();
+        $this->deletingUploadId = null;
+        $this->dispatch('close-modal', name: 'confirm-delete-upload');
+        Flux::toast(text: 'Upload deleted.', variant: 'warning');
     }
 }; ?>
 
@@ -76,47 +89,35 @@ class extends Component {
     </flux:header>
 
     <div class="p-6">
-        @if($successMessage)
-            <div class="mb-6 rounded-md bg-green-50 p-4">
-                <p class="text-sm text-green-700">{{ $successMessage }}</p>
+        <flux:card class="mb-8">
+            <flux:heading size="lg" class="mb-6">Upload CSV File</flux:heading>
+
+            <div class="space-y-4">
+                <flux:field>
+                    <flux:label>Product</flux:label>
+                    <flux:select wire:model="selectedProductId">
+                        <flux:select.option value="">Select a product...</flux:select.option>
+                        @foreach($this->products as $product)
+                            <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:error name="selectedProductId" />
+                </flux:field>
+
+                <flux:field>
+                    <flux:label>CSV File</flux:label>
+                    <flux:input type="file" wire:model="uploadedFile" accept=".csv" />
+                    <flux:error name="uploadedFile" />
+                </flux:field>
+
+                <flux:button variant="primary" wire:click="uploadFile" wire:loading.attr="disabled">
+                    <span wire:loading.remove>Upload</span>
+                    <span wire:loading>Uploading...</span>
+                </flux:button>
             </div>
-        @endif
+        </flux:card>
 
-        <div class="mb-8 rounded-lg border-2 border-dashed border-gray-300 p-8">
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700">Product</label>
-                <select wire:model="selectedProductId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                    <option value="">Select a product...</option>
-                    @foreach($this->products as $product)
-                        <option value="{{ $product->id }}">{{ $product->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700">CSV File</label>
-                <input
-                    type="file"
-                    wire:model="uploadedFile"
-                    accept=".csv"
-                    class="mt-1 block w-full"
-                />
-                @error('uploadedFile')
-                <span class="text-red-600 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            <button
-                wire:click="uploadFile"
-                wire:loading.attr="disabled"
-                class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-                <span wire:loading.remove>Upload</span>
-                <span wire:loading>Uploading...</span>
-            </button>
-        </div>
-
-        <h3 class="mb-4 text-lg font-semibold">Recent Uploads</h3>
+        <flux:heading size="lg" class="mb-4">Recent Uploads</flux:heading>
         <flux:table>
             <flux:table.columns>
                 <flux:table.column>Filename</flux:table.column>
@@ -136,7 +137,7 @@ class extends Component {
                         <flux:table.cell>{{ $upload->date_from->format('d.m.Y') }} - {{ $upload->date_to->format('d.m.Y') }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->uploadedBy->name }}</flux:table.cell>
                         <flux:table.cell>
-                            <button wire:click="deleteUpload({{ $upload->id }})" class="text-red-600 hover:text-red-900">Delete</button>
+                            <flux:button variant="danger" size="sm" wire:click="confirmDeleteUpload({{ $upload->id }})">Delete</flux:button>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
@@ -148,3 +149,15 @@ class extends Component {
         </flux:table>
     </div>
 </flux:main>
+
+<flux:modal name="confirm-delete-upload" :dismissible="false">
+    <flux:heading>Delete Upload</flux:heading>
+    <flux:text>Are you sure you want to delete this upload? This cannot be undone.</flux:text>
+
+    <div class="mt-6 flex gap-2 justify-end">
+        <flux:modal.close>
+            <flux:button variant="ghost">Cancel</flux:button>
+        </flux:modal.close>
+        <flux:button variant="danger" wire:click="deleteUpload">Delete</flux:button>
+    </div>
+</flux:modal>
