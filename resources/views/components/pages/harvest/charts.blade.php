@@ -231,25 +231,25 @@ class extends Component {
                 <!-- Daily kg Chart -->
                 <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                     <h3 class="mb-4 text-lg font-semibold">Daily Harvest</h3>
-                    <flux:chart type="bar" :data="$this->dailyKgChartData" />
+                    <flux:chart type="bar" :data='@json($this->dailyKgChartData)' />
                 </div>
 
                 <!-- Harvester Comparison Chart -->
                 <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                     <h3 class="mb-4 text-lg font-semibold">Top Harvesters</h3>
-                    <flux:chart type="bar" :data="$this->harvesterComparisonChartData" :options="['indexAxis' => 'y']" />
+                    <flux:chart type="bar" :data='@json($this->harvesterComparisonChartData)' :options='@json(["indexAxis" => "y"])' />
                 </div>
 
                 <!-- Hourly Distribution Chart -->
                 <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                     <h3 class="mb-4 text-lg font-semibold">Hourly Distribution</h3>
-                    <flux:chart type="bar" :data="$this->hourlyDistributionChartData" />
+                    <flux:chart type="bar" :data='@json($this->hourlyDistributionChartData)' />
                 </div>
 
                 <!-- Cumulative kg Chart -->
                 <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                     <h3 class="mb-4 text-lg font-semibold">Cumulative Harvest</h3>
-                    <flux:chart type="line" :data="$this->cumulativeKgChartData" />
+                    <flux:chart type="line" :data='@json($this->cumulativeKgChartData)' />
                 </div>
             </div>
         </div>
