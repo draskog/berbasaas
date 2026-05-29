@@ -20,6 +20,7 @@ class extends Component {
     public ?string $newEffectiveFrom = null;
     public ?string $newEffectiveTo = null;
     public ?int $deletingPriceId = null;
+    public bool $showDeleteModal = false;
 
     #[Computed]
     public function products()
@@ -82,14 +83,14 @@ class extends Component {
     public function confirmDeletePrice(int $id): void
     {
         $this->deletingPriceId = $id;
-        $this->dispatch('open-modal', name: 'confirm-delete-price');
+        $this->showDeleteModal = true;
     }
 
     public function deletePrice(): void
     {
         HarvestPrice::find($this->deletingPriceId)?->delete();
         $this->deletingPriceId = null;
-        $this->dispatch('close-modal', name: 'confirm-delete-price');
+        $this->showDeleteModal = false;
         Flux::toast(text: 'Price deleted.', variant: 'warning');
     }
 }; ?>
@@ -185,14 +186,12 @@ class extends Component {
     </div>
 </flux:modal>
 
-<flux:modal name="confirm-delete-price" :dismissible="false">
+<flux:modal name="confirm-delete-price" :dismissible="false" wire:model="showDeleteModal">
     <flux:heading>Delete Price</flux:heading>
     <flux:text>Are you sure you want to delete this price? This cannot be undone.</flux:text>
 
     <div class="mt-6 flex gap-2 justify-end">
-        <flux:modal.close>
-            <flux:button variant="ghost">Cancel</flux:button>
-        </flux:modal.close>
+        <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">Cancel</flux:button>
         <flux:button variant="danger" wire:click="deletePrice">Delete</flux:button>
     </div>
 </flux:modal>

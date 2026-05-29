@@ -20,6 +20,7 @@ class extends Component {
     public $uploadedFile;
     public array $uploads = [];
     public ?int $deletingUploadId = null;
+    public bool $showDeleteModal = false;
 
     #[Computed]
     public function products()
@@ -72,14 +73,14 @@ class extends Component {
     public function confirmDeleteUpload(int $id): void
     {
         $this->deletingUploadId = $id;
-        $this->dispatch('open-modal', name: 'confirm-delete-upload');
+        $this->showDeleteModal = true;
     }
 
     public function deleteUpload(): void
     {
         HarvestUpload::find($this->deletingUploadId)?->delete();
         $this->deletingUploadId = null;
-        $this->dispatch('close-modal', name: 'confirm-delete-upload');
+        $this->showDeleteModal = false;
         Flux::toast(text: 'Upload deleted.', variant: 'warning');
     }
 }; ?>
@@ -149,14 +150,12 @@ class extends Component {
         </flux:table>
     </div>
 
-    <flux:modal name="confirm-delete-upload" :dismissible="false">
+    <flux:modal name="confirm-delete-upload" :dismissible="false" wire:model="showDeleteModal">
     <flux:heading>Delete Upload</flux:heading>
     <flux:text>Are you sure you want to delete this upload? This cannot be undone.</flux:text>
 
     <div class="mt-6 flex gap-2 justify-end">
-        <flux:modal.close>
-            <flux:button variant="ghost">Cancel</flux:button>
-        </flux:modal.close>
+        <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">Cancel</flux:button>
         <flux:button variant="danger" wire:click="deleteUpload">Delete</flux:button>
     </div>
 </flux:modal>

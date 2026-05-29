@@ -17,6 +17,7 @@ class extends Component {
     public ?int $newNumber = null;
     public ?string $newName = null;
     public ?int $deletingAssignmentId = null;
+    public bool $showDeleteModal = false;
 
     #[Computed]
     public function allAssignments()
@@ -61,14 +62,14 @@ class extends Component {
     public function confirmDeleteAssignment(int $id): void
     {
         $this->deletingAssignmentId = $id;
-        $this->dispatch('open-modal', name: 'confirm-delete-assignment');
+        $this->showDeleteModal = true;
     }
 
     public function deleteAssignment(): void
     {
         HarvesterAssignment::find($this->deletingAssignmentId)?->delete();
         $this->deletingAssignmentId = null;
-        $this->dispatch('close-modal', name: 'confirm-delete-assignment');
+        $this->showDeleteModal = false;
         $this->updateAssignments();
         Flux::toast(text: 'Assignment deleted.', variant: 'warning');
     }
@@ -144,14 +145,12 @@ class extends Component {
     </div>
 </flux:modal>
 
-<flux:modal name="confirm-delete-assignment" :dismissible="false">
+<flux:modal name="confirm-delete-assignment" :dismissible="false" wire:model="showDeleteModal">
     <flux:heading>Delete Assignment</flux:heading>
     <flux:text>Are you sure you want to delete this harvester assignment? This cannot be undone.</flux:text>
 
     <div class="mt-6 flex gap-2 justify-end">
-        <flux:modal.close>
-            <flux:button variant="ghost">Cancel</flux:button>
-        </flux:modal.close>
+        <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">Cancel</flux:button>
         <flux:button variant="danger" wire:click="deleteAssignment">Delete</flux:button>
     </div>
 </flux:modal>
