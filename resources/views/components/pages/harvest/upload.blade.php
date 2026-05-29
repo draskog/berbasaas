@@ -148,9 +148,8 @@ class extends Component {
             </flux:table.rows>
         </flux:table>
     </div>
-</flux:main>
 
-<flux:modal name="confirm-delete-upload" :dismissible="false">
+    <flux:modal name="confirm-delete-upload" :dismissible="false">
     <flux:heading>Delete Upload</flux:heading>
     <flux:text>Are you sure you want to delete this upload? This cannot be undone.</flux:text>
 
@@ -161,3 +160,4 @@ class extends Component {
         <flux:button variant="danger" wire:click="deleteUpload">Delete</flux:button>
     </div>
 </flux:modal>
+</flux:main>

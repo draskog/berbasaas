@@ -141,9 +141,8 @@ class extends Component {
             </flux:table>
         @endif
     </div>
-</flux:main>
 
-<flux:modal name="create-price">
+    <flux:modal name="create-price">
     <flux:heading>Add Price</flux:heading>
     <flux:subheading>Set a new price for a product.</flux:subheading>
 
@@ -197,3 +196,4 @@ class extends Component {
         <flux:button variant="danger" wire:click="deletePrice">Delete</flux:button>
     </div>
 </flux:modal>
+</flux:main>

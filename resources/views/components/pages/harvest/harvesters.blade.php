@@ -117,9 +117,8 @@ class extends Component {
             </flux:table.rows>
         </flux:table>
     </div>
-</flux:main>
 
-<flux:modal name="create-assignment">
+    <flux:modal name="create-assignment">
     <flux:heading>Add Harvester Assignment</flux:heading>
     <flux:subheading>Assign a harvester number and name for {{ $this->selectedYear }}</flux:subheading>
 
@@ -156,3 +155,4 @@ class extends Component {
         <flux:button variant="danger" wire:click="deleteAssignment">Delete</flux:button>
     </div>
 </flux:modal>
+</flux:main>
