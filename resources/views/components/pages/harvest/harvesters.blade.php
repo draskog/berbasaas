@@ -2,9 +2,14 @@
 
 use App\Models\HarvesterAssignment;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
-new class extends Component {
+new
+#[Layout('layouts.app')]
+#[Title('Harvesters · eBorovnica')]
+class extends Component {
     public int $selectedYear;
     public array $assignments = [];
 
@@ -35,7 +40,7 @@ new class extends Component {
     }
 }; ?>
 
-<x-layouts::app.sidebar title="Harvesters">
+
     <flux:main>
         <flux:header heading="Harvesters">
             <flux:spacer />
@@ -77,4 +82,4 @@ new class extends Component {
             </flux:table>
         </div>
     </flux:main>
-</x-layouts::app.sidebar>
+

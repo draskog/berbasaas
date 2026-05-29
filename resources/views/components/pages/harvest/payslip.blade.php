@@ -5,10 +5,15 @@ use App\Models\HarvesterAssignment;
 use App\Models\HarvestPrice;
 use App\Models\Product;
 use Illuminate\Database\Query\Builder;
-use Livewire\Volt\Component;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Volt\Component;
 
-new class extends Component {
+new
+#[Layout('layouts.app')]
+#[Title('Payslip · eBorovnica')]
+class extends Component {
     public int $selectedYear;
     public int $selectedHarvesterNumber = 0;
 
@@ -114,7 +119,7 @@ new class extends Component {
     }
 }; ?>
 
-<x-layouts::app.sidebar title="Payslip">
+
     <flux:main>
         <flux:header heading="Harvester Payslip">
         </flux:header>
@@ -235,4 +240,4 @@ new class extends Component {
             </div>
         </div>
     </flux:main>
-</x-layouts::app.sidebar>
+
