@@ -42,7 +42,7 @@
             <flux:spacer />
 
             <flux:sidebar.nav>
-                <flux:sidebar.item icon="cog" :href="route('harvest.settings')" :current="request()->routeIs('harvest.settings')" wire:navigate>
+                <flux:sidebar.item icon="cog" :href="route('profile.edit')" :current="request()->routeIs('profile.edit', 'company.edit', 'harvest.edit', 'security.edit', 'appearance.edit')" wire:navigate>
                     {{ __('Settings') }}
                 </flux:sidebar.item>
             </flux:sidebar.nav>

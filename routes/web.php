@@ -15,7 +15,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('harvest/reports', 'pages.harvest.reports')->name('harvest.reports');
     Volt::route('harvest/charts', 'pages.harvest.charts')->name('harvest.charts');
     Volt::route('harvest/payslip', 'pages.harvest.payslip')->name('harvest.payslip');
-    Volt::route('harvest/settings', 'pages.harvest.settings')->name('harvest.settings');
 });
 
 require __DIR__.'/settings.php';
