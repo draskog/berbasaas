@@ -188,69 +188,63 @@ class extends Component {
 
         <div class="p-6">
             <!-- Filter Panel -->
-            <div class="mb-8 rounded-lg border border-gray-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
+            <flux:card class="mb-8">
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     <!-- Year Selector -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Year</label>
-                        <select wire:model.live="selectedYear" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-zinc-600 dark:bg-zinc-700">
+                    <flux:field>
+                        <flux:label>Year</flux:label>
+                        <flux:select wire:model.live="selectedYear">
                             @for ($y = now()->year; $y >= now()->year - 5; $y--)
-                                <option value="{{ $y }}">{{ $y }}</option>
+                                <flux:select.option value="{{ $y }}">{{ $y }}</flux:select.option>
                             @endfor
-                        </select>
-                    </div>
+                        </flux:select>
+                    </flux:field>
 
                     <!-- Date From -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">From Date</label>
-                        <input type="date" wire:model.live="fromDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-zinc-600 dark:bg-zinc-700" />
-                    </div>
+                    <flux:field>
+                        <flux:label>From Date</flux:label>
+                        <flux:input type="date" wire:model.live="fromDate" />
+                    </flux:field>
 
                     <!-- Date To -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">To Date</label>
-                        <input type="date" wire:model.live="toDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-zinc-600 dark:bg-zinc-700" />
-                    </div>
+                    <flux:field>
+                        <flux:label>To Date</flux:label>
+                        <flux:input type="date" wire:model.live="toDate" />
+                    </flux:field>
 
                     <!-- Product Selector -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Product</label>
-                        <select wire:model.live="selectedProductId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-zinc-600 dark:bg-zinc-700">
-                            <option value="0">All products</option>
+                    <flux:field>
+                        <flux:label>Product</flux:label>
+                        <flux:select wire:model.live="selectedProductId">
+                            <flux:select.option value="0">All products</flux:select.option>
                             @foreach ($this->products as $product)
-                                <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
                             @endforeach
-                        </select>
-                    </div>
+                        </flux:select>
+                    </flux:field>
 
                     <!-- Harvester Selector -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Harvester</label>
-                        <select wire:model.live="selectedHarvesterNumber" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-zinc-600 dark:bg-zinc-700">
-                            <option value="0">All harvesters</option>
+                    <flux:field>
+                        <flux:label>Harvester</flux:label>
+                        <flux:select wire:model.live="selectedHarvesterNumber">
+                            <flux:select.option value="0">All harvesters</flux:select.option>
                             @foreach ($this->harvesterNumbers as $number)
-                                <option value="{{ $number }}">#{{ $number }}</option>
+                                <flux:select.option value="{{ $number }}">#{{ $number }}</flux:select.option>
                             @endforeach
-                        </select>
-                    </div>
+                        </flux:select>
+                    </flux:field>
                 </div>
-            </div>
+            </flux:card>
 
             <!-- Tab Navigation -->
-            <div class="mb-6 flex gap-2 border-b border-gray-200 dark:border-zinc-700">
-                <button wire:click="$set('activeTab', 'daily')" :class="{ 'border-b-2 border-blue-600 text-blue-600': activeTab === 'daily' }" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-zinc-200">
-                    Daily Summary
-                </button>
-                <button wire:click="$set('activeTab', 'harvesters')" :class="{ 'border-b-2 border-blue-600 text-blue-600': activeTab === 'harvesters' }" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-zinc-200">
-                    Harvesters
-                </button>
-                <button wire:click="$set('activeTab', 'products')" :class="{ 'border-b-2 border-blue-600 text-blue-600': activeTab === 'products' }" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-zinc-200">
-                    Products
-                </button>
-            </div>
+            <flux:tabs wire:model="activeTab" class="mb-6">
+                <flux:tab name="daily">Daily Summary</flux:tab>
+                <flux:tab name="harvesters">Harvesters</flux:tab>
+                <flux:tab name="products">Products</flux:tab>
+            </flux:tabs>
 
             <!-- Daily Summary Tab -->
-            @if ($activeTab === 'daily')
+            <flux:tab.panel name="daily">
                 <flux:table>
                     <flux:table.columns>
                         <flux:table.column>Date</flux:table.column>
@@ -280,10 +274,10 @@ class extends Component {
                         @endif
                     </flux:table.rows>
                 </flux:table>
-            @endif
+            </flux:tab.panel>
 
             <!-- Harvester Totals Tab -->
-            @if ($activeTab === 'harvesters')
+            <flux:tab.panel name="harvesters">
                 <flux:table>
                     <flux:table.columns>
                         <flux:table.column>#</flux:table.column>
@@ -324,10 +318,10 @@ class extends Component {
                         @endif
                     </flux:table.rows>
                 </flux:table>
-            @endif
+            </flux:tab.panel>
 
             <!-- Product Totals Tab -->
-            @if ($activeTab === 'products')
+            <flux:tab.panel name="products">
                 <flux:table>
                     <flux:table.columns>
                         <flux:table.column>Product</flux:table.column>
@@ -372,7 +366,7 @@ class extends Component {
                         @endif
                     </flux:table.rows>
                 </flux:table>
-            @endif
+            </flux:tab.panel>
         </div>
     </flux:main>
 
