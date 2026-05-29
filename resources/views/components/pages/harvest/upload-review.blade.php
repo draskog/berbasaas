@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\HarvestRecord;
+use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
 use App\Models\HarvesterAssignment;
+use App\Rules\HarvesterExistsForYear;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -18,46 +20,61 @@ class extends Component {
     public array $corrections = [];
 
     #[Computed]
-    public function year(): int
+    public function invalidRecords()
     {
-        return $this->upload->date_from->year;
+        return HarvestRecordStaging::where('upload_id', $this->upload->id)
+            ->where('status', 'invalid')
+            ->orderBy('weighed_at')
+            ->get();
     }
 
     #[Computed]
     public function validNumbers()
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
-            ->where('year', $this->year)
             ->orderBy('number')
-            ->get();
-    }
-
-    #[Computed]
-    public function invalidRecords()
-    {
-        $validNumbers = $this->validNumbers->pluck('number')->toArray();
-
-        return HarvestRecord::where('upload_id', $this->upload->id)
-            ->where('corrected', false)
-            ->whereNotIn('harvester_number', $validNumbers)
-            ->orderBy('weighed_at')
             ->get();
     }
 
     public function resolve(int $recordId): void
     {
         $newNumber = $this->corrections[$recordId] ?? null;
-        $this->validate(["corrections.$recordId" => 'required|integer|min:1|max:200']);
+        $stagingRecord = HarvestRecordStaging::findOrFail($recordId);
 
-        HarvestRecord::where('id', $recordId)
-            ->where('company_id', auth()->user()->company_id)
-            ->update(['harvester_number' => (int) $newNumber, 'corrected' => true]);
+        // Validate that the staging record belongs to this user's company and upload
+        if ($stagingRecord->company_id !== auth()->user()->company_id || $stagingRecord->upload_id !== $this->upload->id) {
+            Flux::toast(text: 'Unauthorized access.', variant: 'danger');
+
+            return;
+        }
+
+        // Validate the corrected harvester number using the record's weighed_at date
+        $rule = new HarvesterExistsForYear(auth()->user()->company_id, $stagingRecord->weighed_at);
+        $this->validate(
+            ["corrections.$recordId" => ['required', 'integer', 'min:1', 'max:200', $rule]],
+            ["corrections.$recordId.required" => 'Harvester number is required.']
+        );
+
+        // Create the corrected record in harvest_records
+        HarvestRecord::create([
+            'company_id' => $stagingRecord->company_id,
+            'upload_id' => $stagingRecord->upload_id,
+            'product_id' => $stagingRecord->product_id,
+            'harvester_number' => (int) $newNumber,
+            'weight' => $stagingRecord->weight,
+            'tare' => $stagingRecord->tare,
+            'gross' => $stagingRecord->gross,
+            'weighed_at' => $stagingRecord->weighed_at,
+        ]);
+
+        // Mark staging record as valid and delete it
+        $stagingRecord->update(['status' => 'valid']);
+        $stagingRecord->delete();
 
         unset($this->corrections[$recordId]);
-        // Force re-evaluation of computed properties on next access
         $this->dispatch('$refresh');
 
-        Flux::toast(text: 'Record updated.', variant: 'success');
+        Flux::toast(text: 'Record updated and promoted.', variant: 'success');
     }
 }; ?>
 

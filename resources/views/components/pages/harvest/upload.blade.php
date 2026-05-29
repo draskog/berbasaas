@@ -1,7 +1,6 @@
 <?php
 
-use App\Models\HarvestRecord;
-use App\Models\HarvesterAssignment;
+use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
 use App\Models\Product;
 use App\Services\HarvestImportService;
@@ -44,16 +43,8 @@ class extends Component {
 
     public function getInvalidCount(HarvestUpload $upload): int
     {
-        $year = $upload->date_from->year;
-
-        $validNumbers = \App\Models\HarvesterAssignment::where('company_id', auth()->user()->company_id)
-            ->where('year', $year)
-            ->pluck('number')
-            ->toArray();
-
-        return \App\Models\HarvestRecord::where('upload_id', $upload->id)
-            ->where('corrected', false)
-            ->whereNotIn('harvester_number', $validNumbers)
+        return HarvestRecordStaging::where('upload_id', $upload->id)
+            ->where('status', 'invalid')
             ->count();
     }
 

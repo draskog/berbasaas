@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\HarvesterAssignment;
 use App\Models\HarvestRecord;
+use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
@@ -36,7 +38,7 @@ class HarvestImportService
         $rowCount = 0;
 
         while (($row = fgetcsv($handle)) !== false) {
-            if (empty($row) || !isset($row[$productCol])) {
+            if (empty($row) || ! isset($row[$productCol])) {
                 continue;
             }
 
@@ -52,15 +54,15 @@ class HarvestImportService
             // Detect date format: YYYY-MM-DD or DD-MM-YY
             $datetime = $this->parseDateTime($dateStr, $timeStr);
 
-            if (!$datetime) {
+            if (! $datetime) {
                 continue;
             }
 
             // Track date range
-            if (!$dateFrom || $datetime->format('Y-m-d') < $dateFrom) {
+            if (! $dateFrom || $datetime->format('Y-m-d') < $dateFrom) {
                 $dateFrom = $datetime->format('Y-m-d');
             }
-            if (!$dateTo || $datetime->format('Y-m-d') > $dateTo) {
+            if (! $dateTo || $datetime->format('Y-m-d') > $dateTo) {
                 $dateTo = $datetime->format('Y-m-d');
             }
 
@@ -93,14 +95,39 @@ class HarvestImportService
             'date_to' => $dateTo,
         ]);
 
-        // Set upload_id on all records and bulk insert
-        foreach ($records as &$record) {
+        // Process records: validate and stage
+        $validRecords = [];
+        $stagingRecords = [];
+
+        foreach ($records as $record) {
             $record['upload_id'] = $upload->id;
+            $weighedAt = $record['weighed_at'];
+            $harvesterNumber = $record['harvester_number'];
+
+            // Check if harvester exists for the year of weighed_at
+            $harvesterExists = HarvesterAssignment::where('company_id', $companyId)
+                ->where('year', $weighedAt->year)
+                ->where('number', $harvesterNumber)
+                ->exists();
+
+            if ($harvesterExists) {
+                // Valid: prepare for direct insert to harvest_records
+                $validRecords[] = $record;
+            } else {
+                // Invalid: stage for user review
+                $stagingRecord = $record + ['status' => 'invalid'];
+                $stagingRecords[] = $stagingRecord;
+            }
         }
 
-        // Insert in chunks
-        foreach (array_chunk($records, 500) as $chunk) {
+        // Insert valid records directly into harvest_records
+        foreach (array_chunk($validRecords, 500) as $chunk) {
             HarvestRecord::insert($chunk);
+        }
+
+        // Insert invalid records into staging
+        foreach (array_chunk($stagingRecords, 500) as $chunk) {
+            HarvestRecordStaging::insert($chunk);
         }
 
         return $upload;

@@ -2,13 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Models\Company;
+use App\Models\HarvesterAssignment;
 use App\Models\HarvestRecord;
+use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
 use App\Models\Product;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class HarvestRecordSeeder extends Seeder
@@ -20,7 +20,7 @@ class HarvestRecordSeeder extends Seeder
     {
         $csvPath = resource_path('samples/full/record.csv');
 
-        if (!file_exists($csvPath)) {
+        if (! file_exists($csvPath)) {
             $this->command->warn("CSV file not found at {$csvPath}");
 
             return;
@@ -39,22 +39,12 @@ class HarvestRecordSeeder extends Seeder
             ]
         );
 
-        $upload = HarvestUpload::create([
-            'company_id' => $company->id,
-            'product_id' => $defaultProduct->id,
-            'uploaded_by' => $user->id,
-            'original_filename' => 'record.csv',
-            'record_count' => 0,
-            'date_from' => Carbon::parse('2023-06-26'),
-            'date_to' => Carbon::parse('2023-06-26'),
-        ]);
-
         $handle = fopen($csvPath, 'r');
         $header = fgetcsv($handle);
 
         $recordCount = 0;
         $batchSize = 1000;
-        $batch = [];
+        $records = [];
         $minDate = null;
         $maxDate = null;
 
@@ -76,7 +66,7 @@ class HarvestRecordSeeder extends Seeder
             $date = trim($data['date'] ?? '');
             $time = trim($data['time'] ?? '');
 
-            if (!$harvesterNumber || !$weight) {
+            if (! $harvesterNumber || ! $weight) {
                 continue;
             }
 
@@ -88,9 +78,8 @@ class HarvestRecordSeeder extends Seeder
                 $weighedAt = now();
             }
 
-            $batch[] = [
+            $records[] = [
                 'company_id' => $company->id,
-                'upload_id' => $upload->id,
                 'product_id' => $defaultProduct->id,
                 'harvester_number' => $harvesterNumber,
                 'weight' => $weight,
@@ -102,28 +91,63 @@ class HarvestRecordSeeder extends Seeder
             ];
 
             $recordCount++;
-
-            if (count($batch) >= $batchSize) {
-                HarvestRecord::insert($batch);
-                $batch = [];
-                $this->command->line("Inserted {$recordCount} records...");
-            }
-        }
-
-        if (count($batch) > 0) {
-            HarvestRecord::insert($batch);
-        }
-
-        if ($minDate && $maxDate) {
-            $upload->update([
-                'record_count' => $recordCount,
-                'date_from' => $minDate,
-                'date_to' => $maxDate,
-            ]);
         }
 
         fclose($handle);
 
+        // Create upload record
+        $upload = HarvestUpload::create([
+            'company_id' => $company->id,
+            'product_id' => $defaultProduct->id,
+            'uploaded_by' => $user->id,
+            'original_filename' => 'record.csv',
+            'record_count' => $recordCount,
+            'date_from' => $minDate ?? now(),
+            'date_to' => $maxDate ?? now(),
+        ]);
+
+        // Process records: validate and stage
+        $validRecords = [];
+        $stagingRecords = [];
+
+        foreach ($records as $record) {
+            $record['upload_id'] = $upload->id;
+            $weighedAt = $record['weighed_at'];
+            $harvesterNumber = $record['harvester_number'];
+
+            // Check if harvester exists for the year of weighed_at
+            $harvesterExists = HarvesterAssignment::where('company_id', $company->id)
+                ->where('year', $weighedAt->year)
+                ->where('number', $harvesterNumber)
+                ->exists();
+
+            if ($harvesterExists) {
+                // Valid: prepare for direct insert to harvest_records
+                $validRecords[] = $record;
+            } else {
+                // Invalid: stage for user review
+                $stagingRecord = $record + ['status' => 'invalid'];
+                $stagingRecords[] = $stagingRecord;
+            }
+        }
+
+        // Insert valid records directly into harvest_records
+        foreach (array_chunk($validRecords, $batchSize) as $chunk) {
+            HarvestRecord::insert($chunk);
+            $this->command->line('Inserted '.count($chunk).' valid records...');
+        }
+
+        // Insert invalid records into staging
+        foreach (array_chunk($stagingRecords, $batchSize) as $chunk) {
+            HarvestRecordStaging::insert($chunk);
+            $this->command->line('Staged '.count($chunk).' invalid records for review...');
+        }
+
+        $validCount = count($validRecords);
+        $invalidCount = count($stagingRecords);
+
         $this->command->info("Successfully loaded {$recordCount} harvest records from CSV");
+        $this->command->info("Valid records: {$validCount}");
+        $this->command->info("Invalid records (staged for review): {$invalidCount}");
     }
 }
