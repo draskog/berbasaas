@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\HarvestRecord;
+use App\Models\HarvestUpload;
 use App\Models\HarvesterAssignment;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -12,7 +13,7 @@ new
 #[Layout('layouts.app')]
 #[Title('Review Upload')]
 class extends Component {
-    public $upload;
+    public HarvestUpload $upload;
 
     public array $corrections = [];
 
