@@ -19,6 +19,7 @@ class extends Component {
     public ?string $toDate = null;
     public int $selectedProductId = 0;
     public int $selectedHarvesterNumber = 0;
+    public string $activeTab = 'daily';
 
     #[Computed]
     public function products()
@@ -226,31 +227,154 @@ class extends Component {
                 </div>
             </div>
 
-            <!-- Charts Grid -->
-            <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                <!-- Daily kg Chart -->
-                <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
-                    <h3 class="mb-4 text-lg font-semibold">Daily Harvest</h3>
-                    <flux:chart type="bar" :data="{{ json_encode($this->dailyKgChartData) }}" />
-                </div>
+            <!-- Summary Cards -->
+            <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                @php
+                    $dailyData = $this->dailyData;
+                    $harvesterData = $this->harvesterData;
+                    $productData = $this->productData;
+                @endphp
 
-                <!-- Harvester Comparison Chart -->
-                <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
-                    <h3 class="mb-4 text-lg font-semibold">Top Harvesters</h3>
-                    <flux:chart type="bar" :data="{{ json_encode($this->harvesterComparisonChartData) }}" :options="{{ json_encode(['indexAxis' => 'y']) }}" />
-                </div>
+                @if (!empty($dailyData))
+                    <flux:card class="p-4">
+                        <flux:text size="sm" class="text-zinc-500">Total Harvest (kg)</flux:text>
+                        <div class="mt-2 text-2xl font-semibold">{{ number_format($this->dailyTotals['weight'], 3, '.', ',') }}</div>
+                        <div class="text-xs text-zinc-400">{{ count($this->dailyData) }} days</div>
+                    </flux:card>
 
-                <!-- Hourly Distribution Chart -->
-                <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
-                    <h3 class="mb-4 text-lg font-semibold">Hourly Distribution</h3>
-                    <flux:chart type="bar" :data="{{ json_encode($this->hourlyDistributionChartData) }}" />
-                </div>
+                    <flux:card class="p-4">
+                        <flux:text size="sm" class="text-zinc-500">Total Buckets</flux:text>
+                        <div class="mt-2 text-2xl font-semibold">{{ $this->dailyTotals['buckets'] }}</div>
+                    </flux:card>
+                @endif
 
-                <!-- Cumulative kg Chart -->
-                <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
-                    <h3 class="mb-4 text-lg font-semibold">Cumulative Harvest</h3>
-                    <flux:chart type="line" :data="{{ json_encode($this->cumulativeKgChartData) }}" />
-                </div>
+                @if (!empty($harvesterData))
+                    <flux:card class="p-4">
+                        <flux:text size="sm" class="text-zinc-500">Top Harvester</flux:text>
+                        <div class="mt-2 text-lg font-semibold">{{ $this->harvesterData[0]['name'] ?? 'N/A' }}</div>
+                        <div class="text-xs text-zinc-400">{{ number_format($this->harvesterData[0]['total_weight'] ?? 0, 3, '.', ',') }} kg</div>
+                    </flux:card>
+                @endif
+
+                @if (!empty($productData))
+                    <flux:card class="p-4">
+                        <flux:text size="sm" class="text-zinc-500">Product Count</flux:text>
+                        <div class="mt-2 text-2xl font-semibold">{{ count($this->productData) }}</div>
+                    </flux:card>
+                @endif
+            </div>
+
+            <!-- Data Tables -->
+            <div class="space-y-6">
+                <!-- Daily Summary -->
+                @if ($activeTab === 'daily')
+                    <flux:card>
+                        <flux:heading size="sm">Daily Summary</flux:heading>
+                        <flux:table class="mt-4">
+                            <flux:table.columns>
+                                <flux:table.column>Date</flux:table.column>
+                                <flux:table.column>Buckets</flux:table.column>
+                                <flux:table.column>Total kg</flux:table.column>
+                            </flux:table.columns>
+
+                            <flux:table.rows>
+                                @forelse ($this->dailyData as $row)
+                                    <flux:table.row>
+                                        <flux:table.cell>{{ \Carbon\Carbon::parse($row['date'])->format('d.m.Y') }}</flux:table.cell>
+                                        <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
+                                        <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
+                                    </flux:table.row>
+                                @empty
+                                    <flux:table.row>
+                                        <flux:table.cell colspan="3" class="text-center text-gray-500">No data</flux:table.cell>
+                                    </flux:table.row>
+                                @endforelse
+
+                                @if (!empty($this->dailyData))
+                                    <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
+                                        <flux:table.cell>Total</flux:table.cell>
+                                        <flux:table.cell>{{ $this->dailyTotals['buckets'] }}</flux:table.cell>
+                                        <flux:table.cell>{{ number_format($this->dailyTotals['weight'], 3, '.', ',') }}</flux:table.cell>
+                                    </flux:table.row>
+                                @endif
+                            </flux:table.rows>
+                        </flux:table>
+                    </flux:card>
+                @endif
+
+                <!-- Harvester Summary -->
+                @if ($activeTab === 'harvesters')
+                    <flux:card>
+                        <flux:heading size="sm">Harvester Summary</flux:heading>
+                        <flux:table class="mt-4">
+                            <flux:table.columns>
+                                <flux:table.column>#</flux:table.column>
+                                <flux:table.column>Name</flux:table.column>
+                                <flux:table.column>Buckets</flux:table.column>
+                                <flux:table.column>Total kg</flux:table.column>
+                            </flux:table.columns>
+
+                            <flux:table.rows>
+                                @forelse ($this->harvesterData as $row)
+                                    <flux:table.row>
+                                        <flux:table.cell>{{ $row['number'] }}</flux:table.cell>
+                                        <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
+                                        <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
+                                        <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
+                                    </flux:table.row>
+                                @empty
+                                    <flux:table.row>
+                                        <flux:table.cell colspan="4" class="text-center text-gray-500">No data</flux:table.cell>
+                                    </flux:table.row>
+                                @endforelse
+
+                                @if (!empty($this->harvesterData))
+                                    <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
+                                        <flux:table.cell colspan="2">Total</flux:table.cell>
+                                        <flux:table.cell>{{ $this->harvesterTotals['buckets'] }}</flux:table.cell>
+                                        <flux:table.cell>{{ number_format($this->harvesterTotals['weight'], 3, '.', ',') }}</flux:table.cell>
+                                    </flux:table.row>
+                                @endif
+                            </flux:table.rows>
+                        </flux:table>
+                    </flux:card>
+                @endif
+
+                <!-- Products Summary -->
+                @if ($activeTab === 'products')
+                    <flux:card>
+                        <flux:heading size="sm">Product Summary</flux:heading>
+                        <flux:table class="mt-4">
+                            <flux:table.columns>
+                                <flux:table.column>Product</flux:table.column>
+                                <flux:table.column>Buckets</flux:table.column>
+                                <flux:table.column>Total kg</flux:table.column>
+                            </flux:table.columns>
+
+                            <flux:table.rows>
+                                @forelse ($this->productData as $row)
+                                    <flux:table.row>
+                                        <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
+                                        <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
+                                        <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
+                                    </flux:table.row>
+                                @empty
+                                    <flux:table.row>
+                                        <flux:table.cell colspan="3" class="text-center text-gray-500">No data</flux:table.cell>
+                                    </flux:table.row>
+                                @endforelse
+
+                                @if (!empty($this->productData))
+                                    <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
+                                        <flux:table.cell>Total</flux:table.cell>
+                                        <flux:table.cell>{{ $this->productTotals['buckets'] }}</flux:table.cell>
+                                        <flux:table.cell>{{ number_format($this->productTotals['weight'], 3, '.', ',') }}</flux:table.cell>
+                                    </flux:table.row>
+                                @endif
+                            </flux:table.rows>
+                        </flux:table>
+                    </flux:card>
+                @endif
             </div>
         </div>
     </flux:main>
