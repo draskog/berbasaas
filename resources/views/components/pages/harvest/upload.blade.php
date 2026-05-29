@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\HarvesterAssignment;
+use App\Models\HarvestRecord;
+use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
 use App\Models\Product;
 use App\Services\HarvestImportService;
@@ -29,6 +32,10 @@ class extends Component
     public ?int $deletingUploadId = null;
 
     public bool $showDeleteModal = false;
+
+    public ?int $resolvingUploadId = null;
+
+    public bool $showResolveModal = false;
 
     public string $sortBy = 'created_at';
 
@@ -118,6 +125,80 @@ class extends Component
         $this->showDeleteModal = false;
         Flux::toast(text: 'Upload deleted.', variant: 'warning');
     }
+
+    public function autoResolve(int $uploadId): void
+    {
+        $upload = HarvestUpload::findOrFail($uploadId);
+
+        // Authorize access
+        if ($upload->company_id !== auth()->user()->company_id) {
+            Flux::toast(text: 'Unauthorized access.', variant: 'danger');
+
+            return;
+        }
+
+        $year = $upload->date_from->year;
+
+        // Get all invalid staging records for this upload with 'harvester_not_found' reason
+        $invalidRecords = HarvestRecordStaging::where('upload_id', $uploadId)
+            ->where('status', 'invalid')
+            ->where('validation_reason', 'harvester_not_found')
+            ->get();
+
+        // Get all valid harvester assignments for the company in the upload's year
+        $validAssignments = HarvesterAssignment::where('company_id', $upload->company_id)
+            ->where('year', $year)
+            ->get()
+            ->keyBy('number');
+
+        $resolved = 0;
+
+        foreach ($invalidRecords as $record) {
+            // Simple pattern: try exact match first
+            if ($validAssignments->has($record->harvester_number)) {
+                $this->promoteRecord($record);
+                $resolved++;
+            } else {
+                // Try to find closest harvester number
+                $closest = $validAssignments->keys()
+                    ->sortBy(fn ($num) => abs($num - $record->harvester_number))
+                    ->first();
+
+                if ($closest !== null && abs($closest - $record->harvester_number) <= 5) {
+                    $record->update(['harvester_number' => $closest]);
+                    $this->promoteRecord($record);
+                    $resolved++;
+                }
+            }
+        }
+
+        $this->showResolveModal = false;
+        $this->resolvingUploadId = null;
+        $this->dispatch('$refresh');
+
+        $message = $resolved === 0
+            ? 'No records could be auto-resolved. Please resolve manually.'
+            : "Auto-resolved {$resolved} record(s).";
+
+        Flux::toast(text: $message, variant: $resolved > 0 ? 'success' : 'warning');
+    }
+
+    private function promoteRecord(HarvestRecordStaging $record): void
+    {
+        HarvestRecord::create([
+            'company_id' => $record->company_id,
+            'upload_id' => $record->upload_id,
+            'product_id' => $record->product_id,
+            'harvester_number' => $record->harvester_number,
+            'weight' => $record->weight,
+            'tare' => $record->tare,
+            'gross' => $record->gross,
+            'weighed_at' => $record->weighed_at,
+        ]);
+
+        $record->update(['status' => 'valid']);
+        $record->delete();
+    }
 }; ?>
 
 <flux:main>
@@ -167,7 +248,9 @@ class extends Component
             <flux:table.columns>
                 <flux:table.column sortable :sorted="$sortBy === 'original_filename'" :direction="$sortDirection" wire:click="sort('original_filename')">Filename</flux:table.column>
                 <flux:table.column>Product</flux:table.column>
-                <flux:table.column>Records</flux:table.column>
+                <flux:table.column>Total</flux:table.column>
+                <flux:table.column>Valid</flux:table.column>
+                <flux:table.column>Invalid</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">Date Range</flux:table.column>
                 <flux:table.column>Uploaded By</flux:table.column>
                 <flux:table.column>Actions</flux:table.column>
@@ -178,7 +261,21 @@ class extends Component
                     <flux:table.row>
                         <flux:table.cell>{{ $upload->original_filename }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->product->name }}</flux:table.cell>
-                        <flux:table.cell>{{ $upload->valid_count }} / {{ $upload->record_count }}</flux:table.cell>
+                        <flux:table.cell>
+                            @if($upload->invalid_count > 0)
+                                <flux:badge color="orange">{{ $upload->record_count }}</flux:badge>
+                            @else
+                                <flux:badge color="green">{{ $upload->record_count }}</flux:badge>
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            @if($upload->invalid_count === 0)
+                                <flux:badge color="green">{{ $upload->valid_count }}</flux:badge>
+                            @else
+                                {{ $upload->valid_count }}
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell>{{ $upload->invalid_count }}</flux:table.cell>
                         <flux:table.cell>
                             @if($upload->date_from->isSameDay($upload->date_to))
                                 {{ $upload->date_from->format('d.m.Y') }}
@@ -189,11 +286,9 @@ class extends Component
                         <flux:table.cell>{{ $upload->uploadedBy->name }}</flux:table.cell>
                         <flux:table.cell class="flex gap-2">
                             @if($upload->invalid_count > 0)
-                                <a href="{{ route('harvest.upload.review', $upload) }}" wire:navigate>
-                                    <flux:badge variant="warning">{{ $upload->invalid_count }} invalid</flux:badge>
-                                </a>
-                            @else
-                                <flux:badge variant="success">All Valid</flux:badge>
+                                <flux:button size="sm" variant="primary" wire:click="$set('resolvingUploadId', {{ $upload->id }}); $set('showResolveModal', true)">
+                                    Resolve
+                                </flux:button>
                             @endif
 
                             <flux:button variant="danger" size="sm" wire:click="confirmDeleteUpload({{ $upload->id }})">Delete</flux:button>
@@ -201,12 +296,39 @@ class extends Component
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="6" class="text-center text-gray-500">No uploads yet</flux:table.cell>
+                        <flux:table.cell colspan="8" class="text-center text-gray-500">No uploads yet</flux:table.cell>
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>
         </flux:table>
     </div>
+
+    @php
+        $resolvingUpload = $this->resolvingUploadId ? HarvestUpload::find($this->resolvingUploadId) : null;
+    @endphp
+
+    <flux:modal name="resolve-upload" :dismissible="true" wire:model="showResolveModal">
+        @if($resolvingUpload)
+            <flux:heading>Resolve {{ $resolvingUpload->invalid_count }} invalid record(s)</flux:heading>
+            <flux:text class="mt-4">
+                Choose how to handle the invalid records in this upload.
+            </flux:text>
+
+            <div class="mt-6 flex flex-col gap-3">
+                <flux:button
+                    variant="primary"
+                    wire:click="autoResolve({{ $resolvingUpload->id }})"
+                    wire:loading.attr="disabled"
+                >
+                    <span wire:loading.remove>Resolve Automatically</span>
+                    <span wire:loading>Resolving...</span>
+                </flux:button>
+                <a href="{{ route('harvest.upload.review', $resolvingUpload) }}" wire:navigate>
+                    <flux:button variant="ghost" class="w-full">Resolve Manually</flux:button>
+                </a>
+            </div>
+        @endif
+    </flux:modal>
 
     <flux:modal name="confirm-delete-upload" :dismissible="false" wire:model="showDeleteModal">
     <flux:heading>Delete Upload</flux:heading>
