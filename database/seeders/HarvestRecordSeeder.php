@@ -27,10 +27,21 @@ class HarvestRecordSeeder extends Seeder
         }
 
         $user = User::first();
+        $company = $user->company;
+
+        // Create a default blueberry product for the upload
+        $defaultProduct = Product::firstOrCreate(
+            ['name' => 'Blueberries'],
+            [
+                'company_id' => $company->id,
+                'slug' => 'blueberries',
+                'active' => true,
+            ]
+        );
 
         $upload = HarvestUpload::create([
-            'company_id' => $user->company->id,
-            'product_id' => 1,
+            'company_id' => $company->id,
+            'product_id' => $defaultProduct->id,
             'uploaded_by' => $user->id,
             'original_filename' => 'record.csv',
             'record_count' => 0,
@@ -44,7 +55,6 @@ class HarvestRecordSeeder extends Seeder
         $recordCount = 0;
         $batchSize = 1000;
         $batch = [];
-        $productCache = [];
         $minDate = null;
         $maxDate = null;
 
@@ -58,27 +68,16 @@ class HarvestRecordSeeder extends Seeder
 
             $data = array_combine($header, $row);
 
-            $productId = trim($data['Product'] ?? '');
+            // The 'Product' column contains the harvester number assigned for that year
+            $harvesterNumber = (int) trim($data['Product'] ?? 0);
             $weight = (float) trim($data['weight'] ?? 0);
             $tare = (float) trim($data['tare'] ?? 0);
             $gross = (float) trim($data['Gross'] ?? 0);
             $date = trim($data['date'] ?? '');
             $time = trim($data['time'] ?? '');
 
-            if (!$productId || !$weight) {
+            if (!$harvesterNumber || !$weight) {
                 continue;
-            }
-
-            if (!isset($productCache[$productId])) {
-                $product = Product::firstOrCreate(
-                    ['name' => "Product {$productId}"],
-                    [
-                        'company_id' => $user->company->id,
-                        'slug' => "product-{$productId}",
-                        'active' => true,
-                    ]
-                );
-                $productCache[$productId] = $product->id;
             }
 
             if ($date) {
@@ -90,10 +89,10 @@ class HarvestRecordSeeder extends Seeder
             }
 
             $batch[] = [
-                'company_id' => $user->company->id,
+                'company_id' => $company->id,
                 'upload_id' => $upload->id,
-                'product_id' => $productCache[$productId],
-                'harvester_number' => 0,
+                'product_id' => $defaultProduct->id,
+                'harvester_number' => $harvesterNumber,
                 'weight' => $weight,
                 'tare' => $tare,
                 'gross' => $gross,
