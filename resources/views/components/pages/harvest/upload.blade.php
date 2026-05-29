@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\HarvestRecord;
+use App\Models\HarvesterAssignment;
 use App\Models\HarvestUpload;
 use App\Models\Product;
 use App\Services\HarvestImportService;
@@ -38,6 +40,21 @@ class extends Component {
             ->orderByDesc('created_at')
             ->limit(20)
             ->get();
+    }
+
+    public function getInvalidCount(HarvestUpload $upload): int
+    {
+        $year = $upload->date_from->year;
+
+        $validNumbers = \App\Models\HarvesterAssignment::where('company_id', auth()->user()->company_id)
+            ->where('year', $year)
+            ->pluck('number')
+            ->toArray();
+
+        return \App\Models\HarvestRecord::where('upload_id', $upload->id)
+            ->where('corrected', false)
+            ->whereNotIn('harvester_number', $validNumbers)
+            ->count();
     }
 
     public function mount(): void
@@ -137,7 +154,19 @@ class extends Component {
                         <flux:table.cell>{{ $upload->record_count }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->date_from->format('d.m.Y') }} - {{ $upload->date_to->format('d.m.Y') }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->uploadedBy->name }}</flux:table.cell>
-                        <flux:table.cell>
+                        <flux:table.cell class="flex gap-2">
+                            @php
+                                $invalidCount = $this->getInvalidCount($upload);
+                            @endphp
+
+                            @if($invalidCount > 0)
+                                <a href="{{ route('harvest.upload.review', $upload) }}" wire:navigate>
+                                    <flux:badge variant="warning">{{ $invalidCount }} invalid</flux:badge>
+                                </a>
+                            @else
+                                <flux:badge variant="success">✓ Valid</flux:badge>
+                            @endif
+
                             <flux:button variant="danger" size="sm" wire:click="confirmDeleteUpload({{ $upload->id }})">Delete</flux:button>
                         </flux:table.cell>
                     </flux:table.row>

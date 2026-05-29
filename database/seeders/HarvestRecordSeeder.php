@@ -26,19 +26,10 @@ class HarvestRecordSeeder extends Seeder
             return;
         }
 
-        $company = Company::firstOrCreate(['name' => 'Sample Company']);
-
-        $user = User::firstOrCreate(
-            ['email' => 'seeder@example.com'],
-            [
-                'name' => 'Seeder User',
-                'password' => bcrypt('password'),
-                'company_id' => $company->id,
-            ]
-        );
+        $user = User::first();
 
         $upload = HarvestUpload::create([
-            'company_id' => $company->id,
+            'company_id' => $user->company->id,
             'product_id' => 1,
             'uploaded_by' => $user->id,
             'original_filename' => 'record.csv',
@@ -82,7 +73,7 @@ class HarvestRecordSeeder extends Seeder
                 $product = Product::firstOrCreate(
                     ['name' => "Product {$productId}"],
                     [
-                        'company_id' => $company->id,
+                        'company_id' => $user->company->id,
                         'slug' => "product-{$productId}",
                         'active' => true,
                     ]
@@ -99,7 +90,7 @@ class HarvestRecordSeeder extends Seeder
             }
 
             $batch[] = [
-                'company_id' => $company->id,
+                'company_id' => $user->company->id,
                 'upload_id' => $upload->id,
                 'product_id' => $productCache[$productId],
                 'harvester_number' => 0,
