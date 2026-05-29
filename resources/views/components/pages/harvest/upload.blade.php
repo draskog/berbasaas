@@ -119,33 +119,33 @@ class extends Component {
 
             <h3 class="mb-4 text-lg font-semibold">Recent Uploads</h3>
             <flux:table>
-                <flux:columns>
-                    <flux:column>Filename</flux:column>
-                    <flux:column>Product</flux:column>
-                    <flux:column>Records</flux:column>
-                    <flux:column>Date Range</flux:column>
-                    <flux:column>Uploaded By</flux:column>
-                    <flux:column>Actions</flux:column>
-                </flux:columns>
+                <flux:table.columns>
+                    <flux:table.column>Filename</flux:table.column>
+                    <flux:table.column>Product</flux:table.column>
+                    <flux:table.column>Records</flux:table.column>
+                    <flux:table.column>Date Range</flux:table.column>
+                    <flux:table.column>Uploaded By</flux:table.column>
+                    <flux:table.column>Actions</flux:table.column>
+                </flux:table.columns>
 
-                <flux:rows>
+                <flux:table.rows>
                     @forelse($this->recentUploads as $upload)
-                        <flux:row>
-                            <flux:cell>{{ $upload->original_filename }}</flux:cell>
-                            <flux:cell>{{ $upload->product->name }}</flux:cell>
-                            <flux:cell>{{ $upload->record_count }}</flux:cell>
-                            <flux:cell>{{ $upload->date_from->format('d.m.Y') }} - {{ $upload->date_to->format('d.m.Y') }}</flux:cell>
-                            <flux:cell>{{ $upload->uploadedBy->name }}</flux:cell>
-                            <flux:cell>
+                        <flux:table.row>
+                            <flux:table.cell>{{ $upload->original_filename }}</flux:table.cell>
+                            <flux:table.cell>{{ $upload->product->name }}</flux:table.cell>
+                            <flux:table.cell>{{ $upload->record_count }}</flux:table.cell>
+                            <flux:table.cell>{{ $upload->date_from->format('d.m.Y') }} - {{ $upload->date_to->format('d.m.Y') }}</flux:table.cell>
+                            <flux:table.cell>{{ $upload->uploadedBy->name }}</flux:table.cell>
+                            <flux:table.cell>
                                 <button wire:click="deleteUpload({{ $upload->id }})" class="text-red-600 hover:text-red-900">Delete</button>
-                            </flux:cell>
-                        </flux:row>
+                            </flux:table.cell>
+                        </flux:table.row>
                     @empty
-                        <flux:row>
-                            <flux:cell colspan="6" class="text-center text-gray-500">No uploads yet</flux:cell>
-                        </flux:row>
+                        <flux:table.row>
+                            <flux:table.cell colspan="6" class="text-center text-gray-500">No uploads yet</flux:table.cell>
+                        </flux:table.row>
                     @endforelse
-                </flux:rows>
+                </flux:table.rows>
             </flux:table>
         </div>
     </flux:main>
