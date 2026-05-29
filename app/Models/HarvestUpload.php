@@ -13,6 +13,11 @@ class HarvestUpload extends Model
 {
     use HasFactory;
 
+    protected $casts = [
+        'date_from' => 'date',
+        'date_to' => 'date',
+    ];
+
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
