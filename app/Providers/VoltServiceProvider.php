@@ -26,5 +26,7 @@ class VoltServiceProvider extends ServiceProvider
             resource_path('views/pages'),
             resource_path('views/layouts'),
         ]);
+
+        $this->app['view']->addNamespace('volt-livewire', config('livewire.view_path', resource_path('views/livewire')));
     }
 }
