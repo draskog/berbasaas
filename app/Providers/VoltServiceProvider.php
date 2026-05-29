@@ -20,13 +20,15 @@ class VoltServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register the volt-livewire namespace BEFORE Volt::mount
+        $livewireViewPath = config('livewire.view_path', resource_path('views/livewire'));
+        $this->app['view']->addNamespace('volt-livewire', $livewireViewPath);
+
         Volt::mount([
-            config('livewire.view_path', resource_path('views/livewire')),
+            $livewireViewPath,
             resource_path('views/components'),
             resource_path('views/pages'),
             resource_path('views/layouts'),
         ]);
-
-        $this->app['view']->addNamespace('volt-livewire', config('livewire.view_path', resource_path('views/livewire')));
     }
 }
