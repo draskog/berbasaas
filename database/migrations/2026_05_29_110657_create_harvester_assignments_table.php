@@ -17,7 +17,6 @@ return new class extends Migration
             $table->foreignId('harvester_id')->nullable()->constrained()->cascadeOnDelete();
             $table->smallInteger('year');
             $table->smallInteger('number');
-            $table->string('name');
             $table->timestamps();
             $table->unique(['company_id', 'year', 'number']);
         });

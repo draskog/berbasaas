@@ -22,6 +22,7 @@ return new class extends Migration
             $table->decimal('gross', 8, 3);
             $table->dateTime('weighed_at');
             $table->enum('status', ['pending', 'valid', 'invalid'])->default('pending');
+            $table->string('validation_reason')->nullable();
             $table->timestamps();
 
             $table->index(['company_id', 'upload_id', 'status'], 'hrs_company_upload_status_idx');
