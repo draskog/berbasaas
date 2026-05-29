@@ -173,6 +173,44 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - IMPORTANT: Always use `search-docs` tool for version-specific Volt documentation and updated code examples.
 - IMPORTANT: Activate `volt-development` every time you're working with a Volt or single-file component-related task.
 
+=== flux/core rules ===
+
+# Flux UI Components
+
+Flux UI (https://fluxui.dev/components/) is the comprehensive component library used throughout this application.
+
+## Component Categories & Usage
+
+**Layouts:** Header, Sidebar - use for page structure and navigation
+
+**Form & Input:** Input, Textarea, Checkbox, Radio, Switch, Select, Autocomplete, Date Picker, Time Picker, OTP Input, File Upload, Field wrapper - for all form needs
+
+**Data Display:** Table, Pagination, Card, Badge, Avatar, Progress, Skeleton, Timeline, Chart - for displaying and organizing data
+
+**Navigation & Menus:** Dropdown, Navbar, Breadcrumbs, Tabs, Command palette, Context menus
+
+**Feedback & Overlays:** Modal, Popover, Tooltip, Toast, Callout - for user feedback and notifications
+
+**Content Components:** Heading, Text, Editor, Composer, Button (variants: primary, filled, danger, ghost, subtle), Icon - basic building blocks
+
+**Advanced:** Accordion, Calendar, Kanban board, Color Picker, Pillbox, Slider, Separator, Profile
+
+## Button Component Guidelines
+
+The Button component is highly versatile:
+- Supports variants (primary, filled, danger, ghost, subtle)
+- Multiple colors and sizes
+- Icon support
+- Loading states
+- Can function as links or input elements through flexible configuration
+- Always use appropriate variant based on action priority
+
+## Documentation Reference
+
+- Full component documentation: https://fluxui.dev/components/
+- Check component docs before implementing custom solutions
+- Use dot notation for nested components (e.g., `flux:table.columns`, `flux:chart.svg`)
+
 === blaze/core rules ===
 
 # Livewire Blaze
