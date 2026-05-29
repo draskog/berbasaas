@@ -6,7 +6,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
-use Livewire\Flux\Flux;
+use Flux\Flux;
 use Livewire\Volt\Component;
 
 new
