@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
             $table->foreignId('upload_id')->constrained('harvest_uploads')->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->smallInteger('harvester_number');
+            $table->unsignedInteger('harvester_number');
             $table->decimal('weight', 8, 3);
             $table->decimal('tare', 8, 3);
             $table->decimal('gross', 8, 3);

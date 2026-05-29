@@ -53,14 +53,10 @@ class extends Component {
             ->update(['harvester_number' => (int) $newNumber, 'corrected' => true]);
 
         unset($this->corrections[$recordId]);
-        $this->resetComputedCache();
+        // Force re-evaluation of computed properties on next access
+        $this->dispatch('$refresh');
 
         Flux::toast(text: 'Record updated.', variant: 'success');
-    }
-
-    private function resetComputedCache(): void
-    {
-        #[\Livewire\Attributes\Computed] $invalidRecords = null;
     }
 }; ?>
 
