@@ -4,7 +4,9 @@ use App\Models\HarvestPrice;
 use App\Models\Product;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
+use Livewire\Flux\Flux;
 use Livewire\Volt\Component;
 
 new
@@ -13,6 +15,11 @@ new
 class extends Component {
     public int $selectedProductId;
     public array $prices = [];
+    public ?int $newProductId = null;
+    public ?string $newPricePerKg = null;
+    public ?string $newEffectiveFrom = null;
+    public ?string $newEffectiveTo = null;
+    public ?int $deletingPriceId = null;
 
     #[Computed]
     public function products()
@@ -50,28 +57,61 @@ class extends Component {
         // Prices will update via computed property
     }
 
-    public function deletePrice($id): void
+    public function createPrice(): void
     {
-        HarvestPrice::find($id)->delete();
+        $this->validate([
+            'newProductId' => 'required|exists:products,id',
+            'newPricePerKg' => 'required|numeric|min:0',
+            'newEffectiveFrom' => 'required|date',
+            'newEffectiveTo' => 'nullable|date|after_or_equal:newEffectiveFrom',
+        ]);
+
+        HarvestPrice::create([
+            'company_id' => auth()->user()->company_id,
+            'product_id' => $this->newProductId,
+            'price_per_kg' => $this->newPricePerKg,
+            'effective_from' => $this->newEffectiveFrom,
+            'effective_to' => $this->newEffectiveTo,
+        ]);
+
+        $this->reset(['newProductId', 'newPricePerKg', 'newEffectiveFrom', 'newEffectiveTo']);
+        $this->dispatch('close-modal', name: 'create-price');
+        Flux::toast(text: 'Price added successfully.', variant: 'success');
+    }
+
+    public function confirmDeletePrice(int $id): void
+    {
+        $this->deletingPriceId = $id;
+        $this->dispatch('open-modal', name: 'confirm-delete-price');
+    }
+
+    public function deletePrice(): void
+    {
+        HarvestPrice::find($this->deletingPriceId)?->delete();
+        $this->deletingPriceId = null;
+        $this->dispatch('close-modal', name: 'confirm-delete-price');
+        Flux::toast(text: 'Price deleted.', variant: 'warning');
     }
 }; ?>
 
 <flux:main>
     <flux:header heading="Harvest Prices">
         <flux:spacer />
-        <flux:button icon="plus">Add Price</flux:button>
+        <flux:modal.trigger name="create-price">
+            <flux:button icon="plus">Add Price</flux:button>
+        </flux:modal.trigger>
     </flux:header>
 
     <div class="p-6">
-        <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700">Product</label>
-            <select wire:model="selectedProductId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                <option value="">Select a product...</option>
+        <flux:field>
+            <flux:label>Product</flux:label>
+            <flux:select wire:model="selectedProductId">
+                <flux:select.option value="">Select a product...</flux:select.option>
                 @foreach($this->products as $product)
-                    <option value="{{ $product->id }}">{{ $product->name }}</option>
+                    <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
                 @endforeach
-            </select>
-        </div>
+            </flux:select>
+        </flux:field>
 
         @if($this->selectedProductId)
             <flux:table>
@@ -89,7 +129,7 @@ class extends Component {
                             <flux:table.cell>{{ $price->effective_from->format('d.m.Y') }}</flux:table.cell>
                             <flux:table.cell>{{ $price->effective_to?->format('d.m.Y') ?? 'Current' }}</flux:table.cell>
                             <flux:table.cell>
-                                <button wire:click="deletePrice({{ $price->id }})" class="text-red-600 hover:text-red-900">Delete</button>
+                                <flux:button variant="danger" size="sm" wire:click="confirmDeletePrice({{ $price->id }})">Delete</flux:button>
                             </flux:table.cell>
                         </flux:table.row>
                     @empty
@@ -102,3 +142,58 @@ class extends Component {
         @endif
     </div>
 </flux:main>
+
+<flux:modal name="create-price">
+    <flux:heading>Add Price</flux:heading>
+    <flux:subheading>Set a new price for a product.</flux:subheading>
+
+    <div class="mt-6 space-y-4">
+        <flux:field>
+            <flux:label>Product</flux:label>
+            <flux:select wire:model="newProductId">
+                <flux:select.option value="">Select product...</flux:select.option>
+                @foreach ($this->products as $product)
+                    <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
+                @endforeach
+            </flux:select>
+            <flux:error name="newProductId" />
+        </flux:field>
+
+        <flux:field>
+            <flux:label>Price per kg</flux:label>
+            <flux:input type="number" step="0.0001" wire:model="newPricePerKg" />
+            <flux:error name="newPricePerKg" />
+        </flux:field>
+
+        <flux:field>
+            <flux:label>Effective From</flux:label>
+            <flux:input type="date" wire:model="newEffectiveFrom" />
+            <flux:error name="newEffectiveFrom" />
+        </flux:field>
+
+        <flux:field>
+            <flux:label>Effective To</flux:label>
+            <flux:input type="date" wire:model="newEffectiveTo" />
+            <flux:error name="newEffectiveTo" />
+        </flux:field>
+    </div>
+
+    <div class="mt-6 flex gap-2 justify-end">
+        <flux:modal.close>
+            <flux:button variant="ghost">Cancel</flux:button>
+        </flux:modal.close>
+        <flux:button variant="primary" wire:click="createPrice">Save</flux:button>
+    </div>
+</flux:modal>
+
+<flux:modal name="confirm-delete-price" :dismissible="false">
+    <flux:heading>Delete Price</flux:heading>
+    <flux:text>Are you sure you want to delete this price? This cannot be undone.</flux:text>
+
+    <div class="mt-6 flex gap-2 justify-end">
+        <flux:modal.close>
+            <flux:button variant="ghost">Cancel</flux:button>
+        </flux:modal.close>
+        <flux:button variant="danger" wire:click="deletePrice">Delete</flux:button>
+    </div>
+</flux:modal>
