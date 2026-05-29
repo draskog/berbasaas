@@ -13,7 +13,7 @@ new class extends Component {
     /**
      * Delete the currently authenticated user.
      */
-    public function deleteUser(Logout $logout): void
+    public function deleteUser (Logout $logout): void
     {
         $this->validate([
             'password' => $this->currentPasswordRules(),
@@ -35,7 +35,7 @@ new class extends Component {
             </flux:subheading>
         </div>
 
-        <flux:input wire:model="password" :label="__('Password')" type="password" viewable />
+        <flux:input wire:model="password" :label="__('Password')" type="password" viewable/>
 
         <div class="flex justify-end space-x-2 rtl:space-x-reverse">
             <flux:modal.close>
