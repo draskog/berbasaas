@@ -53,8 +53,33 @@ class extends Component
     public function validNumbers()
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
+            ->where('year', $this->year)
+            ->with('harvester')
             ->orderBy('number')
             ->get();
+    }
+
+    #[Computed]
+    public function harvestersByNumber()
+    {
+        return $this->validNumbers->keyBy('number');
+    }
+
+    #[Computed]
+    public function validTares(): array
+    {
+        $fromRecords = HarvestRecord::where('upload_id', $this->upload->id)
+            ->distinct()->pluck('tare');
+
+        $fromStaging = HarvestRecordStaging::where('upload_id', $this->upload->id)
+            ->distinct()->pluck('tare');
+
+        return $fromRecords->merge($fromStaging)
+            ->unique()
+            ->filter(fn ($t) => $t > 0)
+            ->sort()
+            ->values()
+            ->toArray();
     }
 
     public function mount(): void
@@ -80,7 +105,7 @@ class extends Component
 
     public function resolve(int $recordId): void
     {
-        $newNumber = $this->corrections[$recordId] ?? null;
+        $correctionValue = $this->corrections[$recordId] ?? null;
         $stagingRecord = HarvestRecordStaging::findOrFail($recordId);
 
         // Validate that the staging record belongs to this user's company and upload
@@ -90,24 +115,47 @@ class extends Component
             return;
         }
 
-        // Validate the corrected harvester number using the record's weighed_at date
-        $rule = new HarvesterExistsForYear(auth()->user()->company_id, $stagingRecord->weighed_at);
-        $this->validate(
-            ["corrections.$recordId" => ['required', 'integer', 'min:1', 'max:200', $rule]],
-            ["corrections.$recordId.required" => 'Harvester number is required.']
-        );
+        if ($stagingRecord->validation_reason === 'harvester_not_found') {
+            // Harvester number needs correction
+            $rule = new HarvesterExistsForYear(auth()->user()->company_id, $stagingRecord->weighed_at);
+            $this->validate(
+                ["corrections.$recordId" => ['required', 'integer', 'min:1', 'max:200', $rule]],
+                ["corrections.$recordId.required" => 'Harvester number is required.']
+            );
 
-        // Create the corrected record in harvest_records
-        HarvestRecord::create([
-            'company_id' => $stagingRecord->company_id,
-            'upload_id' => $stagingRecord->upload_id,
-            'product_id' => $stagingRecord->product_id,
-            'harvester_number' => (int) $newNumber,
-            'weight' => $stagingRecord->weight,
-            'tare' => $stagingRecord->tare,
-            'gross' => $stagingRecord->gross,
-            'weighed_at' => $stagingRecord->weighed_at,
-        ]);
+            HarvestRecord::create([
+                'company_id' => $stagingRecord->company_id,
+                'upload_id' => $stagingRecord->upload_id,
+                'product_id' => $stagingRecord->product_id,
+                'harvester_number' => (int) $correctionValue,
+                'weight' => $stagingRecord->weight,
+                'tare' => $stagingRecord->tare,
+                'gross' => $stagingRecord->gross,
+                'weighed_at' => $stagingRecord->weighed_at,
+                'corrected' => true,
+            ]);
+        } elseif ($stagingRecord->validation_reason === 'tare_out_of_range') {
+            // Tare value needs correction
+            $this->validate(
+                ["corrections.$recordId" => ['required', 'numeric', 'min:0']],
+                ["corrections.$recordId.required" => 'Tare value is required.']
+            );
+
+            $newTare = (float) $correctionValue;
+            $newWeight = $stagingRecord->gross - $newTare;
+
+            HarvestRecord::create([
+                'company_id' => $stagingRecord->company_id,
+                'upload_id' => $stagingRecord->upload_id,
+                'product_id' => $stagingRecord->product_id,
+                'harvester_number' => $stagingRecord->harvester_number,
+                'weight' => $newWeight,
+                'tare' => $newTare,
+                'gross' => $stagingRecord->gross,
+                'weighed_at' => $stagingRecord->weighed_at,
+                'corrected' => true,
+            ]);
+        }
 
         // Mark staging record as valid and delete it
         $stagingRecord->update(['status' => 'valid']);
@@ -150,9 +198,11 @@ class extends Component
                 <flux:table.columns>
                     <flux:table.column sortable :sorted="$sortBy === 'weighed_at'" :direction="$sortDirection" wire:click="sort('weighed_at')">Date / Time</flux:table.column>
                     <flux:table.column sortable :sorted="$sortBy === 'weight'" :direction="$sortDirection" wire:click="sort('weight')">Weight (kg)</flux:table.column>
+                    <flux:table.column>Tare</flux:table.column>
+                    <flux:table.column>Gross</flux:table.column>
                     <flux:table.column>Original #</flux:table.column>
-                    <flux:table.column>Reason</flux:table.column>
                     <flux:table.column>Corrected #</flux:table.column>
+                    <flux:table.column>Reason</flux:table.column>
                     <flux:table.column>Action</flux:table.column>
                 </flux:table.columns>
 
@@ -166,7 +216,43 @@ class extends Component
                                 {{ number_format($record->weight, 3) }}
                             </flux:table.cell>
                             <flux:table.cell>
+                                {{ number_format($record->tare, 3) }}
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                {{ number_format($record->gross, 3) }}
+                            </flux:table.cell>
+                            <flux:table.cell>
                                 <flux:badge variant="warning">{{ $record->harvester_number }}</flux:badge>
+                                @if($this->harvestersByNumber->has($record->harvester_number))
+                                    <span class="text-sm text-gray-400 ml-1">
+                                        {{ $this->harvestersByNumber[$record->harvester_number]->harvester?->name }}
+                                    </span>
+                                @endif
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <flux:autocomplete
+                                    wire:model="corrections.{{ $record->id }}"
+                                    placeholder="Select..."
+                                    size="sm"
+                                    class="w-40"
+                                >
+                                    @if($record->validation_reason === 'harvester_not_found')
+                                        @foreach($this->validNumbers as $assignment)
+                                            <flux:autocomplete.item value="{{ $assignment->number }}">
+                                                {{ $assignment->number }} — {{ $assignment->harvester?->name }}
+                                            </flux:autocomplete.item>
+                                        @endforeach
+                                    @elseif($record->validation_reason === 'tare_out_of_range')
+                                        @foreach($this->validTares as $tare)
+                                            <flux:autocomplete.item value="{{ $tare }}">
+                                                {{ $tare }}
+                                            </flux:autocomplete.item>
+                                        @endforeach
+                                    @endif
+                                </flux:autocomplete>
+                                @error('corrections.' . $record->id)
+                                    <flux:error>{{ $message }}</flux:error>
+                                @enderror
                             </flux:table.cell>
                             <flux:table.cell>
                                 @if($record->validation_reason === 'harvester_not_found')
@@ -176,23 +262,6 @@ class extends Component
                                 @else
                                     <flux:badge variant="zinc" size="sm">Unknown</flux:badge>
                                 @endif
-                            </flux:table.cell>
-                            <flux:table.cell>
-                                <flux:select
-                                    wire:model="corrections.{{ $record->id }}"
-                                    size="sm"
-                                    class="w-32"
-                                >
-                                    <flux:select.option value="">Select...</flux:select.option>
-                                    @foreach($this->validNumbers as $assignment)
-                                        <flux:select.option value="{{ $assignment->number }}">
-                                            {{ $assignment->number }} — {{ $assignment->name }}
-                                        </flux:select.option>
-                                    @endforeach
-                                </flux:select>
-                                @error("corrections.{$record->id}")
-                                    <flux:error>{{ $message }}</flux:error>
-                                @enderror
                             </flux:table.cell>
                             <flux:table.cell>
                                 <flux:button

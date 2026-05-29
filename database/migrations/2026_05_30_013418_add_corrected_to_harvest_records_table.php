@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('company_id')->nullable()->after('id')->constrained()->cascadeOnDelete();
+        Schema::table('harvest_records', function (Blueprint $table) {
+            $table->boolean('corrected')->default(false)->after('weighed_at');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropForeignIdFor('Company');
+        Schema::table('harvest_records', function (Blueprint $table) {
+            $table->dropColumn('corrected');
         });
     }
 };
