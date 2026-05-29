@@ -27,6 +27,15 @@
                     <flux:sidebar.item icon="currency-dollar" :href="route('harvest.prices')" :current="request()->routeIs('harvest.prices')" wire:navigate>
                         {{ __('Prices') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="chart-bar" :href="route('harvest.charts')" :current="request()->routeIs('harvest.charts')" wire:navigate>
+                        {{ __('Charts') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="document-text" :href="route('harvest.reports')" :current="request()->routeIs('harvest.reports')" wire:navigate>
+                        {{ __('Reports') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="printer" :href="route('harvest.payslip')" :current="request()->routeIs('harvest.payslip')" wire:navigate>
+                        {{ __('Payslip') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 
