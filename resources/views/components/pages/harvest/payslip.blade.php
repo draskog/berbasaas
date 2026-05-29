@@ -126,58 +126,56 @@ class extends Component {
 
         <div class="p-6">
             <!-- Selector Panel (hidden on print) -->
-            <div class="mb-8 rounded-lg border border-gray-200 bg-white p-6 print:hidden dark:border-zinc-700 dark:bg-zinc-800">
+            <flux:card class="mb-8 print:hidden">
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Year</label>
-                        <select wire:model.live="selectedYear" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-zinc-600 dark:bg-zinc-700">
+                    <flux:field>
+                        <flux:label>Year</flux:label>
+                        <flux:select wire:model.live="selectedYear">
                             @for ($y = now()->year; $y >= now()->year - 5; $y--)
-                                <option value="{{ $y }}">{{ $y }}</option>
+                                <flux:select.option value="{{ $y }}">{{ $y }}</flux:select.option>
                             @endfor
-                        </select>
-                    </div>
+                        </flux:select>
+                    </flux:field>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Harvester</label>
-                        <select wire:model.live="selectedHarvesterNumber" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-zinc-600 dark:bg-zinc-700">
+                    <flux:field>
+                        <flux:label>Harvester</flux:label>
+                        <flux:select wire:model.live="selectedHarvesterNumber">
                             @foreach ($this->harvesterNumbers as $number)
-                                <option value="{{ $number }}">#{{ $number }}</option>
+                                <flux:select.option value="{{ $number }}">#{{ $number }}</flux:select.option>
                             @endforeach
-                        </select>
-                    </div>
+                        </flux:select>
+                    </flux:field>
 
                     <div class="flex items-end">
-                        <button onclick="window.print()" class="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+                        <flux:button variant="primary" onclick="window.print()" class="w-full">
                             🖨 Print
-                        </button>
+                        </flux:button>
                     </div>
                 </div>
-            </div>
+            </flux:card>
 
             <!-- Print Area -->
-            <div class="rounded-lg border border-gray-200 bg-white p-8 dark:border-zinc-700 dark:bg-zinc-800 print:border-0 print:bg-white">
+            <flux:card class="p-8 print:border-0 print:bg-white">
                 <!-- Header -->
                 <div class="mb-8 border-b border-gray-200 pb-6 dark:border-zinc-700">
-                    <h1 class="text-2xl font-bold">{{ auth()->user()->company->name }}</h1>
-                    <p class="mt-2 text-gray-600 dark:text-zinc-400">
-                        Harvester Payslip
-                    </p>
+                    <flux:heading size="xl">{{ auth()->user()->company->name }}</flux:heading>
+                    <flux:subheading class="mt-2">Harvester Payslip</flux:subheading>
                 </div>
 
                 <!-- Harvester Info -->
                 @if ($selectedHarvesterNumber)
                     <div class="mb-8 grid grid-cols-3 gap-6 print:gap-4">
                         <div>
-                            <p class="text-sm text-gray-600 dark:text-zinc-400">Harvester Number</p>
-                            <p class="text-lg font-semibold">#{{ $selectedHarvesterNumber }}</p>
+                            <flux:text size="sm">Harvester Number</flux:text>
+                            <flux:heading class="mt-1">#{{ $selectedHarvesterNumber }}</flux:heading>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-600 dark:text-zinc-400">Harvester Name</p>
-                            <p class="text-lg font-semibold">{{ $this->harvesterName() ?? 'Unknown' }}</p>
+                            <flux:text size="sm">Harvester Name</flux:text>
+                            <flux:heading class="mt-1">{{ $this->harvesterName() ?? 'Unknown' }}</flux:heading>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-600 dark:text-zinc-400">Season</p>
-                            <p class="text-lg font-semibold">{{ $selectedYear }}</p>
+                            <flux:text size="sm">Season</flux:text>
+                            <flux:heading class="mt-1">{{ $selectedYear }}</flux:heading>
                         </div>
                     </div>
 
@@ -237,7 +235,7 @@ class extends Component {
                         <p>Generated on {{ now()->format('d.m.Y H:i') }}</p>
                     </div>
                 @endif
-            </div>
+            </flux:card>
         </div>
     </flux:main>
 

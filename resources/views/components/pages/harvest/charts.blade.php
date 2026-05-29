@@ -284,38 +284,38 @@ class extends Component {
 
         <div class="p-6">
             <!-- Filter Panel -->
-            <div class="mb-8 rounded-lg border border-gray-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
+            <flux:card class="mb-8">
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Year</label>
-                        <select wire:model.live="selectedYear" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-zinc-600 dark:bg-zinc-700">
+                    <flux:field>
+                        <flux:label>Year</flux:label>
+                        <flux:select wire:model.live="selectedYear">
                             @for ($y = now()->year; $y >= now()->year - 5; $y--)
-                                <option value="{{ $y }}">{{ $y }}</option>
+                                <flux:select.option value="{{ $y }}">{{ $y }}</flux:select.option>
                             @endfor
-                        </select>
-                    </div>
+                        </flux:select>
+                    </flux:field>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">From Date</label>
-                        <input type="date" wire:model.live="fromDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-zinc-600 dark:bg-zinc-700" />
-                    </div>
+                    <flux:field>
+                        <flux:label>From Date</flux:label>
+                        <flux:input type="date" wire:model.live="fromDate" />
+                    </flux:field>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">To Date</label>
-                        <input type="date" wire:model.live="toDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-zinc-600 dark:bg-zinc-700" />
-                    </div>
+                    <flux:field>
+                        <flux:label>To Date</flux:label>
+                        <flux:input type="date" wire:model.live="toDate" />
+                    </flux:field>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Product</label>
-                        <select wire:model.live="selectedProductId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-zinc-600 dark:bg-zinc-700">
-                            <option value="0">All products</option>
+                    <flux:field>
+                        <flux:label>Product</flux:label>
+                        <flux:select wire:model.live="selectedProductId">
+                            <flux:select.option value="0">All products</flux:select.option>
                             @foreach ($this->products as $product)
-                                <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
                             @endforeach
-                        </select>
-                    </div>
+                        </flux:select>
+                    </flux:field>
                 </div>
-            </div>
+            </flux:card>
 
             <!-- Summary Cards -->
             <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -354,118 +354,120 @@ class extends Component {
                 @endif
             </div>
 
+            <!-- Tab Navigation -->
+            <flux:tabs wire:model="activeTab" class="mb-6">
+                <flux:tab name="daily">Daily Summary</flux:tab>
+                <flux:tab name="harvesters">Harvesters</flux:tab>
+                <flux:tab name="products">Products</flux:tab>
+            </flux:tabs>
+
             <!-- Data Tables -->
-            <div class="space-y-6">
-                <!-- Daily Summary -->
-                @if ($activeTab === 'daily')
-                    <flux:card>
-                        <flux:heading size="sm">Daily Summary</flux:heading>
-                        <flux:table class="mt-4">
-                            <flux:table.columns>
-                                <flux:table.column>Date</flux:table.column>
-                                <flux:table.column>Buckets</flux:table.column>
-                                <flux:table.column>Total kg</flux:table.column>
-                            </flux:table.columns>
+            <!-- Daily Summary Tab -->
+            <flux:tab.panel name="daily">
+                <flux:card>
+                    <flux:table>
+                        <flux:table.columns>
+                            <flux:table.column>Date</flux:table.column>
+                            <flux:table.column>Buckets</flux:table.column>
+                            <flux:table.column>Total kg</flux:table.column>
+                        </flux:table.columns>
 
-                            <flux:table.rows>
-                                @forelse ($this->dailyData as $row)
-                                    <flux:table.row>
-                                        <flux:table.cell>{{ \Carbon\Carbon::parse($row['date'])->format('d.m.Y') }}</flux:table.cell>
-                                        <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
-                                        <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
-                                    </flux:table.row>
-                                @empty
-                                    <flux:table.row>
-                                        <flux:table.cell colspan="3" class="text-center text-gray-500">No data</flux:table.cell>
-                                    </flux:table.row>
-                                @endforelse
+                        <flux:table.rows>
+                            @forelse ($this->dailyData as $row)
+                                <flux:table.row>
+                                    <flux:table.cell>{{ \Carbon\Carbon::parse($row['date'])->format('d.m.Y') }}</flux:table.cell>
+                                    <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
+                                </flux:table.row>
+                            @empty
+                                <flux:table.row>
+                                    <flux:table.cell colspan="3" class="text-center text-gray-500">No data</flux:table.cell>
+                                </flux:table.row>
+                            @endforelse
 
-                                @if (!empty($this->dailyData))
-                                    <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                                        <flux:table.cell>Total</flux:table.cell>
-                                        <flux:table.cell>{{ $this->dailyTotals['buckets'] }}</flux:table.cell>
-                                        <flux:table.cell>{{ number_format($this->dailyTotals['weight'], 3, '.', ',') }}</flux:table.cell>
-                                    </flux:table.row>
-                                @endif
-                            </flux:table.rows>
-                        </flux:table>
-                    </flux:card>
-                @endif
+                            @if (!empty($this->dailyData))
+                                <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
+                                    <flux:table.cell>Total</flux:table.cell>
+                                    <flux:table.cell>{{ $this->dailyTotals['buckets'] }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($this->dailyTotals['weight'], 3, '.', ',') }}</flux:table.cell>
+                                </flux:table.row>
+                            @endif
+                        </flux:table.rows>
+                    </flux:table>
+                </flux:card>
+            </flux:tab.panel>
 
-                <!-- Harvester Summary -->
-                @if ($activeTab === 'harvesters')
-                    <flux:card>
-                        <flux:heading size="sm">Harvester Summary</flux:heading>
-                        <flux:table class="mt-4">
-                            <flux:table.columns>
-                                <flux:table.column>#</flux:table.column>
-                                <flux:table.column>Name</flux:table.column>
-                                <flux:table.column>Buckets</flux:table.column>
-                                <flux:table.column>Total kg</flux:table.column>
-                            </flux:table.columns>
+            <!-- Harvester Summary Tab -->
+            <flux:tab.panel name="harvesters">
+                <flux:card>
+                    <flux:table>
+                        <flux:table.columns>
+                            <flux:table.column>#</flux:table.column>
+                            <flux:table.column>Name</flux:table.column>
+                            <flux:table.column>Buckets</flux:table.column>
+                            <flux:table.column>Total kg</flux:table.column>
+                        </flux:table.columns>
 
-                            <flux:table.rows>
-                                @forelse ($this->harvesterData as $row)
-                                    <flux:table.row>
-                                        <flux:table.cell>{{ $row['number'] }}</flux:table.cell>
-                                        <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
-                                        <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
-                                        <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
-                                    </flux:table.row>
-                                @empty
-                                    <flux:table.row>
-                                        <flux:table.cell colspan="4" class="text-center text-gray-500">No data</flux:table.cell>
-                                    </flux:table.row>
-                                @endforelse
+                        <flux:table.rows>
+                            @forelse ($this->harvesterData as $row)
+                                <flux:table.row>
+                                    <flux:table.cell>{{ $row['number'] }}</flux:table.cell>
+                                    <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
+                                    <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
+                                </flux:table.row>
+                            @empty
+                                <flux:table.row>
+                                    <flux:table.cell colspan="4" class="text-center text-gray-500">No data</flux:table.cell>
+                                </flux:table.row>
+                            @endforelse
 
-                                @if (!empty($this->harvesterData))
-                                    <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                                        <flux:table.cell colspan="2">Total</flux:table.cell>
-                                        <flux:table.cell>{{ $this->harvesterTotals['buckets'] }}</flux:table.cell>
-                                        <flux:table.cell>{{ number_format($this->harvesterTotals['weight'], 3, '.', ',') }}</flux:table.cell>
-                                    </flux:table.row>
-                                @endif
-                            </flux:table.rows>
-                        </flux:table>
-                    </flux:card>
-                @endif
+                            @if (!empty($this->harvesterData))
+                                <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
+                                    <flux:table.cell colspan="2">Total</flux:table.cell>
+                                    <flux:table.cell>{{ $this->harvesterTotals['buckets'] }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($this->harvesterTotals['weight'], 3, '.', ',') }}</flux:table.cell>
+                                </flux:table.row>
+                            @endif
+                        </flux:table.rows>
+                    </flux:table>
+                </flux:card>
+            </flux:tab.panel>
 
-                <!-- Products Summary -->
-                @if ($activeTab === 'products')
-                    <flux:card>
-                        <flux:heading size="sm">Product Summary</flux:heading>
-                        <flux:table class="mt-4">
-                            <flux:table.columns>
-                                <flux:table.column>Product</flux:table.column>
-                                <flux:table.column>Buckets</flux:table.column>
-                                <flux:table.column>Total kg</flux:table.column>
-                            </flux:table.columns>
+            <!-- Products Summary Tab -->
+            <flux:tab.panel name="products">
+                <flux:card>
+                    <flux:table>
+                        <flux:table.columns>
+                            <flux:table.column>Product</flux:table.column>
+                            <flux:table.column>Buckets</flux:table.column>
+                            <flux:table.column>Total kg</flux:table.column>
+                        </flux:table.columns>
 
-                            <flux:table.rows>
-                                @forelse ($this->productData as $row)
-                                    <flux:table.row>
-                                        <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
-                                        <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
-                                        <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
-                                    </flux:table.row>
-                                @empty
-                                    <flux:table.row>
-                                        <flux:table.cell colspan="3" class="text-center text-gray-500">No data</flux:table.cell>
-                                    </flux:table.row>
-                                @endforelse
+                        <flux:table.rows>
+                            @forelse ($this->productData as $row)
+                                <flux:table.row>
+                                    <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
+                                    <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
+                                </flux:table.row>
+                            @empty
+                                <flux:table.row>
+                                    <flux:table.cell colspan="3" class="text-center text-gray-500">No data</flux:table.cell>
+                                </flux:table.row>
+                            @endforelse
 
-                                @if (!empty($this->productData))
-                                    <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                                        <flux:table.cell>Total</flux:table.cell>
-                                        <flux:table.cell>{{ $this->productTotals['buckets'] }}</flux:table.cell>
-                                        <flux:table.cell>{{ number_format($this->productTotals['weight'], 3, '.', ',') }}</flux:table.cell>
-                                    </flux:table.row>
-                                @endif
-                            </flux:table.rows>
-                        </flux:table>
-                    </flux:card>
-                @endif
-            </div>
+                            @if (!empty($this->productData))
+                                <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
+                                    <flux:table.cell>Total</flux:table.cell>
+                                    <flux:table.cell>{{ $this->productTotals['buckets'] }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($this->productTotals['weight'], 3, '.', ',') }}</flux:table.cell>
+                                </flux:table.row>
+                            @endif
+                        </flux:table.rows>
+                    </flux:table>
+                </flux:card>
+            </flux:tab.panel>
         </div>
     </flux:main>
 
