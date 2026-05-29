@@ -4,7 +4,7 @@ use App\Models\HarvestRecord;
 use App\Models\HarvesterAssignment;
 use App\Models\HarvestPrice;
 use App\Models\Product;
-use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
