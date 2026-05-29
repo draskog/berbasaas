@@ -20,6 +20,17 @@ class extends Component {
     public bool $showDeleteModal = false;
 
     #[Computed]
+    public function availableYears()
+    {
+        return HarvesterAssignment::where('company_id', auth()->user()->company_id)
+            ->distinct()
+            ->pluck('year')
+            ->sort()
+            ->reverse()
+            ->values();
+    }
+
+    #[Computed]
     public function allAssignments()
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
@@ -30,7 +41,8 @@ class extends Component {
 
     public function mount(): void
     {
-        $this->selectedYear = now()->year;
+        $years = $this->availableYears;
+        $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
     }
 
 
@@ -82,9 +94,9 @@ class extends Component {
             <flux:field>
                 <flux:label>Year</flux:label>
                 <flux:select wire:model.live="selectedYear">
-                    @for ($year = now()->year - 5; $year <= now()->year; $year++)
+                    @foreach($this->availableYears as $year)
                         <flux:select.option value="{{ $year }}">{{ $year }}</flux:select.option>
-                    @endfor
+                    @endforeach
                 </flux:select>
             </flux:field>
         </div>

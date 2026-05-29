@@ -22,6 +22,17 @@ class extends Component {
     public string $activeTab = 'daily';
 
     #[Computed]
+    public function availableYears()
+    {
+        return HarvesterAssignment::where('company_id', auth()->user()->company_id)
+            ->distinct()
+            ->pluck('year')
+            ->sort()
+            ->reverse()
+            ->values();
+    }
+
+    #[Computed]
     public function products()
     {
         return Product::where('company_id', auth()->user()->company_id)
@@ -43,7 +54,8 @@ class extends Component {
 
     public function mount(): void
     {
-        $this->selectedYear = now()->year;
+        $years = $this->availableYears;
+        $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
         $this->fromDate = now()->startOfYear()->format('Y-m-d');
         $this->toDate = now()->endOfYear()->format('Y-m-d');
         $product = $this->products->first();
@@ -194,9 +206,9 @@ class extends Component {
                     <flux:field>
                         <flux:label>Year</flux:label>
                         <flux:select wire:model.live="selectedYear">
-                            @for ($y = now()->year; $y >= now()->year - 5; $y--)
-                                <flux:select.option value="{{ $y }}">{{ $y }}</flux:select.option>
-                            @endfor
+                            @foreach($this->availableYears as $year)
+                                <flux:select.option value="{{ $year }}">{{ $year }}</flux:select.option>
+                            @endforeach
                         </flux:select>
                     </flux:field>
 
