@@ -16,8 +16,8 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $company = Company::create([
-            'name' => 'Demo Company',
-            'address' => '123 Harvest Lane',
+            'name' => 'Serbian Blueberry Farms',
+            'address' => 'Mačva region',
             'tax_number' => '12345678',
         ]);
 
