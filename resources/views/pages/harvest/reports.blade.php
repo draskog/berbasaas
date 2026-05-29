@@ -6,6 +6,7 @@ use App\Models\HarvestPrice;
 use App\Models\Product;
 use Illuminate\Database\Query\Builder;
 use Livewire\Volt\Component;
+use Livewire\Attributes\Computed;
 
 new class extends Component {
     public int $selectedYear;
