@@ -20,6 +20,12 @@ class extends Component {
     public array $corrections = [];
 
     #[Computed]
+    public function year(): int
+    {
+        return $this->upload->date_from->year;
+    }
+
+    #[Computed]
     public function invalidRecords()
     {
         return HarvestRecordStaging::where('upload_id', $this->upload->id)
