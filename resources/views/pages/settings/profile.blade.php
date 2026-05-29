@@ -83,12 +83,10 @@ class extends Component {
         <flux:heading class="sr-only">{{ __('Profile settings') }}</flux:heading>
 
         <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
-            <form wire:submit="updateProfileInformation" class="my-6 space-y-6">
-                <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" class="w-full"/>
-
+            <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
+                <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name"/>
+                <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email"/>
                 <div>
-                    <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" class="w-full"/>
-
                     @if ($this->hasUnverifiedEmail)
                         <div>
                             <flux:text class="mt-4">
@@ -107,11 +105,12 @@ class extends Component {
                         </div>
                     @endif
                 </div>
-
-                <div class="flex items-center justify-start pt-4">
-                    <flux:button variant="primary" type="submit" data-test="update-profile-button">
-                        {{ __('Save') }}
-                    </flux:button>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center justify-end">
+                        <flux:button variant="primary" type="submit" class="w-full" data-test="update-profile-button">
+                            {{ __('Save') }}
+                        </flux:button>
+                    </div>
                 </div>
             </form>
 

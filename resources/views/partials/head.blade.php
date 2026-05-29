@@ -9,7 +9,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-@fonts
+<link rel="preload" as="font" href="/build/assets/instrument-sans-400-normal-DRC__1Mx.woff2" type="font/woff2" crossorigin="anonymous" />
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance

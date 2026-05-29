@@ -6,8 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 new
-class extends Component
-{
+class extends Component {
     public string $name = '';
 
     public ?string $address = null;
@@ -18,7 +17,7 @@ class extends Component
 
     public ?string $email = null;
 
-    public function mount(): void
+    public function mount (): void
     {
         $company = Auth::user()->company;
         if ($company) {
@@ -30,7 +29,7 @@ class extends Component
         }
     }
 
-    public function updateCompanyInformation(): void
+    public function updateCompanyInformation (): void
     {
         $validated = $this->validate([
             'name' => 'required|string|max:255',
@@ -54,15 +53,15 @@ class extends Component
 
         <x-pages::settings.layout :heading="__('Company')" :subheading="__('Manage your company information')">
             <form wire:submit="updateCompanyInformation" class="my-6 w-full space-y-6">
-                <flux:input wire:model="name" :label="__('Company Name')" type="text" required autofocus />
+                <flux:input wire:model="name" :label="__('Company Name')" type="text" required autofocus/>
 
-                <flux:input wire:model="address" :label="__('Address')" type="text" />
+                <flux:input wire:model="address" :label="__('Address')" type="text"/>
 
-                <flux:input wire:model="tax_number" :label="__('Tax Number')" type="text" />
+                <flux:input wire:model="tax_number" :label="__('Tax Number')" type="text"/>
 
-                <flux:input wire:model="phone" :label="__('Phone')" type="tel" />
+                <flux:input wire:model="phone" :label="__('Phone')" type="tel"/>
 
-                <flux:input wire:model="email" :label="__('Email')" type="email" />
+                <flux:input wire:model="email" :label="__('Email')" type="email"/>
 
                 <div class="flex items-center gap-4">
                     <div class="flex items-center justify-end">
