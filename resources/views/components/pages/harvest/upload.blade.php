@@ -179,7 +179,13 @@ class extends Component
                         <flux:table.cell>{{ $upload->original_filename }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->product->name }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->valid_count }} / {{ $upload->record_count }}</flux:table.cell>
-                        <flux:table.cell>{{ $upload->date_from->format('d.m.Y') }} - {{ $upload->date_to->format('d.m.Y') }}</flux:table.cell>
+                        <flux:table.cell>
+                            @if($upload->date_from->isSameDay($upload->date_to))
+                                {{ $upload->date_from->format('d.m.Y') }}
+                            @else
+                                {{ $upload->date_from->format('d.m.Y') }} - {{ $upload->date_to->format('d.m.Y') }}
+                            @endif
+                        </flux:table.cell>
                         <flux:table.cell>{{ $upload->uploadedBy->name }}</flux:table.cell>
                         <flux:table.cell class="flex gap-2">
                             @if($upload->invalid_count > 0)
