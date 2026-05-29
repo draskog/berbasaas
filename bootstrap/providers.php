@@ -1,7 +1,15 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use App\Providers\FortifyServiceProvider;
+use App\Providers\VoltServiceProvider;
+use Flux\FluxServiceProvider;
+use FluxPro\FluxProServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\FortifyServiceProvider::class,
-    App\Providers\VoltServiceProvider::class,
+    AppServiceProvider::class,
+    FortifyServiceProvider::class,
+    VoltServiceProvider::class,
+    FluxServiceProvider::class,
+    FluxProServiceProvider::class,
 ];
