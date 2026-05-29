@@ -4,7 +4,6 @@ use Livewire\Component;
 
 new class extends Component {
 }; ?>
-<flux:main>
     <section class="mt-10 space-y-6">
         <div class="relative mb-5">
             <flux:heading>{{ __('Delete account') }}</flux:heading>
@@ -19,4 +18,3 @@ new class extends Component {
 
         <livewire:pages::settings.delete-user-modal/>
     </section>
-</flux:main>

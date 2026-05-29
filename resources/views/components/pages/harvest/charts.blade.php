@@ -116,7 +116,9 @@ class extends Component {
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->selectedYear)
-            ->pluck('name', 'number')
+            ->with('harvester')
+            ->get()
+            ->pluck('harvester.name', 'number')
             ->all();
     }
 
