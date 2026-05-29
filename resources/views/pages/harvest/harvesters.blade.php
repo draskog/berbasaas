@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\HarvesterAssignment;
+use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 
 new class extends Component {

@@ -2,6 +2,7 @@
 
 use App\Models\HarvestPrice;
 use App\Models\Product;
+use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 
 new class extends Component {
