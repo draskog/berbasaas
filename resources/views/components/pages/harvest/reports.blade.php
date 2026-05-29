@@ -32,6 +32,18 @@ class extends Component
 
     public int $perPage = 25;
 
+    public string $dailySortBy = 'date';
+
+    public string $dailySortDirection = 'asc';
+
+    public string $harvesterSortBy = 'total_weight';
+
+    public string $harvesterSortDirection = 'desc';
+
+    public string $productSortBy = 'total_weight';
+
+    public string $productSortDirection = 'desc';
+
     #[Computed]
     public function availableYears()
     {
@@ -83,6 +95,39 @@ class extends Component
         $this->resetPage('prod');
     }
 
+    public function sortDaily(string $column): void
+    {
+        if ($this->dailySortBy === $column) {
+            $this->dailySortDirection = $this->dailySortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->dailySortBy = $column;
+            $this->dailySortDirection = 'asc';
+        }
+        $this->resetPage('daily');
+    }
+
+    public function sortHarvesters(string $column): void
+    {
+        if ($this->harvesterSortBy === $column) {
+            $this->harvesterSortDirection = $this->harvesterSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->harvesterSortBy = $column;
+            $this->harvesterSortDirection = 'asc';
+        }
+        $this->resetPage('harv');
+    }
+
+    public function sortProducts(string $column): void
+    {
+        if ($this->productSortBy === $column) {
+            $this->productSortDirection = $this->productSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->productSortBy = $column;
+            $this->productSortDirection = 'asc';
+        }
+        $this->resetPage('prod');
+    }
+
     private function baseQuery(): Builder
     {
         return HarvestRecord::where('company_id', auth()->user()->company_id)
@@ -123,7 +168,7 @@ class extends Component
         $query = $this->baseQuery()
             ->selectRaw('DATE(weighed_at) as date, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('date')
-            ->orderBy('date');
+            ->orderBy($this->dailySortBy, $this->dailySortDirection);
 
         if ($this->perPage === 0) {
             return $query->get()->map(fn ($row) => [
@@ -161,7 +206,7 @@ class extends Component
         $query = $this->baseQuery()
             ->selectRaw('harvester_number, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('harvester_number')
-            ->orderByDesc('total_weight');
+            ->orderBy($this->harvesterSortBy, $this->harvesterSortDirection);
 
         if ($this->perPage === 0) {
             return $query->get()->map(fn ($row) => [
@@ -204,7 +249,8 @@ class extends Component
         $query = $this->baseQuery()
             ->selectRaw('product_id, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('product_id')
-            ->with('product');
+            ->with('product')
+            ->orderBy($this->productSortBy, $this->productSortDirection);
 
         if ($this->perPage === 0) {
             return $query->get()->map(fn ($row) => [
@@ -318,9 +364,9 @@ class extends Component
             <flux:tab.panel name="daily">
                 <flux:table :paginate="$this->perPage > 0 ? $this->dailyData : null">
                     <flux:table.columns>
-                        <flux:table.column>Date</flux:table.column>
-                        <flux:table.column>Buckets</flux:table.column>
-                        <flux:table.column>Total kg</flux:table.column>
+                        <flux:table.column sortable :sorted="$dailySortBy === 'date'" :direction="$dailySortDirection" wire:click="sortDaily('date')">Date</flux:table.column>
+                        <flux:table.column sortable :sorted="$dailySortBy === 'bucket_count'" :direction="$dailySortDirection" wire:click="sortDaily('bucket_count')">Buckets</flux:table.column>
+                        <flux:table.column sortable :sorted="$dailySortBy === 'total_weight'" :direction="$dailySortDirection" wire:click="sortDaily('total_weight')">Total kg</flux:table.column>
                     </flux:table.columns>
 
                     <flux:table.rows>
@@ -351,10 +397,10 @@ class extends Component
             <flux:tab.panel name="harvesters">
                 <flux:table :paginate="$this->perPage > 0 ? $this->harvesterData : null">
                     <flux:table.columns>
-                        <flux:table.column>#</flux:table.column>
+                        <flux:table.column sortable :sorted="$harvesterSortBy === 'harvester_number'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('harvester_number')">#</flux:table.column>
                         <flux:table.column>Name</flux:table.column>
-                        <flux:table.column>Buckets</flux:table.column>
-                        <flux:table.column>Total kg</flux:table.column>
+                        <flux:table.column sortable :sorted="$harvesterSortBy === 'bucket_count'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('bucket_count')">Buckets</flux:table.column>
+                        <flux:table.column sortable :sorted="$harvesterSortBy === 'total_weight'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('total_weight')">Total kg</flux:table.column>
                         <flux:table.column>Earnings</flux:table.column>
                     </flux:table.columns>
 
@@ -396,9 +442,9 @@ class extends Component
                 <flux:table :paginate="$this->perPage > 0 ? $this->productData : null">
                     <flux:table.columns>
                         <flux:table.column>Product</flux:table.column>
-                        <flux:table.column>Total kg</flux:table.column>
+                        <flux:table.column sortable :sorted="$productSortBy === 'bucket_count'" :direction="$productSortDirection" wire:click="sortProducts('bucket_count')">Total kg</flux:table.column>
                         <flux:table.column>Price/kg</flux:table.column>
-                        <flux:table.column>Total Earnings</flux:table.column>
+                        <flux:table.column sortable :sorted="$productSortBy === 'total_weight'" :direction="$productSortDirection" wire:click="sortProducts('total_weight')">Total Earnings</flux:table.column>
                     </flux:table.columns>
 
                     <flux:table.rows>

@@ -21,6 +21,15 @@ class extends Component {
     public int $selectedHarvesterNumber = 0;
     public string $activeTab = 'daily';
 
+    public string $chartDailySortBy = 'date';
+    public string $chartDailySortDirection = 'asc';
+
+    public string $chartHarvesterSortBy = 'total_weight';
+    public string $chartHarvesterSortDirection = 'desc';
+
+    public string $chartProductSortBy = 'total_weight';
+    public string $chartProductSortDirection = 'desc';
+
     #[Computed]
     public function availableYears()
     {
@@ -64,6 +73,36 @@ class extends Component {
         }
     }
 
+    public function sortChartDaily(string $column): void
+    {
+        if ($this->chartDailySortBy === $column) {
+            $this->chartDailySortDirection = $this->chartDailySortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->chartDailySortBy = $column;
+            $this->chartDailySortDirection = 'asc';
+        }
+    }
+
+    public function sortChartHarvesters(string $column): void
+    {
+        if ($this->chartHarvesterSortBy === $column) {
+            $this->chartHarvesterSortDirection = $this->chartHarvesterSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->chartHarvesterSortBy = $column;
+            $this->chartHarvesterSortDirection = 'asc';
+        }
+    }
+
+    public function sortChartProducts(string $column): void
+    {
+        if ($this->chartProductSortBy === $column) {
+            $this->chartProductSortDirection = $this->chartProductSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->chartProductSortBy = $column;
+            $this->chartProductSortDirection = 'asc';
+        }
+    }
+
     private function baseQuery(): Builder
     {
         return HarvestRecord::where('company_id', auth()->user()->company_id)
@@ -87,7 +126,7 @@ class extends Component {
         return $this->baseQuery()
             ->selectRaw('DATE(weighed_at) as date, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('date')
-            ->orderBy('date')
+            ->orderBy($this->chartDailySortBy, $this->chartDailySortDirection)
             ->get()
             ->map(fn($row) => [
                 'date' => $row->date,
@@ -118,7 +157,7 @@ class extends Component {
         return $this->baseQuery()
             ->selectRaw('harvester_number, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('harvester_number')
-            ->orderByDesc('total_weight')
+            ->orderBy($this->chartHarvesterSortBy, $this->chartHarvesterSortDirection)
             ->get()
             ->map(fn($row) => [
                 'number' => $row->harvester_number,
@@ -154,7 +193,9 @@ class extends Component {
                 'name' => $row->product->name,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
-            ]);
+            ])
+            ->sortBy(fn($row) => $row[$this->chartProductSortBy], SORT_REGULAR, $this->chartProductSortDirection === 'desc')
+            ->values();
     }
 
     #[Computed]
@@ -379,9 +420,9 @@ class extends Component {
                 <flux:card>
                     <flux:table>
                         <flux:table.columns>
-                            <flux:table.column>Date</flux:table.column>
-                            <flux:table.column>Buckets</flux:table.column>
-                            <flux:table.column>Total kg</flux:table.column>
+                            <flux:table.column sortable :sorted="$chartDailySortBy === 'date'" :direction="$chartDailySortDirection" wire:click="sortChartDaily('date')">Date</flux:table.column>
+                            <flux:table.column sortable :sorted="$chartDailySortBy === 'bucket_count'" :direction="$chartDailySortDirection" wire:click="sortChartDaily('bucket_count')">Buckets</flux:table.column>
+                            <flux:table.column sortable :sorted="$chartDailySortBy === 'total_weight'" :direction="$chartDailySortDirection" wire:click="sortChartDaily('total_weight')">Total kg</flux:table.column>
                         </flux:table.columns>
 
                         <flux:table.rows>
@@ -414,10 +455,10 @@ class extends Component {
                 <flux:card>
                     <flux:table>
                         <flux:table.columns>
-                            <flux:table.column>#</flux:table.column>
+                            <flux:table.column sortable :sorted="$chartHarvesterSortBy === 'harvester_number'" :direction="$chartHarvesterSortDirection" wire:click="sortChartHarvesters('harvester_number')">#</flux:table.column>
                             <flux:table.column>Name</flux:table.column>
-                            <flux:table.column>Buckets</flux:table.column>
-                            <flux:table.column>Total kg</flux:table.column>
+                            <flux:table.column sortable :sorted="$chartHarvesterSortBy === 'bucket_count'" :direction="$chartHarvesterSortDirection" wire:click="sortChartHarvesters('bucket_count')">Buckets</flux:table.column>
+                            <flux:table.column sortable :sorted="$chartHarvesterSortBy === 'total_weight'" :direction="$chartHarvesterSortDirection" wire:click="sortChartHarvesters('total_weight')">Total kg</flux:table.column>
                         </flux:table.columns>
 
                         <flux:table.rows>
@@ -451,9 +492,9 @@ class extends Component {
                 <flux:card>
                     <flux:table>
                         <flux:table.columns>
-                            <flux:table.column>Product</flux:table.column>
-                            <flux:table.column>Buckets</flux:table.column>
-                            <flux:table.column>Total kg</flux:table.column>
+                            <flux:table.column sortable :sorted="$chartProductSortBy === 'name'" :direction="$chartProductSortDirection" wire:click="sortChartProducts('name')">Product</flux:table.column>
+                            <flux:table.column sortable :sorted="$chartProductSortBy === 'bucket_count'" :direction="$chartProductSortDirection" wire:click="sortChartProducts('bucket_count')">Buckets</flux:table.column>
+                            <flux:table.column sortable :sorted="$chartProductSortBy === 'total_weight'" :direction="$chartProductSortDirection" wire:click="sortChartProducts('total_weight')">Total kg</flux:table.column>
                         </flux:table.columns>
 
                         <flux:table.rows>

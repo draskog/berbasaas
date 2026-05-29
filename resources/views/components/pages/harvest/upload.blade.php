@@ -30,6 +30,10 @@ class extends Component
 
     public bool $showDeleteModal = false;
 
+    public string $sortBy = 'created_at';
+
+    public string $sortDirection = 'desc';
+
     #[Computed]
     public function products()
     {
@@ -45,7 +49,7 @@ class extends Component
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
             ->withCount('harvestRecords as valid_count')
             ->withCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')])
-            ->orderByDesc('created_at');
+            ->orderBy($this->sortBy, $this->sortDirection);
 
         if ($this->perPage === 0) {
             return $query->get();
@@ -65,6 +69,17 @@ class extends Component
 
     public function updatedPerPage(): void
     {
+        $this->resetPage();
+    }
+
+    public function sort(string $column): void
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $column;
+            $this->sortDirection = 'asc';
+        }
         $this->resetPage();
     }
 
@@ -150,10 +165,10 @@ class extends Component
 
         <flux:table :paginate="$this->perPage > 0 ? $this->recentUploads : null">
             <flux:table.columns>
-                <flux:table.column>Filename</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'original_filename'" :direction="$sortDirection" wire:click="sort('original_filename')">Filename</flux:table.column>
                 <flux:table.column>Product</flux:table.column>
                 <flux:table.column>Records</flux:table.column>
-                <flux:table.column>Date Range</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">Date Range</flux:table.column>
                 <flux:table.column>Uploaded By</flux:table.column>
                 <flux:table.column>Actions</flux:table.column>
             </flux:table.columns>

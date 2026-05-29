@@ -25,6 +25,10 @@ class extends Component
 
     public array $corrections = [];
 
+    public string $sortBy = 'weighed_at';
+
+    public string $sortDirection = 'asc';
+
     #[Computed]
     public function year(): int
     {
@@ -36,7 +40,7 @@ class extends Component
     {
         $query = HarvestRecordStaging::where('upload_id', $this->upload->id)
             ->where('status', 'invalid')
-            ->orderBy('weighed_at');
+            ->orderBy($this->sortBy, $this->sortDirection);
 
         if ($this->perPage === 0) {
             return $query->get();
@@ -60,6 +64,17 @@ class extends Component
 
     public function updatedPerPage(): void
     {
+        $this->resetPage();
+    }
+
+    public function sort(string $column): void
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $column;
+            $this->sortDirection = 'asc';
+        }
         $this->resetPage();
     }
 
@@ -133,8 +148,8 @@ class extends Component
 
             <flux:table :paginate="$this->perPage > 0 ? $this->invalidRecords : null">
                 <flux:table.columns>
-                    <flux:table.column>Date / Time</flux:table.column>
-                    <flux:table.column>Weight (kg)</flux:table.column>
+                    <flux:table.column sortable :sorted="$sortBy === 'weighed_at'" :direction="$sortDirection" wire:click="sort('weighed_at')">Date / Time</flux:table.column>
+                    <flux:table.column sortable :sorted="$sortBy === 'weight'" :direction="$sortDirection" wire:click="sort('weight')">Weight (kg)</flux:table.column>
                     <flux:table.column>Original #</flux:table.column>
                     <flux:table.column>Reason</flux:table.column>
                     <flux:table.column>Corrected #</flux:table.column>

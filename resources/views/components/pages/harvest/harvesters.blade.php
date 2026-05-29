@@ -30,6 +30,10 @@ class extends Component
 
     public bool $showDeleteModal = false;
 
+    public string $sortBy = 'number';
+
+    public string $sortDirection = 'asc';
+
     #[Computed]
     public function availableYears()
     {
@@ -46,7 +50,7 @@ class extends Component
     {
         return Harvester::where('company_id', auth()->user()->company_id)
             ->where('active', true)
-            ->orderBy('number')
+            ->orderBy('name')
             ->get();
     }
 
@@ -56,7 +60,7 @@ class extends Component
         $query = HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->selectedYear)
             ->with('harvester')
-            ->orderBy('number');
+            ->orderBy($this->sortBy, $this->sortDirection);
 
         if ($this->perPage === 0) {
             return $query->get();
@@ -74,6 +78,17 @@ class extends Component
 
     public function updatedPerPage(): void
     {
+        $this->resetPage();
+    }
+
+    public function sort(string $column): void
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $column;
+            $this->sortDirection = 'asc';
+        }
         $this->resetPage();
     }
 
@@ -151,9 +166,9 @@ class extends Component
 
         <flux:table :paginate="$this->perPage > 0 ? $this->allAssignments : null">
             <flux:table.columns>
-                <flux:table.column>Number</flux:table.column>
-                <flux:table.column>Name</flux:table.column>
-                <flux:table.column>Prefix</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'number'" :direction="$sortDirection" wire:click="sort('number')">Number</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">Name</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'prefix'" :direction="$sortDirection" wire:click="sort('prefix')">Prefix</flux:table.column>
                 <flux:table.column>Actions</flux:table.column>
             </flux:table.columns>
 

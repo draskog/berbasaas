@@ -17,6 +17,9 @@ class extends Component {
     public int $selectedYear;
     public int $selectedHarvesterNumber = 0;
 
+    public string $sortBy = 'date';
+    public string $sortDirection = 'asc';
+
     #[Computed]
     public function availableYears()
     {
@@ -46,6 +49,16 @@ class extends Component {
         $firstNumber = $this->harvesterNumbers->first();
         if ($firstNumber) {
             $this->selectedHarvesterNumber = $firstNumber;
+        }
+    }
+
+    public function sort(string $column): void
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $column;
+            $this->sortDirection = 'asc';
         }
     }
 
@@ -112,7 +125,10 @@ class extends Component {
             ];
         }
 
-        return $data;
+        return collect($data)
+            ->sortBy(fn($row) => $row[$this->sortBy], SORT_REGULAR, $this->sortDirection === 'desc')
+            ->values()
+            ->all();
     }
 
     #[Computed]
@@ -195,11 +211,11 @@ class extends Component {
                     <div class="mb-8">
                         <flux:table>
                             <flux:table.columns>
-                                <flux:table.column>Date</flux:table.column>
-                                <flux:table.column>Buckets</flux:table.column>
-                                <flux:table.column>Total kg</flux:table.column>
-                                <flux:table.column>Price/kg</flux:table.column>
-                                <flux:table.column>Earnings</flux:table.column>
+                                <flux:table.column sortable :sorted="$sortBy === 'date'" :direction="$sortDirection" wire:click="sort('date')">Date</flux:table.column>
+                                <flux:table.column sortable :sorted="$sortBy === 'bucket_count'" :direction="$sortDirection" wire:click="sort('bucket_count')">Buckets</flux:table.column>
+                                <flux:table.column sortable :sorted="$sortBy === 'total_weight'" :direction="$sortDirection" wire:click="sort('total_weight')">Total kg</flux:table.column>
+                                <flux:table.column sortable :sorted="$sortBy === 'price_per_kg'" :direction="$sortDirection" wire:click="sort('price_per_kg')">Price/kg</flux:table.column>
+                                <flux:table.column sortable :sorted="$sortBy === 'earnings'" :direction="$sortDirection" wire:click="sort('earnings')">Earnings</flux:table.column>
                             </flux:table.columns>
 
                             <flux:table.rows>
