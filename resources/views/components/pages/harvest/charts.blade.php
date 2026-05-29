@@ -70,6 +70,96 @@ class extends Component {
     }
 
     #[Computed]
+    public function dailyData()
+    {
+        return $this->baseQuery()
+            ->selectRaw('DATE(weighed_at) as date, COUNT(*) as bucket_count, SUM(weight) as total_weight')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->map(fn($row) => [
+                'date' => $row->date,
+                'bucket_count' => $row->bucket_count,
+                'total_weight' => round($row->total_weight, 3),
+            ]);
+    }
+
+    #[Computed]
+    public function dailyTotals()
+    {
+        $data = $this->dailyData;
+        if ($data->isEmpty()) {
+            return ['buckets' => 0, 'weight' => 0];
+        }
+
+        return [
+            'buckets' => $data->sum('bucket_count'),
+            'weight' => round($data->sum('total_weight'), 3),
+        ];
+    }
+
+    #[Computed]
+    public function harvesterData()
+    {
+        $names = $this->harvesterNames();
+
+        return $this->baseQuery()
+            ->selectRaw('harvester_number, COUNT(*) as bucket_count, SUM(weight) as total_weight')
+            ->groupBy('harvester_number')
+            ->orderByDesc('total_weight')
+            ->get()
+            ->map(fn($row) => [
+                'number' => $row->harvester_number,
+                'name' => $names[$row->harvester_number] ?? "#{$row->harvester_number}",
+                'bucket_count' => $row->bucket_count,
+                'total_weight' => round($row->total_weight, 3),
+            ]);
+    }
+
+    #[Computed]
+    public function harvesterTotals()
+    {
+        $data = $this->harvesterData;
+        if ($data->isEmpty()) {
+            return ['buckets' => 0, 'weight' => 0];
+        }
+
+        return [
+            'buckets' => $data->sum('bucket_count'),
+            'weight' => round($data->sum('total_weight'), 3),
+        ];
+    }
+
+    #[Computed]
+    public function productData()
+    {
+        return $this->baseQuery()
+            ->selectRaw('product_id, COUNT(*) as bucket_count, SUM(weight) as total_weight')
+            ->groupBy('product_id')
+            ->with('product')
+            ->get()
+            ->map(fn($row) => [
+                'name' => $row->product->name,
+                'bucket_count' => $row->bucket_count,
+                'total_weight' => round($row->total_weight, 3),
+            ]);
+    }
+
+    #[Computed]
+    public function productTotals()
+    {
+        $data = $this->productData;
+        if ($data->isEmpty()) {
+            return ['buckets' => 0, 'weight' => 0];
+        }
+
+        return [
+            'buckets' => $data->sum('bucket_count'),
+            'weight' => round($data->sum('total_weight'), 3),
+        ];
+    }
+
+    #[Computed]
     public function dailyKgChartData()
     {
         $data = $this->baseQuery()
