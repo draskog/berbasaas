@@ -6,8 +6,13 @@ use App\Services\HarvestImportService;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
-new class extends Component {
+new
+#[Layout('layouts.app')]
+#[Title('Upload · eBorovnica')]
+class extends Component {
     use WithFileUploads;
 
     public int $selectedProductId = 0;
