@@ -6,6 +6,8 @@ Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
 
     Route::livewire('settings/profile', 'pages::settings.profile')->name('profile.edit');
+    Route::livewire('settings/company', 'pages::settings.company')->name('company.edit');
+    Route::livewire('settings/harvest', 'pages::settings.harvest')->name('harvest.edit');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
