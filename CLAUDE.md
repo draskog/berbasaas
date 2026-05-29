@@ -173,6 +173,20 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - IMPORTANT: Always use `search-docs` tool for version-specific Volt documentation and updated code examples.
 - IMPORTANT: Activate `volt-development` every time you're working with a Volt or single-file component-related task.
 
+=== blaze/core rules ===
+
+# Livewire Blaze
+
+- Livewire Blaze (https://github.com/livewire/blaze) is a performance optimization package for Blade component rendering.
+- Use Blaze when the application has many anonymous Blade components (especially from Flux UI) that need faster rendering.
+- Blaze offers three optimization strategies:
+  1. **Function Compiler** (default) - 91-97% performance improvement with minimal configuration
+  2. **Runtime Memoization** - Caches repeated components with identical props (icons, avatars, buttons)
+  3. **Compile-Time Folding** - Most aggressive; pre-renders components to static HTML at compile time
+- Enable via `@blaze` directive on individual components or through service provider configuration.
+- Drop-in replacement - no code changes needed to enable.
+- Particularly beneficial for component-heavy UIs like this application's Flux-based pages.
+
 === pint/core rules ===
 
 # Laravel Pint Code Formatter
