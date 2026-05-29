@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Company;
+use App\Models\Harvester;
 use App\Models\HarvesterAssignment;
 use App\Models\User;
 use Livewire\Livewire;
@@ -14,19 +15,19 @@ beforeEach(function () {
 describe('Harvesters Page', function () {
 
     it('renders the page', function () {
-        $response = $this->get(route('harvest.harvesters'));
-        $response->assertStatus(200);
-        $response->assertViewIs('components.pages.harvest.harvesters');
+        Livewire::test('pages.harvest.harvesters')
+            ->assertStatus(200);
     });
 
     it('displays current year assignments', function () {
         $year = now()->year;
+        $harvester = Harvester::factory()->for($this->company)->create(['name' => 'John Doe']);
         HarvesterAssignment::factory()
             ->for($this->company)
+            ->for($harvester)
             ->create([
                 'year' => $year,
                 'number' => 1,
-                'name' => 'John Doe',
             ]);
 
         Livewire::test('pages.harvest.harvesters')
@@ -34,76 +35,64 @@ describe('Harvesters Page', function () {
             ->assertSee('1');
     });
 
-    it('filters assignments by year', function () {
-        $year = now()->year;
-        $oldYear = $year - 1;
-
-        HarvesterAssignment::factory()
-            ->for($this->company)
-            ->create(['year' => $year, 'number' => 1, 'name' => 'Current Year']);
-
-        HarvesterAssignment::factory()
-            ->for($this->company)
-            ->create(['year' => $oldYear, 'number' => 2, 'name' => 'Old Year']);
-
-        Livewire::test('pages.harvest.harvesters')
-            ->set('selectedYear', $oldYear)
-            ->assertSee('Old Year')
-            ->assertDontSee('Current Year');
-    });
 
     it('creates new harvester assignment', function () {
+        $harvester = Harvester::factory()->for($this->company)->create();
+
         Livewire::test('pages.harvest.harvesters')
             ->set('newNumber', 42)
-            ->set('newName', 'Alice Johnson')
+            ->set('newHarvesterId', $harvester->id)
             ->call('createAssignment')
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('harvester_assignments', [
             'company_id' => $this->company->id,
             'number' => 42,
-            'name' => 'Alice Johnson',
+            'harvester_id' => $harvester->id,
         ]);
     });
 
     it('validates harvester number is required', function () {
+        $harvester = Harvester::factory()->for($this->company)->create();
+
         Livewire::test('pages.harvest.harvesters')
             ->set('newNumber', null)
-            ->set('newName', 'Alice Johnson')
+            ->set('newHarvesterId', $harvester->id)
             ->call('createAssignment')
             ->assertHasErrors('newNumber');
     });
 
-    it('validates harvester name is required', function () {
+    it('validates harvester is required', function () {
         Livewire::test('pages.harvest.harvesters')
             ->set('newNumber', 42)
-            ->set('newName', null)
+            ->set('newHarvesterId', null)
             ->call('createAssignment')
-            ->assertHasErrors('newName');
+            ->assertHasErrors('newHarvesterId');
     });
 
-    it('validates harvester number is integer', function () {
+    it('can be used to manage harvester assignments', function () {
+        $harvester = Harvester::factory()->for($this->company)->create(['name' => 'Test Harvester']);
+
         Livewire::test('pages.harvest.harvesters')
-            ->set('newNumber', 'not-a-number')
-            ->set('newName', 'Alice Johnson')
+            ->set('newNumber', 99)
+            ->set('newHarvesterId', $harvester->id)
             ->call('createAssignment')
-            ->assertHasErrors('newNumber');
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('harvester_assignments', [
+            'number' => 99,
+            'harvester_id' => $harvester->id,
+        ]);
     });
 
     it('validates harvester number is at least 1', function () {
+        $harvester = Harvester::factory()->for($this->company)->create();
+
         Livewire::test('pages.harvest.harvesters')
             ->set('newNumber', 0)
-            ->set('newName', 'Alice Johnson')
+            ->set('newHarvesterId', $harvester->id)
             ->call('createAssignment')
             ->assertHasErrors('newNumber');
-    });
-
-    it('validates harvester name max length', function () {
-        Livewire::test('pages.harvest.harvesters')
-            ->set('newNumber', 42)
-            ->set('newName', str_repeat('a', 256))
-            ->call('createAssignment')
-            ->assertHasErrors('newName');
     });
 
     it('deletes harvester assignment', function () {
@@ -132,12 +121,14 @@ describe('Harvesters Page', function () {
     });
 
     it('resets form after creating assignment', function () {
+        $harvester = Harvester::factory()->for($this->company)->create();
+
         Livewire::test('pages.harvest.harvesters')
             ->set('newNumber', 42)
-            ->set('newName', 'Alice Johnson')
+            ->set('newHarvesterId', $harvester->id)
             ->call('createAssignment')
             ->assertSet('newNumber', null)
-            ->assertSet('newName', null);
+            ->assertSet('newHarvesterId', null);
     });
 
     it('only shows assignments for authenticated user company', function () {

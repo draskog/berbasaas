@@ -1,26 +1,33 @@
 <?php
 
-use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
 use App\Models\Product;
 use App\Services\HarvestImportService;
+use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Flux\Flux;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 new
 #[Layout('layouts.app')]
 #[Title('Upload · eBorovnica')]
-class extends Component {
-    use WithFileUploads;
+class extends Component
+{
+    use WithFileUploads, WithPagination;
 
     public int $selectedProductId = 0;
+
+    public int $perPage = 25;
+
     public $uploadedFile;
+
     public array $uploads = [];
+
     public ?int $deletingUploadId = null;
+
     public bool $showDeleteModal = false;
 
     #[Computed]
@@ -35,25 +42,30 @@ class extends Component {
     #[Computed]
     public function recentUploads()
     {
-        return HarvestUpload::where('company_id', auth()->user()->company_id)
-            ->orderByDesc('created_at')
-            ->limit(20)
-            ->get();
-    }
+        $query = HarvestUpload::where('company_id', auth()->user()->company_id)
+            ->withCount('harvestRecords as valid_count')
+            ->withCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')])
+            ->orderByDesc('created_at');
 
-    public function getInvalidCount(HarvestUpload $upload): int
-    {
-        return HarvestRecordStaging::where('upload_id', $upload->id)
-            ->where('status', 'invalid')
-            ->count();
+        if ($this->perPage === 0) {
+            return $query->get();
+        }
+
+        return $query->paginate($this->perPage);
     }
 
     public function mount(): void
     {
+        $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
         $product = $this->products->first();
         if ($product) {
             $this->selectedProductId = $product->id;
         }
+    }
+
+    public function updatedPerPage(): void
+    {
+        $this->resetPage();
     }
 
     public function uploadFile(): void
@@ -63,7 +75,7 @@ class extends Component {
             'uploadedFile' => 'required|file|mimes:csv|max:10240',
         ]);
 
-        $service = new HarvestImportService();
+        $service = new HarvestImportService;
         $upload = $service->parse(
             $this->uploadedFile,
             auth()->user()->company_id,
@@ -126,8 +138,17 @@ class extends Component {
             </div>
         </flux:card>
 
-        <flux:heading size="lg" class="mb-4">Recent Uploads</flux:heading>
-        <flux:table>
+        <div class="flex items-center justify-between mb-4">
+            <flux:heading size="lg">Recent Uploads</flux:heading>
+            <flux:select wire:model.live="perPage" size="sm" class="w-28">
+                <flux:select.option value="25">25</flux:select.option>
+                <flux:select.option value="50">50</flux:select.option>
+                <flux:select.option value="100">100</flux:select.option>
+                <flux:select.option value="0">All</flux:select.option>
+            </flux:select>
+        </div>
+
+        <flux:table :paginate="$this->perPage > 0 ? $this->recentUploads : null">
             <flux:table.columns>
                 <flux:table.column>Filename</flux:table.column>
                 <flux:table.column>Product</flux:table.column>
@@ -142,20 +163,16 @@ class extends Component {
                     <flux:table.row>
                         <flux:table.cell>{{ $upload->original_filename }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->product->name }}</flux:table.cell>
-                        <flux:table.cell>{{ $upload->record_count }}</flux:table.cell>
+                        <flux:table.cell>{{ $upload->valid_count }} / {{ $upload->record_count }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->date_from->format('d.m.Y') }} - {{ $upload->date_to->format('d.m.Y') }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->uploadedBy->name }}</flux:table.cell>
                         <flux:table.cell class="flex gap-2">
-                            @php
-                                $invalidCount = $this->getInvalidCount($upload);
-                            @endphp
-
-                            @if($invalidCount > 0)
+                            @if($upload->invalid_count > 0)
                                 <a href="{{ route('harvest.upload.review', $upload) }}" wire:navigate>
-                                    <flux:badge variant="warning">{{ $invalidCount }} invalid</flux:badge>
+                                    <flux:badge variant="warning">{{ $upload->invalid_count }} invalid</flux:badge>
                                 </a>
                             @else
-                                <flux:badge variant="success">✓ Valid</flux:badge>
+                                <flux:badge variant="success">All Valid</flux:badge>
                             @endif
 
                             <flux:button variant="danger" size="sm" wire:click="confirmDeleteUpload({{ $upload->id }})">Delete</flux:button>

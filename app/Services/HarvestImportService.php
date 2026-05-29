@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\HarvesterAssignment;
+use App\Models\HarvestImportSettings;
 use App\Models\HarvestRecord;
 use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
@@ -95,6 +96,9 @@ class HarvestImportService
             'date_to' => $dateTo,
         ]);
 
+        // Load import settings for validation
+        $settings = HarvestImportSettings::where('company_id', $companyId)->first();
+
         // Process records: validate and stage
         $validRecords = [];
         $stagingRecords = [];
@@ -102,20 +106,38 @@ class HarvestImportService
         foreach ($records as $record) {
             $record['upload_id'] = $upload->id;
             $weighedAt = $record['weighed_at'];
+            $tare = $record['tare'];
             $harvesterNumber = $record['harvester_number'];
 
-            // Check if harvester exists for the year of weighed_at
-            $harvesterExists = HarvesterAssignment::where('company_id', $companyId)
-                ->where('year', $weighedAt->year)
-                ->where('number', $harvesterNumber)
-                ->exists();
+            $reason = null;
 
-            if ($harvesterExists) {
+            // Check tare range first
+            if ($settings) {
+                if ($settings->tare_min !== null && $tare < $settings->tare_min) {
+                    $reason = 'tare_out_of_range';
+                } elseif ($settings->tare_max !== null && $tare > $settings->tare_max) {
+                    $reason = 'tare_out_of_range';
+                }
+            }
+
+            // Check if harvester exists for the year of weighed_at
+            if ($reason === null) {
+                $harvesterExists = HarvesterAssignment::where('company_id', $companyId)
+                    ->where('year', $weighedAt->year)
+                    ->where('number', $harvesterNumber)
+                    ->exists();
+
+                if (! $harvesterExists) {
+                    $reason = 'harvester_not_found';
+                }
+            }
+
+            if ($reason === null) {
                 // Valid: prepare for direct insert to harvest_records
                 $validRecords[] = $record;
             } else {
                 // Invalid: stage for user review
-                $stagingRecord = $record + ['status' => 'invalid'];
+                $stagingRecord = $record + ['status' => 'invalid', 'validation_reason' => $reason];
                 $stagingRecords[] = $stagingRecord;
             }
         }

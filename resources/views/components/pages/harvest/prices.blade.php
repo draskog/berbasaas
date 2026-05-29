@@ -2,24 +2,36 @@
 
 use App\Models\HarvestPrice;
 use App\Models\Product;
+use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
-use Flux\Flux;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 new
 #[Layout('layouts.app.sidebar')]
 #[Title('Prices · eBorovnica')]
 class extends Component {
+    use WithPagination;
+
     public int $selectedProductId;
+
+    public int $perPage = 25;
+
     public array $prices = [];
+
     public ?int $newProductId = null;
+
     public ?string $newPricePerKg = null;
+
     public ?string $newEffectiveFrom = null;
+
     public ?string $newEffectiveTo = null;
+
     public ?int $deletingPriceId = null;
+
     public bool $showDeleteModal = false;
 
     #[Computed]
@@ -34,28 +46,39 @@ class extends Component {
     #[Computed]
     public function pricesForProduct()
     {
-        if (!$this->selectedProductId) {
+        if (! $this->selectedProductId) {
             return [];
         }
 
-        return HarvestPrice::where('company_id', auth()->user()->company_id)
+        $query = HarvestPrice::where('company_id', auth()->user()->company_id)
             ->where('product_id', $this->selectedProductId)
-            ->orderByDesc('effective_from')
-            ->get();
+            ->orderByDesc('effective_from');
+
+        if ($this->perPage === 0) {
+            return $query->get();
+        }
+
+        return $query->paginate($this->perPage);
     }
 
     public function mount(): void
     {
+        $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
         $product = $this->products->first();
         if ($product) {
             $this->selectedProductId = $product->id;
         }
     }
 
+    public function updatedPerPage(): void
+    {
+        $this->resetPage();
+    }
+
     #[On('updated-selectedProductId')]
     public function updatePrices(): void
     {
-        // Prices will update via computed property
+        $this->resetPage();
     }
 
     public function createPrice(): void
@@ -106,7 +129,7 @@ class extends Component {
     <div class="p-6">
         <flux:field>
             <flux:label>Product</flux:label>
-            <flux:select wire:model="selectedProductId">
+            <flux:select wire:model.live="selectedProductId">
                 <flux:select.option value="">Select a product...</flux:select.option>
                 @foreach($this->products as $product)
                     <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
@@ -115,7 +138,16 @@ class extends Component {
         </flux:field>
 
         @if($this->selectedProductId)
-            <flux:table>
+            <div class="flex justify-end mb-4 mt-6">
+                <flux:select wire:model.live="perPage" size="sm" class="w-28">
+                    <flux:select.option value="25">25</flux:select.option>
+                    <flux:select.option value="50">50</flux:select.option>
+                    <flux:select.option value="100">100</flux:select.option>
+                    <flux:select.option value="0">All</flux:select.option>
+                </flux:select>
+            </div>
+
+            <flux:table :paginate="$this->perPage > 0 ? $this->pricesForProduct : null">
                 <flux:table.columns>
                     <flux:table.column>Price (per kg)</flux:table.column>
                     <flux:table.column>Effective From</flux:table.column>

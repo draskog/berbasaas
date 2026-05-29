@@ -120,7 +120,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Start services using `sail up -d` and stop them with `sail stop`.
 - Open the application in the browser by running `sail open`.
 - Always prefix PHP, Artisan, Composer, and Node commands with `sail`. Examples:
-    - Run Artisan Commands: `pa migrate`
+    - Run Artisan Commands: `php artisan migrate`
     - Install Composer packages: `sail composer install`
     - Execute Node commands: `sail npm run dev`
     - Execute PHP scripts: `sail php [script]`

@@ -37,4 +37,9 @@ class HarvestUpload extends Model
     {
         return $this->hasMany(HarvestRecord::class, 'upload_id');
     }
+
+    public function stagingRecords(): HasMany
+    {
+        return $this->hasMany(HarvestRecordStaging::class, 'upload_id');
+    }
 }

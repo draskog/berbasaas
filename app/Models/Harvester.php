@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['company_id', 'name', 'active'])]
+#[Fillable(['company_id', 'name', 'prefix', 'active'])]
 class Harvester extends Model
 {
     use HasFactory;

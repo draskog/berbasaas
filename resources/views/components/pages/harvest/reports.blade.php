@@ -1,25 +1,36 @@
 <?php
 
-use App\Models\HarvestRecord;
 use App\Models\HarvesterAssignment;
 use App\Models\HarvestPrice;
+use App\Models\HarvestRecord;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 new
 #[Layout('layouts.app')]
 #[Title('Reports · eBorovnica')]
-class extends Component {
+class extends Component
+{
+    use WithPagination;
+
     public int $selectedYear;
+
     public ?string $fromDate = null;
+
     public ?string $toDate = null;
+
     public int $selectedProductId = 0;
+
     public int $selectedHarvesterNumber = 0;
+
     public string $activeTab = 'daily';
+
+    public int $perPage = 25;
 
     #[Computed]
     public function availableYears()
@@ -54,6 +65,7 @@ class extends Component {
 
     public function mount(): void
     {
+        $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
         $years = $this->availableYears;
         $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
         $this->fromDate = now()->startOfYear()->format('Y-m-d');
@@ -64,25 +76,32 @@ class extends Component {
         }
     }
 
+    public function updatedPerPage(): void
+    {
+        $this->resetPage('daily');
+        $this->resetPage('harv');
+        $this->resetPage('prod');
+    }
+
     private function baseQuery(): Builder
     {
         return HarvestRecord::where('company_id', auth()->user()->company_id)
-            ->when($this->fromDate, fn($q) => $q->whereDate('weighed_at', '>=', $this->fromDate))
-            ->when($this->toDate, fn($q) => $q->whereDate('weighed_at', '<=', $this->toDate))
-            ->when($this->selectedProductId, fn($q) => $q->where('product_id', $this->selectedProductId))
-            ->when($this->selectedHarvesterNumber, fn($q) => $q->where('harvester_number', $this->selectedHarvesterNumber));
+            ->when($this->fromDate, fn ($q) => $q->whereDate('weighed_at', '>=', $this->fromDate))
+            ->when($this->toDate, fn ($q) => $q->whereDate('weighed_at', '<=', $this->toDate))
+            ->when($this->selectedProductId, fn ($q) => $q->where('product_id', $this->selectedProductId))
+            ->when($this->selectedHarvesterNumber, fn ($q) => $q->where('harvester_number', $this->selectedHarvesterNumber));
     }
 
     private function priceAt(?string $date): ?float
     {
-        if (!$this->selectedProductId || !$date) {
+        if (! $this->selectedProductId || ! $date) {
             return null;
         }
 
         return HarvestPrice::where('company_id', auth()->user()->company_id)
             ->where('product_id', $this->selectedProductId)
             ->where('effective_from', '<=', $date)
-            ->where(fn($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $date))
+            ->where(fn ($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $date))
             ->value('price_per_kg');
     }
 
@@ -90,36 +109,47 @@ class extends Component {
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->selectedYear)
-            ->pluck('name', 'number')
+            ->with('harvester')
+            ->get()
+            ->mapWithKeys(fn ($assignment) => [
+                $assignment->number => $assignment->harvester?->name ?? "#{$assignment->number}",
+            ])
             ->all();
     }
 
     #[Computed]
     public function dailyData()
     {
-        return $this->baseQuery()
+        $query = $this->baseQuery()
             ->selectRaw('DATE(weighed_at) as date, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('date')
-            ->orderBy('date')
-            ->get()
-            ->map(fn($row) => [
+            ->orderBy('date');
+
+        if ($this->perPage === 0) {
+            return $query->get()->map(fn ($row) => [
                 'date' => $row->date,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
             ]);
+        }
+
+        return $query->paginate($this->perPage, pageName: 'daily')->map(fn ($row) => [
+            'date' => $row->date,
+            'bucket_count' => $row->bucket_count,
+            'total_weight' => round($row->total_weight, 3),
+        ]);
     }
 
     #[Computed]
     public function dailyTotals()
     {
-        $data = $this->dailyData;
-        if ($data->isEmpty()) {
-            return ['buckets' => 0, 'weight' => 0];
-        }
+        $data = $this->baseQuery()
+            ->selectRaw('COUNT(*) as bucket_count, SUM(weight) as total_weight')
+            ->get();
 
         return [
-            'buckets' => $data->sum('bucket_count'),
-            'weight' => round($data->sum('total_weight'), 3),
+            'buckets' => $data[0]?->bucket_count ?? 0,
+            'weight' => round($data[0]?->total_weight ?? 0, 3),
         ];
     }
 
@@ -128,33 +158,42 @@ class extends Component {
     {
         $names = $this->harvesterNames();
         $price = $this->priceAt($this->fromDate);
-
-        return $this->baseQuery()
+        $query = $this->baseQuery()
             ->selectRaw('harvester_number, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('harvester_number')
-            ->orderByDesc('total_weight')
-            ->get()
-            ->map(fn($row) => [
+            ->orderByDesc('total_weight');
+
+        if ($this->perPage === 0) {
+            return $query->get()->map(fn ($row) => [
                 'number' => $row->harvester_number,
                 'name' => $names[$row->harvester_number] ?? "#{$row->harvester_number}",
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
                 'earnings' => $price ? round($row->total_weight * $price, 2) : null,
             ]);
+        }
+
+        return $query->paginate($this->perPage, pageName: 'harv')->map(fn ($row) => [
+            'number' => $row->harvester_number,
+            'name' => $names[$row->harvester_number] ?? "#{$row->harvester_number}",
+            'bucket_count' => $row->bucket_count,
+            'total_weight' => round($row->total_weight, 3),
+            'earnings' => $price ? round($row->total_weight * $price, 2) : null,
+        ]);
     }
 
     #[Computed]
     public function harvesterTotals()
     {
-        $data = $this->harvesterData;
-        if ($data->isEmpty()) {
-            return ['buckets' => 0, 'weight' => 0, 'earnings' => 0];
-        }
+        $data = $this->baseQuery()
+            ->selectRaw('COUNT(*) as bucket_count, SUM(weight) as total_weight')
+            ->get();
+        $price = $this->priceAt($this->fromDate);
 
         return [
-            'buckets' => $data->sum('bucket_count'),
-            'weight' => round($data->sum('total_weight'), 3),
-            'earnings' => round($data->sum('earnings') ?? 0, 2),
+            'buckets' => $data[0]?->bucket_count ?? 0,
+            'weight' => round($data[0]?->total_weight ?? 0, 3),
+            'earnings' => $price ? round(($data[0]?->total_weight ?? 0) * $price, 2) : 0,
         ];
     }
 
@@ -162,33 +201,42 @@ class extends Component {
     public function productData()
     {
         $price = $this->priceAt($this->fromDate);
-
-        return $this->baseQuery()
+        $query = $this->baseQuery()
             ->selectRaw('product_id, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('product_id')
-            ->with('product')
-            ->get()
-            ->map(fn($row) => [
+            ->with('product');
+
+        if ($this->perPage === 0) {
+            return $query->get()->map(fn ($row) => [
                 'name' => $row->product->name,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
                 'price_per_kg' => $price,
                 'earnings' => $price ? round($row->total_weight * $price, 2) : null,
             ]);
+        }
+
+        return $query->paginate($this->perPage, pageName: 'prod')->map(fn ($row) => [
+            'name' => $row->product->name,
+            'bucket_count' => $row->bucket_count,
+            'total_weight' => round($row->total_weight, 3),
+            'price_per_kg' => $price,
+            'earnings' => $price ? round($row->total_weight * $price, 2) : null,
+        ]);
     }
 
     #[Computed]
     public function productTotals()
     {
-        $data = $this->productData;
-        if ($data->isEmpty()) {
-            return ['buckets' => 0, 'weight' => 0, 'earnings' => 0];
-        }
+        $data = $this->baseQuery()
+            ->selectRaw('COUNT(*) as bucket_count, SUM(weight) as total_weight')
+            ->get();
+        $price = $this->priceAt($this->fromDate);
 
         return [
-            'buckets' => $data->sum('bucket_count'),
-            'weight' => round($data->sum('total_weight'), 3),
-            'earnings' => round($data->sum('earnings') ?? 0, 2),
+            'buckets' => $data[0]?->bucket_count ?? 0,
+            'weight' => round($data[0]?->total_weight ?? 0, 3),
+            'earnings' => $price ? round(($data[0]?->total_weight ?? 0) * $price, 2) : 0,
         ];
     }
 }; ?>
@@ -245,6 +293,17 @@ class extends Component {
                             @endforeach
                         </flux:select>
                     </flux:field>
+
+                    <!-- Records Per Page -->
+                    <flux:field>
+                        <flux:label>Records Per Page</flux:label>
+                        <flux:select wire:model.live="perPage">
+                            <flux:select.option value="25">25</flux:select.option>
+                            <flux:select.option value="50">50</flux:select.option>
+                            <flux:select.option value="100">100</flux:select.option>
+                            <flux:select.option value="0">All</flux:select.option>
+                        </flux:select>
+                    </flux:field>
                 </div>
             </flux:card>
 
@@ -257,7 +316,7 @@ class extends Component {
 
             <!-- Daily Summary Tab -->
             <flux:tab.panel name="daily">
-                <flux:table>
+                <flux:table :paginate="$this->perPage > 0 ? $this->dailyData : null">
                     <flux:table.columns>
                         <flux:table.column>Date</flux:table.column>
                         <flux:table.column>Buckets</flux:table.column>
@@ -290,7 +349,7 @@ class extends Component {
 
             <!-- Harvester Totals Tab -->
             <flux:tab.panel name="harvesters">
-                <flux:table>
+                <flux:table :paginate="$this->perPage > 0 ? $this->harvesterData : null">
                     <flux:table.columns>
                         <flux:table.column>#</flux:table.column>
                         <flux:table.column>Name</flux:table.column>
@@ -334,7 +393,7 @@ class extends Component {
 
             <!-- Product Totals Tab -->
             <flux:tab.panel name="products">
-                <flux:table>
+                <flux:table :paginate="$this->perPage > 0 ? $this->productData : null">
                     <flux:table.columns>
                         <flux:table.column>Product</flux:table.column>
                         <flux:table.column>Total kg</flux:table.column>

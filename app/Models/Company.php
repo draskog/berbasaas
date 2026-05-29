@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable(['name', 'address', 'tax_number', 'phone', 'email'])]
 class Company extends Model
@@ -45,5 +46,10 @@ class Company extends Model
     public function harvestPrices(): HasMany
     {
         return $this->hasMany(HarvestPrice::class);
+    }
+
+    public function importSettings(): HasOne
+    {
+        return $this->hasOne(HarvestImportSettings::class);
     }
 }

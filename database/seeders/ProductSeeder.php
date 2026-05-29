@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Company;
 use App\Models\Product;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class ProductSeeder extends Seeder
@@ -16,21 +15,21 @@ class ProductSeeder extends Seeder
     {
         $company = Company::first();
 
-        if (!$company) {
+        if (! $company) {
             return;
         }
 
         Product::create([
             'company_id' => $company->id,
-            'name' => 'Blueberry',
-            'slug' => 'blueberry',
+            'name' => 'Blueberries',
+            'slug' => 'blueberries',
             'active' => true,
         ]);
 
         Product::create([
             'company_id' => $company->id,
-            'name' => 'Strawberry',
-            'slug' => 'strawberry',
+            'name' => 'Strawberries',
+            'slug' => 'strawberries',
             'active' => true,
         ]);
     }
