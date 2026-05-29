@@ -33,11 +33,6 @@ class extends Component {
         $this->selectedYear = now()->year;
     }
 
-    #[On('updated-selectedYear')]
-    public function updateAssignments(): void
-    {
-        $this->assignments = $this->allAssignments->toArray();
-    }
 
     public function createAssignment(): void
     {
@@ -55,7 +50,6 @@ class extends Component {
 
         $this->reset(['newNumber', 'newName']);
         $this->dispatch('close-modal', name: 'create-assignment');
-        $this->updateAssignments();
         Flux::toast(text: 'Assignment added.', variant: 'success');
     }
 
@@ -70,7 +64,6 @@ class extends Component {
         HarvesterAssignment::find($this->deletingAssignmentId)?->delete();
         $this->deletingAssignmentId = null;
         $this->showDeleteModal = false;
-        $this->updateAssignments();
         Flux::toast(text: 'Assignment deleted.', variant: 'warning');
     }
 }; ?>
@@ -85,14 +78,16 @@ class extends Component {
     </flux:header>
 
     <div class="p-6">
-        <flux:field>
-            <flux:label>Year</flux:label>
-            <flux:select wire:model="selectedYear">
-                @for ($year = now()->year - 5; $year <= now()->year; $year++)
-                    <flux:select.option value="{{ $year }}">{{ $year }}</flux:select.option>
-                @endfor
-            </flux:select>
-        </flux:field>
+        <div class="w-32">
+            <flux:field>
+                <flux:label>Year</flux:label>
+                <flux:select wire:model.live="selectedYear">
+                    @for ($year = now()->year - 5; $year <= now()->year; $year++)
+                        <flux:select.option value="{{ $year }}">{{ $year }}</flux:select.option>
+                    @endfor
+                </flux:select>
+            </flux:field>
+        </div>
 
         <flux:table>
             <flux:table.columns>
