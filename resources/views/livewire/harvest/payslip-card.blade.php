@@ -128,9 +128,9 @@ new class extends Component
     }
 }; ?>
 
-<flux:card class="p-8 print:border-0 print:bg-white">
+<flux:card class="p-4 print:border-0 print:bg-white">
     <!-- Header: Harvester left, Company right -->
-    <div class="mb-8 border-b border-gray-200 pb-6 dark:border-zinc-700 flex justify-between items-start">
+    <div class="border-b border-gray-200 pb-6 dark:border-zinc-700 flex justify-between items-start">
         <div>
             <flux:heading size="lg">#{{ $this->harvesterNumber }} {{ $this->harvesterName() ?? 'Unknown' }}</flux:heading>
         </div>
@@ -185,16 +185,16 @@ new class extends Component
         <div class="border-t border-gray-200 pt-6 dark:border-zinc-700">
             <div class="flex flex-wrap gap-6 text-sm font-semibold">
                 <div>
-                    <flux:text size="sm" class="text-gray-500 dark:text-zinc-400">Buckets</flux:text>
-                    <flux:text size="md">{{ $this->payslipTotals['buckets'] }}</flux:text>
+                    <flux:text size="sm" class="text-center text-gray-500 dark:text-zinc-400">Buckets</flux:text>
+                    <flux:text size="md" class="text-center">{{ $this->payslipTotals['buckets'] }}</flux:text>
                 </div>
                 <div>
-                    <flux:text size="sm" class="text-gray-500 dark:text-zinc-400">Total Weight</flux:text>
-                    <flux:text size="md">{{ number_format($this->payslipTotals['weight'], 3, ',', '.') }} kg</flux:text>
+                    <flux:text size="sm" class="text-center text-gray-500 dark:text-zinc-400">Total Weight</flux:text>
+                    <flux:text size="md" class="text-center">{{ number_format($this->payslipTotals['weight'], 3, ',', '.') }} kg</flux:text>
                 </div>
                 <div>
-                    <flux:text size="sm" class="text-gray-500 dark:text-zinc-400">Total Earnings</flux:text>
-                    <flux:text size="md">{{ number_format($this->payslipTotals['earnings'], 2, ',', '.') }}</flux:text>
+                    <flux:text size="sm" class="text-center text-gray-500 dark:text-zinc-400">Total Earnings</flux:text>
+                    <flux:text size="md" class="text-center">{{ number_format($this->payslipTotals['earnings'], 2, ',', '.') }}</flux:text>
                 </div>
             </div>
         </div>
