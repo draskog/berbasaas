@@ -235,4 +235,104 @@ describe('Prices Page', function () {
             ->call('updatePrice')
             ->assertHasNoErrors();
     });
+
+    it('auto-closes open-ended preceding price when creating a new one', function () {
+        $product = Product::factory()->for($this->company)->create();
+
+        $oldPrice = HarvestPrice::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create([
+                'effective_from' => '2026-01-01',
+                'effective_to' => null,
+            ]);
+
+        Livewire::test('pages.harvest.prices')
+            ->set('newProductId', $product->id)
+            ->set('newPricePerKg', '5.00')
+            ->set('newEffectiveFrom', '2026-06-01')
+            ->set('newEffectiveTo', null)
+            ->call('createPrice')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('harvest_prices', [
+            'id' => $oldPrice->id,
+        ]);
+        $this->assertEquals('2026-05-31', HarvestPrice::find($oldPrice->id)->effective_to->format('Y-m-d'));
+    });
+
+    it('auto-closes open-ended preceding price when editing an existing one', function () {
+        $product = Product::factory()->for($this->company)->create();
+
+        $oldPrice = HarvestPrice::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create([
+                'effective_from' => '2026-01-01',
+                'effective_to' => null,
+            ]);
+
+        $editedPrice = HarvestPrice::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create([
+                'effective_from' => '2026-03-01',
+                'effective_to' => '2026-04-30',
+            ]);
+
+        Livewire::test('pages.harvest.prices')
+            ->call('editPrice', $editedPrice->id)
+            ->set('editEffectiveFrom', '2026-06-01')
+            ->set('editEffectiveTo', null)
+            ->call('updatePrice')
+            ->assertHasNoErrors();
+
+        $this->assertEquals('2026-05-31', HarvestPrice::find($oldPrice->id)->effective_to->format('Y-m-d'));
+    });
+
+    it('does not modify prices that already have an effective_to date set', function () {
+        $product = Product::factory()->for($this->company)->create();
+
+        $closedPrice = HarvestPrice::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create([
+                'effective_from' => '2026-01-01',
+                'effective_to' => '2026-03-31',
+            ]);
+
+        Livewire::test('pages.harvest.prices')
+            ->set('newProductId', $product->id)
+            ->set('newPricePerKg', '5.00')
+            ->set('newEffectiveFrom', '2026-06-01')
+            ->set('newEffectiveTo', null)
+            ->call('createPrice')
+            ->assertHasNoErrors();
+
+        $this->assertEquals('2026-03-31', HarvestPrice::find($closedPrice->id)->effective_to->format('Y-m-d'));
+    });
+
+    it('does not close the record being edited when updating', function () {
+        $product = Product::factory()->for($this->company)->create();
+
+        $price = HarvestPrice::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create([
+                'effective_from' => '2026-01-01',
+                'effective_to' => null,
+            ]);
+
+        Livewire::test('pages.harvest.prices')
+            ->call('editPrice', $price->id)
+            ->set('editEffectiveFrom', '2026-01-01')
+            ->set('editEffectiveTo', null)
+            ->call('updatePrice')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('harvest_prices', [
+            'id' => $price->id,
+            'effective_to' => null,
+        ]);
+    });
 });

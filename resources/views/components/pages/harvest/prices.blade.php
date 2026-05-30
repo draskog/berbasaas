@@ -3,6 +3,7 @@
 use App\Models\HarvestPrice;
 use App\Models\Product;
 use Flux\Flux;
+use Illuminate\Support\Carbon;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
@@ -125,6 +126,12 @@ class extends Component {
             'effective_to' => $this->newEffectiveTo,
         ]);
 
+        HarvestPrice::closeOpenPrecedingPrices(
+            companyId: auth()->user()->company_id,
+            productId: $this->newProductId,
+            effectiveFrom: Carbon::parse($this->newEffectiveFrom),
+        );
+
         $this->reset(['newProductId', 'newPricePerKg', 'newEffectiveFrom', 'newEffectiveTo']);
         $this->showCreatePriceModal = false;
         Flux::toast(text: 'Price added successfully.', variant: 'success');
@@ -162,13 +169,21 @@ class extends Component {
             'editEffectiveTo' => 'nullable|date|after_or_equal:editEffectiveFrom',
         ]);
 
-        HarvestPrice::where('company_id', auth()->user()->company_id)
-            ->findOrFail($this->editingPriceId)
-            ->update([
-                'price_per_kg' => $this->editPricePerKg,
-                'effective_from' => $this->editEffectiveFrom,
-                'effective_to' => $this->editEffectiveTo,
-            ]);
+        $price = HarvestPrice::where('company_id', auth()->user()->company_id)
+            ->findOrFail($this->editingPriceId);
+
+        $price->update([
+            'price_per_kg' => $this->editPricePerKg,
+            'effective_from' => $this->editEffectiveFrom,
+            'effective_to' => $this->editEffectiveTo,
+        ]);
+
+        HarvestPrice::closeOpenPrecedingPrices(
+            companyId: auth()->user()->company_id,
+            productId: $price->product_id,
+            effectiveFrom: Carbon::parse($this->editEffectiveFrom),
+            excludeId: $this->editingPriceId,
+        );
 
         $this->showEditPriceModal = false;
         Flux::toast(text: 'Price updated.', variant: 'success');
