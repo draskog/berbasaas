@@ -8,16 +8,20 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 
 new
 #[Layout('layouts.app')]
 #[Title('Payslip')]
 class extends Component {
+    #[Url]
     public int $selectedYear;
 
+    #[Url]
     public ?string $dateFrom = null;
 
+    #[Url]
     public ?string $dateTo = null;
 
     #[Computed]
@@ -55,8 +59,13 @@ class extends Component {
     public function mount (): void
     {
         $years = $this->availableYears;
-        $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
-        $this->updateDatesForSelectedYear();
+        if (! $this->selectedYear) {
+            $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
+        }
+
+        if (! $this->dateFrom || ! $this->dateTo) {
+            $this->updateDatesForSelectedYear();
+        }
     }
 
     #[On('updated-selected-year')]
