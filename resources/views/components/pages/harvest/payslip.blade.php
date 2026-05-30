@@ -223,10 +223,10 @@ class extends Component {
                                     <flux:table.row>
                                         <flux:table.cell>{{ \Carbon\Carbon::parse($row['date'])->format('d.m.Y') }}</flux:table.cell>
                                         <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
-                                        <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
+                                        <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
                                         <flux:table.cell>
                                             @if ($row['price_per_kg'])
-                                                €{{ number_format($row['price_per_kg'], 4, ',', '.') }}
+                                                €{{ number_format($row['price_per_kg'], 3, ',', '.') }}
                                             @else
                                                 —
                                             @endif
@@ -249,7 +249,7 @@ class extends Component {
                                     <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
                                         <flux:table.cell>Total</flux:table.cell>
                                         <flux:table.cell>{{ $this->payslipTotals['buckets'] }}</flux:table.cell>
-                                        <flux:table.cell>{{ number_format($this->payslipTotals['weight'], 3, '.', ',') }}</flux:table.cell>
+                                        <flux:table.cell>{{ number_format($this->payslipTotals['weight'], 3, ',', '.') }}</flux:table.cell>
                                         <flux:table.cell>—</flux:table.cell>
                                         <flux:table.cell>€{{ number_format($this->payslipTotals['earnings'], 2, ',', '.') }}</flux:table.cell>
                                     </flux:table.row>

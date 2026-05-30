@@ -177,7 +177,7 @@ class extends Component {
                 <flux:table.rows>
                     @forelse($this->pricesForProduct as $price)
                         <flux:table.row>
-                            <flux:table.cell>{{ number_format($price->price_per_kg, 4) }}</flux:table.cell>
+                            <flux:table.cell>{{ number_format($price->price_per_kg, 3, ',', '.') }}</flux:table.cell>
                             <flux:table.cell>{{ $price->effective_from->format('d.m.Y') }}</flux:table.cell>
                             <flux:table.cell>{{ $price->effective_to?->format('d.m.Y') ?? 'Current' }}</flux:table.cell>
                             <flux:table.cell>

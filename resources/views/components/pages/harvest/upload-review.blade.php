@@ -206,10 +206,10 @@ class extends Component
                                 {{ $record->weighed_at->format('d.m.Y H:i') }}
                             </flux:table.cell>
                             <flux:table.cell>
-                                {{ number_format($record->weight, 3) }}
+                                {{ number_format($record->weight, 3, ',', '.') }}
                             </flux:table.cell>
                             <flux:table.cell>
-                                {{ number_format($record->tare, 3) }}
+                                {{ number_format($record->tare, 3, ',', '.') }}
                             </flux:table.cell>
                             <flux:table.cell>
                                 @php $reasons = (array) $record->validation_reason; @endphp
@@ -226,7 +226,7 @@ class extends Component
                                         />
                                         <flux:tooltip.content>
                                             @foreach($this->validTares as $tare)
-                                                <div>{{ number_format($tare, 3) }}</div>
+                                                <div>{{ number_format($tare, 3, ',', '.') }}</div>
                                             @endforeach
                                         </flux:tooltip.content>
                                     </flux:tooltip>
@@ -236,7 +236,7 @@ class extends Component
                                 @endif
                             </flux:table.cell>
                             <flux:table.cell>
-                                {{ number_format($record->gross, 3) }}
+                                {{ number_format($record->gross, 3, ',', '.') }}
                             </flux:table.cell>
                             <flux:table.cell>
                                 <flux:badge variant="warning">{{ $record->harvester_number }}</flux:badge>

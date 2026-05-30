@@ -383,7 +383,7 @@ class extends Component {
                 @if (!empty($dailyData))
                     <flux:card class="p-4">
                         <flux:text size="sm" class="text-zinc-500">Total Harvest (kg)</flux:text>
-                        <div class="mt-2 text-2xl font-semibold">{{ number_format($this->dailyTotals['weight'], 3, '.', ',') }}</div>
+                        <div class="mt-2 text-2xl font-semibold">{{ number_format($this->dailyTotals['weight'], 3, ',', '.') }}</div>
                         <div class="text-xs text-zinc-400">{{ count($this->dailyData) }} days</div>
                     </flux:card>
 
@@ -397,7 +397,7 @@ class extends Component {
                     <flux:card class="p-4">
                         <flux:text size="sm" class="text-zinc-500">Top Harvester</flux:text>
                         <div class="mt-2 text-lg font-semibold">{{ $this->harvesterData[0]['name'] ?? 'N/A' }}</div>
-                        <div class="text-xs text-zinc-400">{{ number_format($this->harvesterData[0]['total_weight'] ?? 0, 3, '.', ',') }} kg</div>
+                        <div class="text-xs text-zinc-400">{{ number_format($this->harvesterData[0]['total_weight'] ?? 0, 3, ',', '.') }} kg</div>
                     </flux:card>
                 @endif
 
@@ -432,7 +432,7 @@ class extends Component {
                                 <flux:table.row>
                                     <flux:table.cell>{{ \Carbon\Carbon::parse($row['date'])->format('d.m.Y') }}</flux:table.cell>
                                     <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
                                 </flux:table.row>
                             @empty
                                 <flux:table.row>
@@ -444,7 +444,7 @@ class extends Component {
                                 <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
                                     <flux:table.cell>Total</flux:table.cell>
                                     <flux:table.cell>{{ $this->dailyTotals['buckets'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($this->dailyTotals['weight'], 3, '.', ',') }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($this->dailyTotals['weight'], 3, ',', '.') }}</flux:table.cell>
                                 </flux:table.row>
                             @endif
                         </flux:table.rows>
@@ -469,7 +469,7 @@ class extends Component {
                                     <flux:table.cell>{{ $row['number'] }}</flux:table.cell>
                                     <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
                                     <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
                                 </flux:table.row>
                             @empty
                                 <flux:table.row>
@@ -481,7 +481,7 @@ class extends Component {
                                 <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
                                     <flux:table.cell colspan="2">Total</flux:table.cell>
                                     <flux:table.cell>{{ $this->harvesterTotals['buckets'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($this->harvesterTotals['weight'], 3, '.', ',') }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($this->harvesterTotals['weight'], 3, ',', '.') }}</flux:table.cell>
                                 </flux:table.row>
                             @endif
                         </flux:table.rows>
@@ -504,7 +504,7 @@ class extends Component {
                                 <flux:table.row>
                                     <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
                                     <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($row['total_weight'], 3, '.', ',') }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
                                 </flux:table.row>
                             @empty
                                 <flux:table.row>
@@ -516,7 +516,7 @@ class extends Component {
                                 <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
                                     <flux:table.cell>Total</flux:table.cell>
                                     <flux:table.cell>{{ $this->productTotals['buckets'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($this->productTotals['weight'], 3, '.', ',') }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($this->productTotals['weight'], 3, ',', '.') }}</flux:table.cell>
                                 </flux:table.row>
                             @endif
                         </flux:table.rows>
