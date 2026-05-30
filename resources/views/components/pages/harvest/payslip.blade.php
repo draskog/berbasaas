@@ -195,16 +195,13 @@ class extends Component
                     <flux:select.option value="0">All</flux:select.option>
                 </flux:select>
             </div>
-            <div class="mb-6">
+            <div class="mb-6 max-w-md">
                 <flux:field>
                     <flux:label>Harvester</flux:label>
                     <flux:autocomplete placeholder="Search by number, name, or prefix...">
                         @foreach ($this->harvesterOptions as $option)
                             <flux:autocomplete.item wire:click="selectHarvester({{ $option['value'] }})">
-                                <div class="flex items-center justify-between w-full">
-                                    <span class="font-medium">{{ $option['label'] }} - {{ $option['name'] }}</span>
-                                    <span class="text-xs text-zinc-500">{{ $option['prefix'] }}</span>
-                                </div>
+                                <span class="font-medium">{{ $option['label'] }} - {{ $option['name'] }}@if($option['prefix'] !== '-') ({{ $option['prefix'] }})@endif</span>
                             </flux:autocomplete.item>
                         @endforeach
                     </flux:autocomplete>
