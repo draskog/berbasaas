@@ -25,16 +25,16 @@ $textClasses = Flux::classes()
 <?php if ($name): ?>
     <a href="{{ $href }}" {{ $attributes->class([ $classes, 'gap-2' ]) }} data-flux-sidebar-brand>
         <?php if ($logo instanceof \Illuminate\View\ComponentSlot): ?>
-            <div {{ $logo->attributes->class('flex items-center justify-center [:where(&)]:h-6 [:where(&)]:min-w-6 [:where(&)]:rounded-sm overflow-hidden shrink-0') }}>
+            <div {{ $logo->attributes->class('flex items-center justify-center [:where(&)]:h-10 [:where(&)]:min-w-10 [:where(&)]:rounded-sm overflow-hidden shrink-0') }}>
                 {{ $logo }}
             </div>
         <?php else: ?>
-            <div class="flex items-center justify-center h-6 min-w-6 rounded-sm overflow-hidden shrink-0">
+            <div class="flex items-center justify-center h-10 min-w-10 rounded-sm overflow-hidden shrink-0">
                 <?php if ($logoDark): ?>
-                    <img src="{{ $logo }}" alt="{{ $alt }}" class="h-6 min-w-6 dark:hidden" />
-                    <img src="{{ $logoDark }}" alt="{{ $alt }}" class="h-6 min-w-6 hidden dark:block" />
+                    <img src="{{ $logo }}" alt="{{ $alt }}" class="h-10 min-w-10 dark:hidden" />
+                    <img src="{{ $logoDark }}" alt="{{ $alt }}" class="h-10 min-w-10 hidden dark:block" />
                 <?php elseif ($logo): ?>
-                    <img src="{{ $logo }}" alt="{{ $alt }}" class="h-6 min-w-6" />
+                    <img src="{{ $logo }}" alt="{{ $alt }}" class="h-10 min-w-10" />
                 <?php else: ?>
                     {{ $slot }}
                 <?php endif; ?>
@@ -46,16 +46,16 @@ $textClasses = Flux::classes()
 <?php else: ?>
     <a href="{{ $href }}" {{ $attributes->class($classes) }} data-flux-sidebar-brand>
         <?php if ($logo instanceof \Illuminate\View\ComponentSlot): ?>
-            <div {{ $logo->attributes->class('flex items-center justify-center [:where(&)]:h-6 [:where(&)]:min-w-6 [:where(&)]:rounded-sm overflow-hidden shrink-0') }}>
+            <div {{ $logo->attributes->class('flex items-center justify-center [:where(&)]:h-10 [:where(&)]:min-w-10 [:where(&)]:rounded-sm overflow-hidden shrink-0') }}>
                 {{ $logo }}
             </div>
         <?php else: ?>
-            <div class="flex items-center justify-center h-6 rounded-sm overflow-hidden shrink-0">
+            <div class="flex items-center justify-center h-10 rounded-sm overflow-hidden shrink-0">
                 <?php if ($logoDark): ?>
-                    <img src="{{ $logo }}" alt="{{ $alt }}" class="h-6 dark:hidden" />
-                    <img src="{{ $logoDark }}" alt="{{ $alt }}" class="h-6 hidden dark:block" />
+                    <img src="{{ $logo }}" alt="{{ $alt }}" class="h-10 dark:hidden" />
+                    <img src="{{ $logoDark }}" alt="{{ $alt }}" class="h-10 hidden dark:block" />
                 <?php elseif ($logo): ?>
-                    <img src="{{ $logo }}" alt="{{ $alt }}" class="h-6" />
+                    <img src="{{ $logo }}" alt="{{ $alt }}" class="h-10" />
                 <?php else: ?>
                     {{ $slot }}
                 <?php endif; ?>
