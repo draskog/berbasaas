@@ -5,9 +5,9 @@
 @if($sidebar)
     <flux:sidebar.brand {{ $attributes }}>
         <x-slot name="logo">
-            <div class="flex items-center justify-center w-full">
+            <div class="flex items-center justify-center w-full h-10">
                 <!-- Full logo (hidden when collapsed) -->
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 312.65 85.53" class="h-10 in-data-flux-sidebar-collapsed-desktop:hidden" width="100%" height="100%">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 312.65 85.53" class="w-auto in-data-flux-sidebar-collapsed-desktop:hidden" width="100%" height="100%">
                     <defs>
                         <style>.cls-1 { fill: #72be44; } .cls-2 { fill: #345094; }</style>
                     </defs>
@@ -47,7 +47,7 @@
                 </svg>
 
                 <!-- Collapsed logo (icon only) -->
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 85.53" class="h-6 hidden in-data-flux-sidebar-collapsed-desktop:block" width="100%" height="100%">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 85.53" class="w-auto hidden in-data-flux-sidebar-collapsed-desktop:block" width="100%" height="100%">
                     <defs>
                         <style>.cls-1 { fill: #72be44; } .cls-2 { fill: #345094; }</style>
                     </defs>
