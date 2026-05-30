@@ -3,7 +3,7 @@
 namespace App\Rules;
 
 use App\Models\HarvesterAssignment;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -11,7 +11,7 @@ readonly class HarvesterExistsForYear implements ValidationRule
 {
     public function __construct(
         private int $companyId,
-        private Carbon $weighedAt,
+        private CarbonInterface $weighedAt,
     ) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
