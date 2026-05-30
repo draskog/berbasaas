@@ -63,3 +63,18 @@ textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
 }
+
+/* Show sidebar labels when collapsed */
+@layer base {
+    [data-flux-sidebar-collapsed-desktop] [data-flux-sidebar-item] {
+        @apply !w-auto !justify-start !px-3;
+    }
+
+    [data-flux-sidebar-collapsed-desktop] [data-flux-sidebar-item] [data-content] {
+        @apply !block !flex-1;
+    }
+
+    [data-flux-sidebar-collapsed-desktop] svg[class*="size-"] {
+        @apply !flex-shrink-0;
+    }
+}
