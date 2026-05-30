@@ -8,6 +8,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 
@@ -18,8 +19,10 @@ class extends Component
 {
     use WithPagination;
 
+    #[Url]
     public ?int $selectedProductId = null;
 
+    #[Url]
     public string $productFilter = '';
 
     public int $perPage = 25;

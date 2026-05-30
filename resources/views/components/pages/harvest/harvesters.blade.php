@@ -6,6 +6,7 @@ use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 
@@ -16,6 +17,7 @@ class extends Component
 {
     use WithPagination;
 
+    #[Url]
     public mixed $selectedYear = '';
 
     public int $perPage = 25;

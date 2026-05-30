@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 
 new
@@ -15,16 +16,22 @@ new
 #[Title('Charts')]
 class extends Component
 {
+    #[Url]
     public int $selectedYear;
 
+    #[Url]
     public ?string $fromDate = null;
 
+    #[Url]
     public ?string $toDate = null;
 
+    #[Url]
     public int $selectedProductId = 0;
 
+    #[Url]
     public int $selectedHarvesterNumber = 0;
 
+    #[Url]
     public string $activeTab = 'daily';
 
     public string $chartDailySortBy = 'date';
@@ -75,8 +82,13 @@ class extends Component
     public function mount(): void
     {
         $years = $this->availableYears;
-        $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
-        $this->updateDatesForSelectedYear();
+        if (! $this->selectedYear) {
+            $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
+        }
+
+        if (! $this->fromDate || ! $this->toDate) {
+            $this->updateDatesForSelectedYear();
+        }
     }
 
     public function updatedSelectedYear(): void

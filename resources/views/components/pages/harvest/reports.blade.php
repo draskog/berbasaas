@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 
@@ -18,16 +19,22 @@ class extends Component
 {
     use WithPagination;
 
+    #[Url]
     public int $selectedYear;
 
+    #[Url]
     public ?string $fromDate = null;
 
+    #[Url]
     public ?string $toDate = null;
 
+    #[Url]
     public int $selectedProductId = 0;
 
+    #[Url]
     public int $selectedHarvesterNumber = 0;
 
+    #[Url]
     public string $activeTab = 'daily';
 
     public int $perPage = 25;
@@ -79,12 +86,20 @@ class extends Component
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
         $years = $this->availableYears;
-        $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
-        $this->fromDate = now()->startOfYear()->format('Y-m-d');
-        $this->toDate = now()->endOfYear()->format('Y-m-d');
-        $product = $this->products->first();
-        if ($product) {
-            $this->selectedProductId = $product->id;
+        if (! $this->selectedYear) {
+            $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
+        }
+
+        if (! $this->fromDate || ! $this->toDate) {
+            $this->fromDate = now()->startOfYear()->format('Y-m-d');
+            $this->toDate = now()->endOfYear()->format('Y-m-d');
+        }
+
+        if (! $this->selectedProductId) {
+            $product = $this->products->first();
+            if ($product) {
+                $this->selectedProductId = $product->id;
+            }
         }
     }
 
