@@ -34,7 +34,7 @@ describe('Prices Page', function () {
 
         Livewire::test('pages.harvest.prices')
             ->set('selectedProductId', $product->id)
-            ->assertSee('2.5');
+            ->assertSee('2,500');
     });
 
     it('creates new price', function () {
@@ -153,5 +153,86 @@ describe('Prices Page', function () {
 
         Livewire::test('pages.harvest.prices')
             ->assertDontSee('9.99');
+    });
+
+    it('can edit price', function () {
+        $product = Product::factory()->for($this->company)->create();
+        $price = HarvestPrice::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create(['price_per_kg' => 2.5]);
+
+        Livewire::test('pages.harvest.prices')
+            ->call('editPrice', $price->id)
+            ->assertSet('editingPriceId', $price->id)
+            ->assertSet('showEditPriceModal', true);
+    });
+
+    it('updates price', function () {
+        $product = Product::factory()->for($this->company)->create();
+        $price = HarvestPrice::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create(['price_per_kg' => 2.5]);
+
+        Livewire::test('pages.harvest.prices')
+            ->call('editPrice', $price->id)
+            ->set('editPricePerKg', '3.99')
+            ->set('editEffectiveFrom', '2026-06-01')
+            ->set('editEffectiveTo', null)
+            ->call('updatePrice')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('harvest_prices', [
+            'id' => $price->id,
+            'price_per_kg' => 3.99,
+        ]);
+    });
+
+    it('validates edit price is numeric', function () {
+        $product = Product::factory()->for($this->company)->create();
+        $price = HarvestPrice::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create();
+
+        Livewire::test('pages.harvest.prices')
+            ->call('editPrice', $price->id)
+            ->set('editPricePerKg', 'invalid')
+            ->set('editEffectiveFrom', '2026-01-01')
+            ->call('updatePrice')
+            ->assertHasErrors('editPricePerKg');
+    });
+
+    it('validates edit effective to is after or equal effective from', function () {
+        $product = Product::factory()->for($this->company)->create();
+        $price = HarvestPrice::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create();
+
+        Livewire::test('pages.harvest.prices')
+            ->call('editPrice', $price->id)
+            ->set('editPricePerKg', '2.5')
+            ->set('editEffectiveFrom', '2026-12-31')
+            ->set('editEffectiveTo', '2026-01-01')
+            ->call('updatePrice')
+            ->assertHasErrors('editEffectiveTo');
+    });
+
+    it('clears edit form after updating price', function () {
+        $product = Product::factory()->for($this->company)->create();
+        $price = HarvestPrice::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create();
+
+        Livewire::test('pages.harvest.prices')
+            ->call('editPrice', $price->id)
+            ->set('editPricePerKg', '3.5')
+            ->set('editEffectiveFrom', '2026-01-01')
+            ->set('editEffectiveTo', null)
+            ->call('updatePrice')
+            ->assertHasNoErrors();
     });
 });

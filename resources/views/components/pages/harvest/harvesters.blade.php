@@ -176,6 +176,17 @@ class extends Component
             return;
         }
 
+        // Check if assignment already exists for this year and number
+        if (HarvesterAssignment::where([
+            'company_id' => auth()->user()->company_id,
+            'year' => $this->selectedYear,
+            'number' => $this->newNumber,
+        ])->exists()) {
+            Flux::toast(text: 'An assignment with this number already exists for this year.', variant: 'warning');
+
+            return;
+        }
+
         HarvesterAssignment::create([
             'company_id' => auth()->user()->company_id,
             'harvester_id' => $this->newHarvesterId,

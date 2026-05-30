@@ -16,7 +16,7 @@ new
 class extends Component {
     use WithPagination;
 
-    public int $selectedProductId;
+    public ?int $selectedProductId = null;
 
     public int $perPage = 25;
 
@@ -29,6 +29,18 @@ class extends Component {
     public ?string $newEffectiveFrom = null;
 
     public ?string $newEffectiveTo = null;
+
+    public bool $showCreatePriceModal = false;
+
+    public ?int $editingPriceId = null;
+
+    public ?string $editPricePerKg = null;
+
+    public ?string $editEffectiveFrom = null;
+
+    public ?string $editEffectiveTo = null;
+
+    public bool $showEditPriceModal = false;
 
     public ?int $deletingPriceId = null;
 
@@ -114,7 +126,7 @@ class extends Component {
         ]);
 
         $this->reset(['newProductId', 'newPricePerKg', 'newEffectiveFrom', 'newEffectiveTo']);
-        $this->dispatch('close-modal', name: 'create-price');
+        $this->showCreatePriceModal = false;
         Flux::toast(text: 'Price added successfully.', variant: 'success');
     }
 
@@ -130,6 +142,36 @@ class extends Component {
         $this->deletingPriceId = null;
         $this->showDeleteModal = false;
         Flux::toast(text: 'Price deleted.', variant: 'warning');
+    }
+
+    public function editPrice(int $id): void
+    {
+        $price = HarvestPrice::where('company_id', auth()->user()->company_id)->findOrFail($id);
+        $this->editingPriceId = $id;
+        $this->editPricePerKg = (string) $price->price_per_kg;
+        $this->editEffectiveFrom = $price->effective_from->format('Y-m-d');
+        $this->editEffectiveTo = $price->effective_to?->format('Y-m-d');
+        $this->showEditPriceModal = true;
+    }
+
+    public function updatePrice(): void
+    {
+        $this->validate([
+            'editPricePerKg' => 'required|numeric|min:0',
+            'editEffectiveFrom' => 'required|date',
+            'editEffectiveTo' => 'nullable|date|after_or_equal:editEffectiveFrom',
+        ]);
+
+        HarvestPrice::where('company_id', auth()->user()->company_id)
+            ->findOrFail($this->editingPriceId)
+            ->update([
+                'price_per_kg' => $this->editPricePerKg,
+                'effective_from' => $this->editEffectiveFrom,
+                'effective_to' => $this->editEffectiveTo,
+            ]);
+
+        $this->showEditPriceModal = false;
+        Flux::toast(text: 'Price updated.', variant: 'success');
     }
 }; ?>
 
@@ -181,7 +223,10 @@ class extends Component {
                             <flux:table.cell>{{ $price->effective_from->format('d.m.Y') }}</flux:table.cell>
                             <flux:table.cell>{{ $price->effective_to?->format('d.m.Y') ?? 'Current' }}</flux:table.cell>
                             <flux:table.cell>
-                                <flux:button variant="danger" size="sm" wire:click="confirmDeletePrice({{ $price->id }})">Delete</flux:button>
+                                <div class="flex gap-1">
+                                    <flux:button size="sm" wire:click="editPrice({{ $price->id }})">Edit</flux:button>
+                                    <flux:button variant="danger" size="sm" wire:click="confirmDeletePrice({{ $price->id }})">Delete</flux:button>
+                                </div>
                             </flux:table.cell>
                         </flux:table.row>
                     @empty
@@ -194,7 +239,7 @@ class extends Component {
         @endif
     </div>
 
-    <flux:modal name="create-price">
+    <flux:modal name="create-price" wire:model="showCreatePriceModal">
     <flux:heading>Add Price</flux:heading>
     <flux:subheading>Set a new price for a product.</flux:subheading>
 
@@ -236,6 +281,35 @@ class extends Component {
         <flux:button variant="primary" wire:click="createPrice">Save</flux:button>
     </div>
 </flux:modal>
+
+    <flux:modal name="edit-price" wire:model="showEditPriceModal">
+        <flux:heading>Edit Price</flux:heading>
+
+        <div class="mt-6 space-y-4">
+            <flux:field>
+                <flux:label>Price per kg</flux:label>
+                <flux:input type="number" step="0.0001" wire:model="editPricePerKg" />
+                <flux:error name="editPricePerKg" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Effective From</flux:label>
+                <flux:input type="date" wire:model="editEffectiveFrom" />
+                <flux:error name="editEffectiveFrom" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Effective To</flux:label>
+                <flux:input type="date" wire:model="editEffectiveTo" />
+                <flux:error name="editEffectiveTo" />
+            </flux:field>
+        </div>
+
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:button variant="ghost" wire:click="$set('showEditPriceModal', false)">Cancel</flux:button>
+            <flux:button variant="primary" wire:click="updatePrice">Save</flux:button>
+        </div>
+    </flux:modal>
 
 <flux:modal name="confirm-delete-price" :dismissible="false" wire:model="showDeleteModal">
     <flux:heading>Delete Price</flux:heading>
