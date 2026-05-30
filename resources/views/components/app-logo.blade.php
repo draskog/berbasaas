@@ -68,7 +68,7 @@
 @else
     <flux:brand {{ $attributes }}>
         <x-slot name="logo">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 312.65 85.53" class="h-6" width="100%" height="100%">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 312.65 85.53" class="h-10" width="100%" height="100%">
                 <defs>
                     <style>.cls-1 { fill: #72be44; } .cls-2 { fill: #345094; }</style>
                 </defs>
