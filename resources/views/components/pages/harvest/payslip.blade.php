@@ -3,6 +3,7 @@
 use App\Models\HarvesterAssignment;
 use App\Models\HarvestPrice;
 use App\Models\HarvestRecord;
+use Carbon\Carbon;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
@@ -46,15 +47,32 @@ class extends Component {
     {
         $years = $this->availableYears;
         $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
-        $this->dateFrom = $this->selectedYear.'-01-01';
-        $this->dateTo = $this->selectedYear.'-12-31';
+        $this->updateDatesForSelectedYear();
     }
 
     #[On('updated-selected-year')]
     public function updatedSelectedYear (): void
     {
-        $this->dateFrom = $this->selectedYear.'-01-01';
-        $this->dateTo = $this->selectedYear.'-12-31';
+        $this->updateDatesForSelectedYear();
+    }
+
+    private function updateDatesForSelectedYear (): void
+    {
+        if ($this->dateFrom) {
+            $fromCarbon = Carbon::parse($this->dateFrom);
+            $this->dateFrom = Carbon::create($this->selectedYear, $fromCarbon->month, $fromCarbon->day)->format('Y-m-d');
+        } else {
+            $monday = now()->startOfWeek();
+            $this->dateFrom = Carbon::create($this->selectedYear, $monday->month, $monday->day)->format('Y-m-d');
+        }
+
+        if ($this->dateTo) {
+            $toCarbon = Carbon::parse($this->dateTo);
+            $this->dateTo = Carbon::create($this->selectedYear, $toCarbon->month, $toCarbon->day)->format('Y-m-d');
+        } else {
+            $today = now();
+            $this->dateTo = Carbon::create($this->selectedYear, $today->month, $today->day)->format('Y-m-d');
+        }
     }
 }; ?>
 
