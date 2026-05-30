@@ -24,9 +24,10 @@ class extends Component
     #[Computed]
     public function availableYears()
     {
-        return HarvesterAssignment::where('company_id', auth()->user()->company_id)
-            ->distinct()
-            ->pluck('year')
+        return HarvestRecord::where('company_id', auth()->user()->company_id)
+            ->get()
+            ->map(fn ($record) => $record->weighed_at->year)
+            ->unique()
             ->sort()
             ->reverse()
             ->values();
@@ -35,10 +36,10 @@ class extends Component
     #[Computed]
     public function harvesterNumbers()
     {
-        return HarvesterAssignment::where('company_id', auth()->user()->company_id)
-            ->where('year', $this->selectedYear)
+        return HarvestRecord::where('company_id', auth()->user()->company_id)
+            ->whereYear('weighed_at', $this->selectedYear)
             ->distinct()
-            ->pluck('number')
+            ->pluck('harvester_number')
             ->sort()
             ->values();
     }
@@ -46,8 +47,11 @@ class extends Component
     #[Computed]
     public function harvesterOptions()
     {
+        $harvesterNumbers = $this->harvesterNumbers;
+
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->selectedYear)
+            ->whereIn('number', $harvesterNumbers)
             ->with('harvester')
             ->distinct('number')
             ->orderBy('number')
