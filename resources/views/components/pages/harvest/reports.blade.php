@@ -59,7 +59,7 @@ class extends Component
     public function products()
     {
         return Product::where('company_id', auth()->user()->company_id)
-            ->where('active', true)
+            ->whereHas('harvestRecords', fn ($q) => $q->where('company_id', auth()->user()->company_id))
             ->orderBy('name')
             ->get();
     }
@@ -93,6 +93,11 @@ class extends Component
         $this->resetPage('daily');
         $this->resetPage('harv');
         $this->resetPage('prod');
+    }
+
+    public function updatedSelectedYear(): void
+    {
+        $this->selectedHarvesterNumber = 0;
     }
 
     public function sortDaily(string $column): void
@@ -293,65 +298,55 @@ class extends Component
         </flux:header>
 
         <div class="p-6">
-            <!-- Filter Panel -->
-            <flux:card class="mb-8">
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    <!-- Year Selector -->
-                    <flux:field>
-                        <flux:label>Year</flux:label>
-                        <flux:select wire:model.live="selectedYear">
-                            @foreach($this->availableYears as $year)
-                                <flux:select.option value="{{ $year }}">{{ $year }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
-                    </flux:field>
+            <!-- Records Per Page -->
+            <div class="flex justify-end mb-4">
+                <flux:select wire:model.live="perPage" size="sm" class="w-28">
+                    <flux:select.option value="25">25</flux:select.option>
+                    <flux:select.option value="50">50</flux:select.option>
+                    <flux:select.option value="100">100</flux:select.option>
+                    <flux:select.option value="0">All</flux:select.option>
+                </flux:select>
+            </div>
 
-                    <!-- Date From -->
-                    <flux:field>
+            <!-- Filter Pills -->
+            <div class="space-y-4 mb-6">
+                <div>
+                    <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
+                        @foreach($this->availableYears as $year)
+                            <flux:radio value="{{ $year }}" label="{{ $year }}"/>
+                        @endforeach
+                    </flux:radio.group>
+                </div>
+
+                <div class="flex gap-4">
+                    <flux:field class="flex-1">
                         <flux:label>From Date</flux:label>
                         <flux:input type="date" wire:model.live="fromDate" />
                     </flux:field>
-
-                    <!-- Date To -->
-                    <flux:field>
+                    <flux:field class="flex-1">
                         <flux:label>To Date</flux:label>
                         <flux:input type="date" wire:model.live="toDate" />
                     </flux:field>
-
-                    <!-- Product Selector -->
-                    <flux:field>
-                        <flux:label>Product</flux:label>
-                        <flux:select wire:model.live="selectedProductId">
-                            <flux:select.option value="0">All products</flux:select.option>
-                            @foreach ($this->products as $product)
-                                <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
-                    </flux:field>
-
-                    <!-- Harvester Selector -->
-                    <flux:field>
-                        <flux:label>Harvester</flux:label>
-                        <flux:select wire:model.live="selectedHarvesterNumber">
-                            <flux:select.option value="0">All harvesters</flux:select.option>
-                            @foreach ($this->harvesterNumbers as $number)
-                                <flux:select.option value="{{ $number }}">#{{ $number }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
-                    </flux:field>
-
-                    <!-- Records Per Page -->
-                    <flux:field>
-                        <flux:label>Records Per Page</flux:label>
-                        <flux:select wire:model.live="perPage">
-                            <flux:select.option value="25">25</flux:select.option>
-                            <flux:select.option value="50">50</flux:select.option>
-                            <flux:select.option value="100">100</flux:select.option>
-                            <flux:select.option value="0">All</flux:select.option>
-                        </flux:select>
-                    </flux:field>
                 </div>
-            </flux:card>
+
+                <div>
+                    <flux:radio.group wire:model.live="selectedProductId" label="Product" variant="pills">
+                        <flux:radio value="0" label="All" />
+                        @foreach ($this->products as $product)
+                            <flux:radio value="{{ $product->id }}" label="{{ $product->name }}"/>
+                        @endforeach
+                    </flux:radio.group>
+                </div>
+
+                <div>
+                    <flux:radio.group wire:model.live="selectedHarvesterNumber" label="Harvester" variant="pills">
+                        <flux:radio value="0" label="All" />
+                        @foreach ($this->harvesterNumbers as $number)
+                            <flux:radio value="{{ $number }}" label="#{{ $number }}"/>
+                        @endforeach
+                    </flux:radio.group>
+                </div>
+            </div>
 
             <!-- Tab Navigation -->
             <flux:tabs wire:model="activeTab" class="mb-6">

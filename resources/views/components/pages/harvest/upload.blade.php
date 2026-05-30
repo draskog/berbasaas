@@ -17,7 +17,8 @@ use Livewire\WithPagination;
 new
 #[Layout('layouts.app')]
 #[Title('Upload')]
-class extends Component {
+class extends Component
+{
     use WithFileUploads, WithPagination;
 
     public int $selectedProductId = 0;
@@ -51,7 +52,7 @@ class extends Component {
     public int $filterYear = 0;
 
     #[Computed]
-    public function products ()
+    public function products()
     {
         return Product::where('company_id', auth()->user()->company_id)
             ->where('active', true)
@@ -60,11 +61,20 @@ class extends Component {
     }
 
     #[Computed]
-    public function availableYears ()
+    public function filterProducts()
+    {
+        return Product::where('company_id', auth()->user()->company_id)
+            ->whereHas('harvestUploads', fn ($q) => $q->where('company_id', auth()->user()->company_id))
+            ->orderBy('name')
+            ->get();
+    }
+
+    #[Computed]
+    public function availableYears()
     {
         return HarvestUpload::where('company_id', auth()->user()->company_id)
             ->pluck('date_from')
-            ->map(fn($date) => $date->year)
+            ->map(fn ($date) => $date->year)
             ->unique()
             ->sortDesc()
             ->values()
@@ -72,11 +82,11 @@ class extends Component {
     }
 
     #[Computed]
-    public function recentUploads ()
+    public function recentUploads()
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
             ->withCount('harvestRecords as valid_count')
-            ->withCount(['stagingRecords as invalid_count' => fn($q) => $q->where('status', 'invalid')]);
+            ->withCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
 
         if ($this->filterYear !== 0) {
             $query->whereYear('date_from', $this->filterYear);
@@ -115,7 +125,7 @@ class extends Component {
         return $query->paginate($this->perPage);
     }
 
-    public function mount (): void
+    public function mount(): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
         $currentYear = now()->year;
@@ -126,32 +136,32 @@ class extends Component {
         }
     }
 
-    public function updatedPerPage (): void
+    public function updatedPerPage(): void
     {
         $this->resetPage();
     }
 
-    public function updatedFilterProduct (): void
+    public function updatedFilterProduct(): void
     {
         $this->resetPage();
     }
 
-    public function updatedFilterStatus (): void
+    public function updatedFilterStatus(): void
     {
         $this->resetPage();
     }
 
-    public function updatedFilterResolved (): void
+    public function updatedFilterResolved(): void
     {
         $this->resetPage();
     }
 
-    public function updatedFilterYear (): void
+    public function updatedFilterYear(): void
     {
         $this->resetPage();
     }
 
-    public function sort (string $column): void
+    public function sort(string $column): void
     {
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -162,7 +172,7 @@ class extends Component {
         $this->resetPage();
     }
 
-    public function uploadFile (): void
+    public function uploadFile(): void
     {
         $this->validate([
             'selectedProductId' => 'required|exists:products,id',
@@ -185,19 +195,19 @@ class extends Component {
         );
     }
 
-    public function confirmResolveUpload (int $id): void
+    public function confirmResolveUpload(int $id): void
     {
         $this->resolvingUploadId = $id;
         $this->showResolveModal = true;
     }
 
-    public function confirmDeleteUpload (int $id): void
+    public function confirmDeleteUpload(int $id): void
     {
         $this->deletingUploadId = $id;
         $this->showDeleteModal = true;
     }
 
-    public function deleteUpload (): void
+    public function deleteUpload(): void
     {
         HarvestUpload::find($this->deletingUploadId)?->delete();
         $this->deletingUploadId = null;
@@ -205,7 +215,7 @@ class extends Component {
         Flux::toast(text: 'Upload deleted.', variant: 'warning');
     }
 
-    public function autoResolve (int $uploadId): void
+    public function autoResolve(int $uploadId): void
     {
         $upload = HarvestUpload::findOrFail($uploadId);
 
@@ -240,7 +250,7 @@ class extends Component {
             } else {
                 // Try to find closest harvester number
                 $closest = $validAssignments->keys()
-                    ->sortBy(fn($num) => abs($num - $record->harvester_number))
+                    ->sortBy(fn ($num) => abs($num - $record->harvester_number))
                     ->first();
 
                 if ($closest !== null && abs($closest - $record->harvester_number) <= 5) {
@@ -262,7 +272,7 @@ class extends Component {
         Flux::toast(text: $message, variant: $resolved > 0 ? 'success' : 'warning');
     }
 
-    private function promoteRecord (HarvestRecordStaging $record): void
+    private function promoteRecord(HarvestRecordStaging $record): void
     {
         HarvestRecord::create([
             'company_id' => $record->company_id,
@@ -302,7 +312,7 @@ class extends Component {
         <div class="space-y-4 mb-6">
             <div>
                 <flux:radio.group wire:model.live="filterYear" label="Year" variant="pills">
-                    <flux:radio value="0" label="All Years"/>
+                    <flux:radio value="0" label="All"/>
                     @foreach($this->availableYears as $year)
                         <flux:radio value="{{ $year }}" label="{{ $year }}"/>
                     @endforeach
@@ -311,8 +321,8 @@ class extends Component {
 
             <div>
                 <flux:radio.group wire:model.live="filterProduct" label="Product" variant="pills">
-                    <flux:radio value="" label="All Products"/>
-                    @foreach($this->products as $product)
+                    <flux:radio value="" label="All"/>
+                    @foreach($this->filterProducts as $product)
                         <flux:radio value="{{ $product->id }}" label="{{ $product->name }}"/>
                     @endforeach
                 </flux:radio.group>

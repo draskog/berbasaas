@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\HarvestRecord;
 use App\Models\HarvesterAssignment;
-use App\Models\HarvestPrice;
+use App\Models\HarvestRecord;
 use App\Models\Product;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -13,21 +13,30 @@ use Livewire\Volt\Component;
 new
 #[Layout('layouts.app')]
 #[Title('Charts')]
-class extends Component {
+class extends Component
+{
     public int $selectedYear;
+
     public ?string $fromDate = null;
+
     public ?string $toDate = null;
+
     public int $selectedProductId = 0;
+
     public int $selectedHarvesterNumber = 0;
+
     public string $activeTab = 'daily';
 
     public string $chartDailySortBy = 'date';
+
     public string $chartDailySortDirection = 'asc';
 
     public string $chartHarvesterSortBy = 'total_weight';
+
     public string $chartHarvesterSortDirection = 'desc';
 
     public string $chartProductSortBy = 'total_weight';
+
     public string $chartProductSortDirection = 'desc';
 
     #[Computed]
@@ -45,7 +54,9 @@ class extends Component {
     public function products()
     {
         return Product::where('company_id', auth()->user()->company_id)
-            ->where('active', true)
+            ->whereHas('harvestRecords', fn ($q) => $q
+                ->where('company_id', auth()->user()->company_id)
+                ->whereYear('weighed_at', $this->selectedYear))
             ->orderBy('name')
             ->get();
     }
@@ -76,17 +87,17 @@ class extends Component {
     private function updateDatesForSelectedYear(): void
     {
         if ($this->fromDate) {
-            $fromCarbon = \Carbon\Carbon::parse($this->fromDate);
-            $this->fromDate = \Carbon\Carbon::create($this->selectedYear, $fromCarbon->month, $fromCarbon->day)->format('Y-m-d');
+            $fromCarbon = Carbon::parse($this->fromDate);
+            $this->fromDate = Carbon::create($this->selectedYear, $fromCarbon->month, $fromCarbon->day)->format('Y-m-d');
         } else {
-            $this->fromDate = \Carbon\Carbon::create($this->selectedYear, 1, 1)->format('Y-m-d');
+            $this->fromDate = Carbon::create($this->selectedYear, 1, 1)->format('Y-m-d');
         }
 
         if ($this->toDate) {
-            $toCarbon = \Carbon\Carbon::parse($this->toDate);
-            $this->toDate = \Carbon\Carbon::create($this->selectedYear, $toCarbon->month, $toCarbon->day)->format('Y-m-d');
+            $toCarbon = Carbon::parse($this->toDate);
+            $this->toDate = Carbon::create($this->selectedYear, $toCarbon->month, $toCarbon->day)->format('Y-m-d');
         } else {
-            $this->toDate = \Carbon\Carbon::create($this->selectedYear, 12, 31)->format('Y-m-d');
+            $this->toDate = Carbon::create($this->selectedYear, 12, 31)->format('Y-m-d');
         }
     }
 
@@ -123,10 +134,10 @@ class extends Component {
     private function baseQuery(): Builder
     {
         return HarvestRecord::where('company_id', auth()->user()->company_id)
-            ->when($this->fromDate, fn($q) => $q->whereDate('weighed_at', '>=', $this->fromDate))
-            ->when($this->toDate, fn($q) => $q->whereDate('weighed_at', '<=', $this->toDate))
-            ->when($this->selectedProductId, fn($q) => $q->where('product_id', $this->selectedProductId))
-            ->when($this->selectedHarvesterNumber, fn($q) => $q->where('harvester_number', $this->selectedHarvesterNumber));
+            ->when($this->fromDate, fn ($q) => $q->whereDate('weighed_at', '>=', $this->fromDate))
+            ->when($this->toDate, fn ($q) => $q->whereDate('weighed_at', '<=', $this->toDate))
+            ->when($this->selectedProductId, fn ($q) => $q->where('product_id', $this->selectedProductId))
+            ->when($this->selectedHarvesterNumber, fn ($q) => $q->where('harvester_number', $this->selectedHarvesterNumber));
     }
 
     private function harvesterNames(): array
@@ -147,7 +158,7 @@ class extends Component {
             ->groupBy('date')
             ->orderBy($this->chartDailySortBy, $this->chartDailySortDirection)
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'date' => $row->date,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
@@ -178,7 +189,7 @@ class extends Component {
             ->groupBy('harvester_number')
             ->orderBy($this->chartHarvesterSortBy, $this->chartHarvesterSortDirection)
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'number' => $row->harvester_number,
                 'name' => $names[$row->harvester_number] ?? "#{$row->harvester_number}",
                 'bucket_count' => $row->bucket_count,
@@ -208,12 +219,12 @@ class extends Component {
             ->groupBy('product_id')
             ->with('product')
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'name' => $row->product->name,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
             ])
-            ->sortBy(fn($row) => $row[$this->chartProductSortBy], SORT_REGULAR, $this->chartProductSortDirection === 'desc')
+            ->sortBy(fn ($row) => $row[$this->chartProductSortBy], SORT_REGULAR, $this->chartProductSortDirection === 'desc')
             ->values();
     }
 
@@ -241,11 +252,11 @@ class extends Component {
             ->get();
 
         return [
-            'labels' => $data->map(fn($row) => \Carbon\Carbon::parse($row->date)->format('d.m'))->values()->toArray(),
+            'labels' => $data->map(fn ($row) => Carbon::parse($row->date)->format('d.m'))->values()->toArray(),
             'datasets' => [
                 [
                     'label' => 'Total kg',
-                    'data' => $data->map(fn($row) => round($row->total_weight, 2))->values()->toArray(),
+                    'data' => $data->map(fn ($row) => round($row->total_weight, 2))->values()->toArray(),
                     'backgroundColor' => 'rgba(59, 130, 246, 0.8)',
                     'borderColor' => 'rgba(59, 130, 246, 1)',
                     'borderWidth' => 1,
@@ -266,11 +277,11 @@ class extends Component {
             ->get();
 
         return [
-            'labels' => $data->map(fn($row) => $names[$row->harvester_number] ?? "#$row->harvester_number")->values()->toArray(),
+            'labels' => $data->map(fn ($row) => $names[$row->harvester_number] ?? "#$row->harvester_number")->values()->toArray(),
             'datasets' => [
                 [
                     'label' => 'Total kg',
-                    'data' => $data->map(fn($row) => round($row->total_weight, 2))->values()->toArray(),
+                    'data' => $data->map(fn ($row) => round($row->total_weight, 2))->values()->toArray(),
                     'backgroundColor' => 'rgba(34, 197, 94, 0.8)',
                     'borderColor' => 'rgba(34, 197, 94, 1)',
                     'borderWidth' => 1,
@@ -288,13 +299,13 @@ class extends Component {
             ->orderBy('hour')
             ->get();
 
-        $allHours = collect(range(0, 23))->mapWithKeys(fn($h) => [$h => 0]);
+        $allHours = collect(range(0, 23))->mapWithKeys(fn ($h) => [$h => 0]);
         foreach ($data as $row) {
             $allHours[$row->hour] = $row->bucket_count;
         }
 
         return [
-            'labels' => $allHours->keys()->map(fn($h) => sprintf('%02dh', $h))->values()->toArray(),
+            'labels' => $allHours->keys()->map(fn ($h) => sprintf('%02dh', $h))->values()->toArray(),
             'datasets' => [
                 [
                     'label' => 'Buckets',
@@ -328,8 +339,8 @@ class extends Component {
         // Limit to every 50th point to avoid overcrowding
         if (count($labels) > 50) {
             $step = ceil(count($labels) / 50);
-            $labels = collect($labels)->filter(fn($_, $i) => $i % $step === 0)->values()->toArray();
-            $data = collect($data)->filter(fn($_, $i) => $i % $step === 0)->values()->toArray();
+            $labels = collect($labels)->filter(fn ($_, $i) => $i % $step === 0)->values()->toArray();
+            $data = collect($data)->filter(fn ($_, $i) => $i % $step === 0)->values()->toArray();
         }
 
         return [
@@ -356,13 +367,13 @@ class extends Component {
             ->groupBy('date')
             ->orderBy('date')
             ->get()
-            ->map(fn($row) => [
-                'date' => \Carbon\Carbon::parse($row->date)->format('d.m.Y'),
+            ->map(fn ($row) => [
+                'date' => Carbon::parse($row->date)->format('d.m.Y'),
                 'total_weight' => round($row->total_weight, 2),
             ]);
 
         if ($data->count() === 1) {
-            $firstDate = \Carbon\Carbon::createFromFormat('d.m.Y', $data->first()['date'])->subDay();
+            $firstDate = Carbon::createFromFormat('d.m.Y', $data->first()['date'])->subDay();
             $data->prepend([
                 'date' => $firstDate->format('d.m.Y'),
                 'total_weight' => 0,
@@ -383,7 +394,7 @@ class extends Component {
             ->orderByDesc('total_weight')
             ->limit(20)
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
                 'total_weight' => round($row->total_weight, 2),
             ]);
@@ -396,39 +407,24 @@ class extends Component {
         </flux:header>
 
         <div class="p-6">
-            <!-- Filter Panel -->
-            <flux:card class="mb-8">
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    <flux:field>
-                        <flux:label>Year</flux:label>
-                        <flux:select wire:model.live="selectedYear">
-                            @foreach($this->availableYears as $year)
-                                <flux:select.option value="{{ $year }}">{{ $year }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
-                    </flux:field>
+            <!-- Year Pills -->
+            <div class="mb-6">
+                <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
+                    @foreach($this->availableYears as $year)
+                        <flux:radio label="{{ $year }}" value="{{ $year }}" />
+                    @endforeach
+                </flux:radio.group>
+            </div>
 
-                    <flux:field>
-                        <flux:label>From Date</flux:label>
-                        <flux:input type="date" wire:model.live="fromDate" />
-                    </flux:field>
-
-                    <flux:field>
-                        <flux:label>To Date</flux:label>
-                        <flux:input type="date" wire:model.live="toDate" />
-                    </flux:field>
-
-                    <flux:field>
-                        <flux:label>Product</flux:label>
-                        <flux:select wire:model.live="selectedProductId">
-                            <flux:select.option value="0">All products</flux:select.option>
-                            @foreach ($this->products as $product)
-                                <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
-                    </flux:field>
-                </div>
-            </flux:card>
+            <!-- Product Pills -->
+            <div class="mb-8">
+                <flux:radio.group wire:model.live="selectedProductId" label="Product" variant="pills">
+                    <flux:radio label="All" value="0" />
+                    @foreach ($this->products as $product)
+                        <flux:radio label="{{ $product->name }}" value="{{ $product->id }}" />
+                    @endforeach
+                </flux:radio.group>
+            </div>
 
             <!-- Summary Cards -->
             <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -466,6 +462,21 @@ class extends Component {
                     </flux:card>
                 @endif
             </div>
+
+            <!-- Date Filters -->
+            <flux:card class="mb-8">
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <flux:field>
+                        <flux:label>From Date</flux:label>
+                        <flux:input type="date" wire:model.live="fromDate" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>To Date</flux:label>
+                        <flux:input type="date" wire:model.live="toDate" />
+                    </flux:field>
+                </div>
+            </flux:card>
 
             <!-- Tabs -->
             <flux:tab.group>

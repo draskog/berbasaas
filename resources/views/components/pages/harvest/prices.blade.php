@@ -14,7 +14,8 @@ use Livewire\WithPagination;
 new
 #[Layout('layouts.app.sidebar')]
 #[Title('Prices')]
-class extends Component {
+class extends Component
+{
     use WithPagination;
 
     public ?int $selectedProductId = null;
@@ -58,6 +59,15 @@ class extends Component {
     {
         return Product::where('company_id', auth()->user()->company_id)
             ->where('active', true)
+            ->orderBy('name')
+            ->get();
+    }
+
+    #[Computed]
+    public function filterProducts()
+    {
+        return Product::where('company_id', auth()->user()->company_id)
+            ->whereHas('harvestPrices', fn ($q) => $q->where('company_id', auth()->user()->company_id))
             ->orderBy('name')
             ->get();
     }
@@ -207,7 +217,7 @@ class extends Component {
             <div class="flex-1">
                 <flux:radio.group wire:model.live="productFilter" label="Product" variant="pills">
                     <flux:radio label="All" value="all" />
-                    @foreach($this->products as $product)
+                    @foreach($this->filterProducts as $product)
                         <flux:radio :label="$product->name" :value="$product->id" />
                     @endforeach
                 </flux:radio.group>

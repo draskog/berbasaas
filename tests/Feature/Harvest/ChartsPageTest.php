@@ -21,7 +21,13 @@ describe('Charts Page', function () {
     });
 
     it('displays filter controls', function () {
-        Product::factory()->for($this->company)->create(['name' => 'Berries']);
+        $product = Product::factory()->for($this->company)->create(['name' => 'Berries']);
+        $year = now()->year;
+
+        HarvestRecord::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create(['weighed_at' => "$year-06-15", 'weight' => 100]);
 
         Livewire::test('pages.harvest.charts')
             ->assertSee('Berries');

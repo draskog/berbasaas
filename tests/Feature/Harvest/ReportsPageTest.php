@@ -21,7 +21,12 @@ describe('Reports Page', function () {
     });
 
     it('displays filter options', function () {
-        Product::factory()->for($this->company)->create(['name' => 'Peaches']);
+        $product = Product::factory()->for($this->company)->create(['name' => 'Peaches']);
+
+        HarvestRecord::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create(['weighed_at' => now()->format('Y-m-d'), 'weight' => 100]);
 
         Livewire::test('pages.harvest.reports')
             ->assertSee('Peaches');
@@ -30,6 +35,10 @@ describe('Reports Page', function () {
     it('filters by year', function () {
         $year = now()->year;
         $oldYear = $year - 1;
+
+        $harvester = Harvester::factory()->for($this->company)->create();
+        HarvesterAssignment::factory()->for($this->company)->for($harvester)->create(['year' => $year]);
+        HarvesterAssignment::factory()->for($this->company)->for($harvester)->create(['year' => $oldYear]);
 
         $product = Product::factory()->for($this->company)->create();
 
@@ -49,6 +58,9 @@ describe('Reports Page', function () {
     });
 
     it('filters by date range', function () {
+        $harvester = Harvester::factory()->for($this->company)->create();
+        HarvesterAssignment::factory()->for($this->company)->for($harvester)->create(['year' => now()->year]);
+
         $product = Product::factory()->for($this->company)->create();
 
         HarvestRecord::factory()
@@ -78,6 +90,9 @@ describe('Reports Page', function () {
     });
 
     it('calculates daily totals', function () {
+        $harvester = Harvester::factory()->for($this->company)->create();
+        HarvesterAssignment::factory()->for($this->company)->for($harvester)->create(['year' => now()->year]);
+
         $product = Product::factory()->for($this->company)->create();
         $today = now()->format('Y-m-d');
 
@@ -111,6 +126,9 @@ describe('Reports Page', function () {
     });
 
     it('shows product data in products tab', function () {
+        $harvester = Harvester::factory()->for($this->company)->create();
+        HarvesterAssignment::factory()->for($this->company)->for($harvester)->create(['year' => now()->year]);
+
         $product = Product::factory()->for($this->company)->create(['name' => 'Strawberries']);
 
         HarvestRecord::factory(2)
@@ -125,6 +143,9 @@ describe('Reports Page', function () {
     });
 
     it('filters by product', function () {
+        $harvester = Harvester::factory()->for($this->company)->create();
+        HarvesterAssignment::factory()->for($this->company)->for($harvester)->create(['year' => now()->year]);
+
         $product1 = Product::factory()->for($this->company)->create(['name' => 'Apples']);
         $product2 = Product::factory()->for($this->company)->create(['name' => 'Pears']);
 
@@ -145,6 +166,9 @@ describe('Reports Page', function () {
     });
 
     it('filters by harvester', function () {
+        $harvester = Harvester::factory()->for($this->company)->create();
+        HarvesterAssignment::factory()->for($this->company)->for($harvester)->create(['year' => now()->year, 'number' => 1]);
+
         $product = Product::factory()->for($this->company)->create();
 
         HarvestRecord::factory()

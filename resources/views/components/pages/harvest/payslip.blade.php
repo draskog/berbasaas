@@ -1,10 +1,8 @@
 <?php
 
-use App\Models\HarvestRecord;
 use App\Models\HarvesterAssignment;
 use App\Models\HarvestPrice;
-use App\Models\Product;
-use Illuminate\Database\Query\Builder;
+use App\Models\HarvestRecord;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -13,11 +11,14 @@ use Livewire\Volt\Component;
 new
 #[Layout('layouts.app')]
 #[Title('Payslip')]
-class extends Component {
+class extends Component
+{
     public int $selectedYear;
+
     public int $selectedHarvesterNumber = 0;
 
     public string $sortBy = 'date';
+
     public string $sortDirection = 'asc';
 
     #[Computed]
@@ -64,7 +65,7 @@ class extends Component {
 
     public function harvesterName(): ?string
     {
-        if (!$this->selectedHarvesterNumber) {
+        if (! $this->selectedHarvesterNumber) {
             return null;
         }
 
@@ -83,21 +84,21 @@ class extends Component {
             ->whereDate('weighed_at', $date)
             ->first();
 
-        if (!$record) {
+        if (! $record) {
             return null;
         }
 
         return HarvestPrice::where('company_id', auth()->user()->company_id)
             ->where('product_id', $record->product_id)
             ->where('effective_from', '<=', $date)
-            ->where(fn($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $date))
+            ->where(fn ($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $date))
             ->value('price_per_kg');
     }
 
     #[Computed]
     public function payslipData()
     {
-        if (!$this->selectedHarvesterNumber) {
+        if (! $this->selectedHarvesterNumber) {
             return [];
         }
 
@@ -128,7 +129,7 @@ class extends Component {
         }
 
         return collect($data)
-            ->sortBy(fn($row) => $row[$this->sortBy], SORT_REGULAR, $this->sortDirection === 'desc')
+            ->sortBy(fn ($row) => $row[$this->sortBy], SORT_REGULAR, $this->sortDirection === 'desc')
             ->values()
             ->all();
     }
@@ -157,27 +158,25 @@ class extends Component {
         <div class="p-6">
             <!-- Selector Panel (hidden on print) -->
             <flux:card class="mb-8 print:hidden">
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                    <flux:field>
-                        <flux:label>Year</flux:label>
-                        <flux:select wire:model.live="selectedYear">
+                <div class="space-y-4">
+                    <div>
+                        <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
                             @foreach($this->availableYears as $year)
-                                <flux:select.option value="{{ $year }}">{{ $year }}</flux:select.option>
+                                <flux:radio value="{{ $year }}" label="{{ $year }}" />
                             @endforeach
-                        </flux:select>
-                    </flux:field>
+                        </flux:radio.group>
+                    </div>
 
-                    <flux:field>
-                        <flux:label>Harvester</flux:label>
-                        <flux:select wire:model.live="selectedHarvesterNumber">
+                    <div>
+                        <flux:radio.group wire:model.live="selectedHarvesterNumber" label="Harvester" variant="pills">
                             @foreach ($this->harvesterNumbers as $number)
-                                <flux:select.option value="{{ $number }}">#{{ $number }}</flux:select.option>
+                                <flux:radio value="{{ $number }}" label="#{{ $number }}" />
                             @endforeach
-                        </flux:select>
-                    </flux:field>
+                        </flux:radio.group>
+                    </div>
 
-                    <div class="flex items-end">
-                        <flux:button variant="primary" onclick="window.print()" class="w-full">
+                    <div class="flex justify-end">
+                        <flux:button variant="primary" onclick="window.print()">
                             🖨 Print
                         </flux:button>
                     </div>
