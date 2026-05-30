@@ -17,7 +17,7 @@ new
 class extends Component
 {
     #[Url]
-    public int $selectedYear;
+    public int $selectedYear = 0;
 
     #[Url]
     public ?string $fromDate = null;

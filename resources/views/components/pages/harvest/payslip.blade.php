@@ -16,7 +16,7 @@ new
 #[Title('Payslip')]
 class extends Component {
     #[Url]
-    public int $selectedYear;
+    public int $selectedYear = 0;
 
     #[Url]
     public ?string $dateFrom = null;

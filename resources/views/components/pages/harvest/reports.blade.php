@@ -20,7 +20,7 @@ class extends Component
     use WithPagination;
 
     #[Url]
-    public int $selectedYear;
+    public int $selectedYear = 0;
 
     #[Url]
     public ?string $fromDate = null;
