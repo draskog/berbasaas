@@ -109,6 +109,12 @@ class extends Component {
         $this->resetPage();
     }
 
+    public function openCreatePriceModal(): void
+    {
+        $this->newProductId = $this->selectedProductId;
+        $this->showCreatePriceModal = true;
+    }
+
     public function createPrice(): void
     {
         $this->validate([
@@ -193,9 +199,7 @@ class extends Component {
 <flux:main>
     <flux:header heading="Harvest Prices">
         <flux:spacer />
-        <flux:modal.trigger name="create-price">
-            <flux:button icon="plus">Add Price</flux:button>
-        </flux:modal.trigger>
+        <flux:button icon="plus" wire:click="openCreatePriceModal">Add Price</flux:button>
     </flux:header>
 
     <div class="p-6">
