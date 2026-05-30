@@ -43,6 +43,14 @@ class extends Component
 
     public string $sortDirection = 'desc';
 
+    public string $filterProduct = '';
+
+    public string $filterStatus = 'all';
+
+    public string $filterResolved = 'all';
+
+    public int $filterYear = 0;
+
     #[Computed]
     public function products()
     {
@@ -53,12 +61,53 @@ class extends Component
     }
 
     #[Computed]
+    public function availableYears()
+    {
+        return HarvestUpload::where('company_id', auth()->user()->company_id)
+            ->selectRaw('EXTRACT(YEAR FROM date_from) as year')
+            ->distinct()
+            ->orderByDesc('year')
+            ->pluck('year')
+            ->map(fn ($year) => (int) $year)
+            ->toArray();
+    }
+
+    #[Computed]
     public function recentUploads()
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
             ->withCount('harvestRecords as valid_count')
-            ->withCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')])
-            ->orderBy($this->sortBy, $this->sortDirection);
+            ->withCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
+
+        if ($this->filterYear !== 0) {
+            $query->whereYear('date_from', $this->filterYear);
+        }
+
+        if ($this->filterProduct !== '') {
+            $query->where('product_id', $this->filterProduct);
+        }
+
+        if ($this->filterStatus === 'valid') {
+            $query->doesntHave('stagingRecords', function ($q) {
+                $q->where('status', 'invalid');
+            });
+        } elseif ($this->filterStatus === 'invalid') {
+            $query->whereHas('stagingRecords', function ($q) {
+                $q->where('status', 'invalid');
+            });
+        }
+
+        if ($this->filterResolved === 'resolved') {
+            $query->doesntHave('stagingRecords', function ($q) {
+                $q->where('status', 'invalid');
+            });
+        } elseif ($this->filterResolved === 'unresolved') {
+            $query->whereHas('stagingRecords', function ($q) {
+                $q->where('status', 'invalid');
+            });
+        }
+
+        $query->orderBy($this->sortBy, $this->sortDirection);
 
         if ($this->perPage === 0) {
             return $query->get();
@@ -70,6 +119,8 @@ class extends Component
     public function mount(): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
+        $currentYear = now()->year;
+        $this->filterYear = in_array($currentYear, $this->availableYears, true) ? $currentYear : 0;
         $product = $this->products->first();
         if ($product) {
             $this->selectedProductId = $product->id;
@@ -77,6 +128,26 @@ class extends Component
     }
 
     public function updatedPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterProduct(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterResolved(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterYear(): void
     {
         $this->resetPage();
     }
@@ -213,7 +284,7 @@ class extends Component
     </flux:header>
 
     <div class="p-6">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center justify-between mb-6">
             <flux:heading size="lg">Recent Upload Harvest Records</flux:heading>
             <flux:select wire:model.live="perPage" size="sm" class="w-28">
                 <flux:select.option value="25">25</flux:select.option>
@@ -221,6 +292,42 @@ class extends Component
                 <flux:select.option value="100">100</flux:select.option>
                 <flux:select.option value="0">All</flux:select.option>
             </flux:select>
+        </div>
+
+        <div class="space-y-4 mb-6">
+            <div>
+                <flux:radio.group wire:model.live="filterYear" label="Year" variant="pills">
+                    <flux:radio value="0" label="All Years" />
+                    @foreach($this->availableYears as $year)
+                        <flux:radio value="{{ $year }}" label="{{ $year }}" />
+                    @endforeach
+                </flux:radio.group>
+            </div>
+
+            <div>
+                <flux:radio.group wire:model.live="filterProduct" label="Product" variant="pills">
+                    <flux:radio value="" label="All Products" />
+                    @foreach($this->products as $product)
+                        <flux:radio value="{{ $product->id }}" label="{{ $product->name }}" />
+                    @endforeach
+                </flux:radio.group>
+            </div>
+
+            <div>
+                <flux:radio.group wire:model.live="filterStatus" label="Status" variant="pills">
+                    <flux:radio value="all" label="All" />
+                    <flux:radio value="valid" label="Valid" />
+                    <flux:radio value="invalid" label="Invalid" />
+                </flux:radio.group>
+            </div>
+
+            <div>
+                <flux:radio.group wire:model.live="filterResolved" label="Resolution Status" variant="pills">
+                    <flux:radio value="all" label="All" />
+                    <flux:radio value="resolved" label="Resolved" />
+                    <flux:radio value="unresolved" label="Unresolved" />
+                </flux:radio.group>
+            </div>
         </div>
 
         <flux:table :paginate="$this->perPage > 0 ? $this->recentUploads : null">
