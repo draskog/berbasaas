@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Company;
+use App\Models\Harvester;
 use App\Models\HarvesterAssignment;
 use App\Models\HarvestRecord;
 use App\Models\Product;
@@ -69,9 +70,11 @@ describe('Charts Page', function () {
         $product = Product::factory()->for($this->company)->create();
         $year = now()->year;
 
+        $harvester = Harvester::factory()->for($this->company)->create(['name' => 'Charlie']);
         HarvesterAssignment::factory()
             ->for($this->company)
-            ->create(['year' => $year, 'number' => 3, 'name' => 'Charlie']);
+            ->for($harvester)
+            ->create(['year' => $year, 'number' => 3]);
 
         HarvestRecord::factory(3)
             ->for($this->company)
@@ -165,9 +168,7 @@ describe('Charts Page', function () {
     it('handles empty data gracefully', function () {
         Livewire::test('pages.harvest.charts')
             ->set('activeTab', 'daily')
-            ->call('dailyData');
-
-        expect(true)->toBeTrue();
+            ->assertStatus(200);
     });
 
     it('only shows company data', function () {

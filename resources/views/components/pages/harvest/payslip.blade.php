@@ -62,7 +62,7 @@ class extends Component {
         }
     }
 
-    private function harvesterName(): ?string
+    public function harvesterName(): ?string
     {
         if (!$this->selectedHarvesterNumber) {
             return null;

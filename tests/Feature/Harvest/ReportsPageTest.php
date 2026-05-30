@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Company;
+use App\Models\Harvester;
 use App\Models\HarvesterAssignment;
 use App\Models\HarvestRecord;
 use App\Models\Product;
@@ -93,9 +94,11 @@ describe('Reports Page', function () {
         $product = Product::factory()->for($this->company)->create();
         $year = now()->year;
 
+        $harvester = Harvester::factory()->for($this->company)->create(['name' => 'Bob']);
         HarvesterAssignment::factory()
             ->for($this->company)
-            ->create(['year' => $year, 'number' => 5, 'name' => 'Bob']);
+            ->for($harvester)
+            ->create(['year' => $year, 'number' => 5]);
 
         HarvestRecord::factory()
             ->for($this->company)

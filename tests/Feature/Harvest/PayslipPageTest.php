@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Company;
+use App\Models\Harvester;
 use App\Models\HarvesterAssignment;
 use App\Models\HarvestPrice;
 use App\Models\HarvestRecord;
@@ -42,22 +43,25 @@ describe('Payslip Page', function () {
     it('shows available harvesters for year', function () {
         $year = now()->year;
 
+        $harvester = Harvester::factory()->for($this->company)->create(['name' => 'David']);
         HarvesterAssignment::factory()
             ->for($this->company)
-            ->create(['year' => $year, 'number' => 7, 'name' => 'David']);
+            ->for($harvester)
+            ->create(['year' => $year, 'number' => 7]);
 
         Livewire::test('pages.harvest.payslip')
             ->set('selectedYear', $year)
-            ->call('harvesterNumbers')
             ->assertSee('7');
     });
 
     it('displays harvester info when selected', function () {
         $year = now()->year;
 
+        $harvester = Harvester::factory()->for($this->company)->create(['name' => 'Emma']);
         HarvesterAssignment::factory()
             ->for($this->company)
-            ->create(['year' => $year, 'number' => 8, 'name' => 'Emma']);
+            ->for($harvester)
+            ->create(['year' => $year, 'number' => 8]);
 
         Livewire::test('pages.harvest.payslip')
             ->set('selectedYear', $year)
@@ -70,9 +74,11 @@ describe('Payslip Page', function () {
         $year = now()->year;
         $product = Product::factory()->for($this->company)->create();
 
+        $harvester = Harvester::factory()->for($this->company)->create(['name' => 'Frank']);
         HarvesterAssignment::factory()
             ->for($this->company)
-            ->create(['year' => $year, 'number' => 9, 'name' => 'Frank']);
+            ->for($harvester)
+            ->create(['year' => $year, 'number' => 9]);
 
         HarvestRecord::factory()
             ->for($this->company)
@@ -94,9 +100,11 @@ describe('Payslip Page', function () {
         $year = now()->year;
         $product = Product::factory()->for($this->company)->create();
 
+        $harvester = Harvester::factory()->for($this->company)->create(['name' => 'Grace']);
         HarvesterAssignment::factory()
             ->for($this->company)
-            ->create(['year' => $year, 'number' => 10, 'name' => 'Grace']);
+            ->for($harvester)
+            ->create(['year' => $year, 'number' => 10]);
 
         HarvestRecord::factory(3)
             ->for($this->company)
@@ -114,9 +122,11 @@ describe('Payslip Page', function () {
         $year = now()->year;
         $product = Product::factory()->for($this->company)->create();
 
+        $harvester = Harvester::factory()->for($this->company)->create(['name' => 'Henry']);
         HarvesterAssignment::factory()
             ->for($this->company)
-            ->create(['year' => $year, 'number' => 11, 'name' => 'Henry']);
+            ->for($harvester)
+            ->create(['year' => $year, 'number' => 11]);
 
         HarvestPrice::factory()
             ->for($this->company)
@@ -148,13 +158,14 @@ describe('Payslip Page', function () {
         $otherCompany = Company::factory()->create();
         $year = now()->year;
 
+        $otherHarvester = Harvester::factory()->for($otherCompany)->create(['name' => 'Secret']);
         HarvesterAssignment::factory()
             ->for($otherCompany)
-            ->create(['year' => $year, 'number' => 99, 'name' => 'Secret']);
+            ->for($otherHarvester)
+            ->create(['year' => $year, 'number' => 99]);
 
         Livewire::test('pages.harvest.payslip')
             ->set('selectedYear', $year)
-            ->call('harvesterNumbers')
             ->assertDontSee('99');
     });
 
@@ -174,9 +185,11 @@ describe('Payslip Page', function () {
         $year = now()->year;
         $product = Product::factory()->for($this->company)->create();
 
+        $harvester = Harvester::factory()->for($this->company)->create(['name' => 'Iris']);
         HarvesterAssignment::factory()
             ->for($this->company)
-            ->create(['year' => $year, 'number' => 12, 'name' => 'Iris']);
+            ->for($harvester)
+            ->create(['year' => $year, 'number' => 12]);
 
         HarvestRecord::factory(5)
             ->for($this->company)
@@ -193,14 +206,16 @@ describe('Payslip Page', function () {
     it('shows empty message when no payslip data', function () {
         $year = now()->year;
 
+        $harvester = Harvester::factory()->for($this->company)->create();
         HarvesterAssignment::factory()
             ->for($this->company)
+            ->for($harvester)
             ->create(['year' => $year, 'number' => 13]);
 
         Livewire::test('pages.harvest.payslip')
             ->set('selectedYear', $year)
             ->set('selectedHarvesterNumber', 13)
-            ->call('payslipData');
+            ->assertStatus(200);
 
         expect(true)->toBeTrue();
     });

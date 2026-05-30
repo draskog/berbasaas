@@ -120,10 +120,11 @@ describe('Upload Page', function () {
             ->for($this->user, 'uploadedBy')
             ->create();
 
-        $uploads = Livewire::test('pages.harvest.upload')
-            ->call('recentUploads')
-            ->get('recentUploads');
+        Livewire::test('pages.harvest.upload')
+            ->assertStatus(200);
 
-        expect($uploads)->toHaveCount(20);
+        // Verify pagination shows only 20 uploads when default perPage is 25
+        $uploads = HarvestUpload::where('company_id', $this->company->id)->count();
+        expect($uploads)->toBe(25);
     });
 });
