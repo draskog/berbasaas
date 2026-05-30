@@ -27,8 +27,8 @@ Incorrect:
 
 # .env committed to repo or shared in Slack
 
-STRIPE_SECRET=sk_live_xxxxx
-AWS_SECRET_ACCESS_KEY=xxxxx
+STRIPE_SECRET=xxxxxxx
+AWS_SECRET_ACCESS_KEY=xxxxxxx
 ```
 
 Correct:
