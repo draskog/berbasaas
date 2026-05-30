@@ -29,7 +29,7 @@ class HarvesterAssignmentSeeder extends Seeder
                 ],
                 [
                     'active' => true,
-                    'prefix' => fake()->boolean(20) ? fake()->name() : null,
+                    'prefix' => fake()->boolean(5) ? fake()->firstName() : null,
                 ]
             );
             for ($year = 2023; $year <= 2026; $year++) {
