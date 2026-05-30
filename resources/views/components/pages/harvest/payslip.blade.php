@@ -43,6 +43,23 @@ class extends Component
             ->values();
     }
 
+    #[Computed]
+    public function harvesterOptions()
+    {
+        return HarvesterAssignment::where('company_id', auth()->user()->company_id)
+            ->where('year', $this->selectedYear)
+            ->with('harvester')
+            ->distinct('number')
+            ->orderBy('number')
+            ->get()
+            ->map(fn ($assignment) => [
+                'value' => $assignment->number,
+                'label' => "#{$assignment->number}",
+                'name' => $assignment->harvester?->name ?? 'Unknown',
+                'prefix' => $assignment->harvester?->prefix ?? '-',
+            ]);
+    }
+
     public function mount(): void
     {
         $years = $this->availableYears;
@@ -152,36 +169,42 @@ class extends Component
 
 
     <flux:main>
-        <flux:header heading="Harvester Payslip">
+        <flux:header heading="Harvesters Payslips" class="flex justify-end space-x-3 items-center">
+            <flux:button icon="printer" variant="primary" onclick="window.print()">Print</flux:button>
         </flux:header>
 
         <div class="p-6">
-            <!-- Selector Panel (hidden on print) -->
-            <flux:card class="mb-8 print:hidden">
-                <div class="space-y-4">
-                    <div>
-                        <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
-                            @foreach($this->availableYears as $year)
-                                <flux:radio value="{{ $year }}" label="{{ $year }}" />
-                            @endforeach
-                        </flux:radio.group>
-                    </div>
-
-                    <div>
-                        <flux:radio.group wire:model.live="selectedHarvesterNumber" label="Harvester" variant="pills">
-                            @foreach ($this->harvesterNumbers as $number)
-                                <flux:radio value="{{ $number }}" label="#{{ $number }}" />
-                            @endforeach
-                        </flux:radio.group>
-                    </div>
-
-                    <div class="flex justify-end">
-                        <flux:button variant="primary" onclick="window.print()">
-                            🖨 Print
-                        </flux:button>
-                    </div>
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-4">
+                    <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
+                        <flux:radio label="All" value="" />
+                        @foreach($this->availableYears as $year)
+                            <flux:radio label="{{ $year }}" value="{{ $year }}" />
+                        @endforeach
+                    </flux:radio.group>
                 </div>
-            </flux:card>
+                <flux:select wire:model.live="perPage" size="sm" class="w-28">
+                    <flux:select.option value="25">25</flux:select.option>
+                    <flux:select.option value="50">50</flux:select.option>
+                    <flux:select.option value="100">100</flux:select.option>
+                    <flux:select.option value="0">All</flux:select.option>
+                </flux:select>
+            </div>
+            <div class="mb-6">
+                <flux:field>
+                    <flux:label>Harvester</flux:label>
+                    <flux:select wire:model.live="selectedHarvesterNumber" searchable placeholder="Search by number, name, or prefix...">
+                        @foreach ($this->harvesterOptions as $option)
+                            <flux:select.option value="{{ $option['value'] }}">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-medium">{{ $option['label'] }} - {{ $option['name'] }}</span>
+                                    <span class="text-xs text-zinc-500 ml-2">{{ $option['prefix'] }}</span>
+                                </div>
+                            </flux:select.option>
+                        @endforeach
+                    </flux:select>
+                </flux:field>
+            </div>
 
             <!-- Print Area -->
             <flux:card class="p-8 print:border-0 print:bg-white">
