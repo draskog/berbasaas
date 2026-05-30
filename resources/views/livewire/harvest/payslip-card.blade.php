@@ -111,6 +111,18 @@ new class extends Component
         return array_chunk($data, $chunkSize);
     }
 
+    #[Computed]
+    public function gridClass(): string
+    {
+        $count = count($this->chunkedData);
+
+        return match ($count) {
+            1 => 'grid-cols-1',
+            2 => 'grid-cols-2',
+            default => 'grid-cols-3',
+        };
+    }
+
     public function placeholder(): string
     {
         return <<<'HTML'
@@ -145,7 +157,7 @@ new class extends Component
         </div>
     @else
         <!-- Multi-column table layout -->
-        <div class="mb-8 grid gap-8" :class="{ 'grid-cols-1': count($this->chunkedData) === 1, 'grid-cols-2': count($this->chunkedData) === 2, 'grid-cols-3': count($this->chunkedData) >= 3 }">
+        <div class="mb-8 grid gap-8 {{ $this->gridClass }}">
             @foreach ($this->chunkedData as $chunk)
                 <flux:table>
                     <flux:table.columns>
