@@ -142,26 +142,30 @@ class extends Component {
     </flux:header>
 
     <div class="p-6">
-        <flux:field>
-            <flux:label>Product</flux:label>
-            <flux:select wire:model.live="selectedProductId">
-                <flux:select.option value="">Select a product...</flux:select.option>
-                @foreach($this->products as $product)
-                    <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
-                @endforeach
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-4">
+                <div class="w-48">
+                    <flux:field>
+                        <flux:label>Product</flux:label>
+                        <flux:select wire:model.live="selectedProductId">
+                            <flux:select.option value="">Select a product...</flux:select.option>
+                            @foreach($this->products as $product)
+                                <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    </flux:field>
+                </div>
+            </div>
+            <flux:select wire:model.live="perPage" size="sm" class="w-28">
+                <flux:select.option value="25">25</flux:select.option>
+                <flux:select.option value="50">50</flux:select.option>
+                <flux:select.option value="100">100</flux:select.option>
+                <flux:select.option value="0">All</flux:select.option>
             </flux:select>
-        </flux:field>
+        </div>
+
 
         @if($this->selectedProductId)
-            <div class="flex justify-end mb-4 mt-6">
-                <flux:select wire:model.live="perPage" size="sm" class="w-28">
-                    <flux:select.option value="25">25</flux:select.option>
-                    <flux:select.option value="50">50</flux:select.option>
-                    <flux:select.option value="100">100</flux:select.option>
-                    <flux:select.option value="0">All</flux:select.option>
-                </flux:select>
-            </div>
-
             <flux:table :paginate="$this->perPage > 0 ? $this->pricesForProduct : null">
                 <flux:table.columns>
                     <flux:table.column sortable :sorted="$sortBy === 'price_per_kg'" :direction="$sortDirection" wire:click="sort('price_per_kg')">Price (per kg)</flux:table.column>
