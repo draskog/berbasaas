@@ -37,6 +37,8 @@ class extends Component
 
     public bool $showResolveModal = false;
 
+    public bool $showUploadModal = false;
+
     public string $sortBy = 'created_at';
 
     public string $sortDirection = 'desc';
@@ -206,33 +208,11 @@ class extends Component
     </flux:header>
 
     <div class="p-6">
-        <flux:card class="mb-8">
-            <flux:heading size="lg" class="mb-6">Upload CSV File</flux:heading>
-
-            <div class="space-y-4">
-                <flux:field>
-                    <flux:label>Product</flux:label>
-                    <flux:select wire:model="selectedProductId">
-                        <flux:select.option value="">Select a product...</flux:select.option>
-                        @foreach($this->products as $product)
-                            <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                    <flux:error name="selectedProductId" />
-                </flux:field>
-
-                <flux:field>
-                    <flux:label>CSV File</flux:label>
-                    <flux:input type="file" wire:model="uploadedFile" accept=".csv" />
-                    <flux:error name="uploadedFile" />
-                </flux:field>
-
-                <flux:button variant="primary" wire:click="uploadFile" wire:loading.attr="disabled">
-                    <span wire:loading.remove>Upload</span>
-                    <span wire:loading>Uploading...</span>
-                </flux:button>
-            </div>
-        </flux:card>
+        <div class="mb-6">
+            <flux:button variant="primary" wire:click="$set('showUploadModal', true)">
+                Upload CSV File
+            </flux:button>
+        </div>
 
         <div class="flex items-center justify-between mb-4">
             <flux:heading size="lg">Recent Uploads</flux:heading>
@@ -339,4 +319,35 @@ class extends Component
         <flux:button variant="danger" wire:click="deleteUpload">Delete</flux:button>
     </div>
 </flux:modal>
+
+    <flux:modal name="upload-csv" :dismissible="true" wire:model="showUploadModal">
+        <flux:heading>Upload CSV File</flux:heading>
+
+        <div class="mt-6 space-y-4">
+            <flux:field>
+                <flux:label>Product</flux:label>
+                <flux:select wire:model="selectedProductId">
+                    <flux:select.option value="">Select a product...</flux:select.option>
+                    @foreach($this->products as $product)
+                        <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+                <flux:error name="selectedProductId" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>CSV File</flux:label>
+                <flux:input type="file" wire:model="uploadedFile" accept=".csv" />
+                <flux:error name="uploadedFile" />
+            </flux:field>
+        </div>
+
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:button variant="ghost" wire:click="$set('showUploadModal', false)">Cancel</flux:button>
+            <flux:button variant="primary" wire:click="uploadFile" wire:loading.attr="disabled">
+                <span wire:loading.remove>Upload</span>
+                <span wire:loading>Uploading...</span>
+            </flux:button>
+        </div>
+    </flux:modal>
 </flux:main>
