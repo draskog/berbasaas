@@ -133,11 +133,13 @@ describe('Harvesters Page', function () {
 
     it('only shows assignments for authenticated user company', function () {
         $otherCompany = Company::factory()->create();
+        $otherHarvester = Harvester::factory()->for($otherCompany)->create(['name' => 'OtherCompanyHarvester']);
         HarvesterAssignment::factory()
             ->for($otherCompany)
+            ->for($otherHarvester)
             ->create(['year' => now()->year, 'number' => 99]);
 
         Livewire::test('pages.harvest.harvesters')
-            ->assertDontSee('99');
+            ->assertDontSee('OtherCompanyHarvester');
     });
 });

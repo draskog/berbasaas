@@ -64,11 +64,11 @@ class extends Component
     public function availableYears()
     {
         return HarvestUpload::where('company_id', auth()->user()->company_id)
-            ->selectRaw('EXTRACT(YEAR FROM date_from) as year')
-            ->distinct()
-            ->orderByDesc('year')
-            ->pluck('year')
-            ->map(fn ($year) => (int) $year)
+            ->pluck('date_from')
+            ->map(fn ($date) => $date->year)
+            ->unique()
+            ->sortDesc()
+            ->values()
             ->toArray();
     }
 
