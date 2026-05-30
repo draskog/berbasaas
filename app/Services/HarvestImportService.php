@@ -109,35 +109,33 @@ class HarvestImportService
             $tare = $record['tare'];
             $harvesterNumber = $record['harvester_number'];
 
-            $reason = null;
+            $reasons = [];
 
-            // Check tare range first
+            // Check tare range
             if ($settings) {
                 if ($settings->tare_min !== null && $tare < $settings->tare_min) {
-                    $reason = 'tare_out_of_range';
+                    $reasons[] = 'tare_out_of_range';
                 } elseif ($settings->tare_max !== null && $tare > $settings->tare_max) {
-                    $reason = 'tare_out_of_range';
+                    $reasons[] = 'tare_out_of_range';
                 }
             }
 
             // Check if harvester exists for the year of weighed_at
-            if ($reason === null) {
-                $harvesterExists = HarvesterAssignment::where('company_id', $companyId)
-                    ->where('year', $weighedAt->year)
-                    ->where('number', $harvesterNumber)
-                    ->exists();
+            $harvesterExists = HarvesterAssignment::where('company_id', $companyId)
+                ->where('year', $weighedAt->year)
+                ->where('number', $harvesterNumber)
+                ->exists();
 
-                if (! $harvesterExists) {
-                    $reason = 'harvester_not_found';
-                }
+            if (! $harvesterExists) {
+                $reasons[] = 'harvester_not_found';
             }
 
-            if ($reason === null) {
+            if (empty($reasons)) {
                 // Valid: prepare for direct insert to harvest_records
                 $validRecords[] = $record;
             } else {
                 // Invalid: stage for user review
-                $stagingRecord = $record + ['status' => 'invalid', 'validation_reason' => $reason];
+                $stagingRecord = $record + ['status' => 'invalid', 'validation_reason' => $reasons];
                 $stagingRecords[] = $stagingRecord;
             }
         }

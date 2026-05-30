@@ -15,6 +15,7 @@ class HarvestRecordStaging extends Model
     {
         return [
             'weighed_at' => 'datetime',
+            'validation_reason' => 'array',
         ];
     }
 
