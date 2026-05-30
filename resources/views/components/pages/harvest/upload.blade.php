@@ -205,17 +205,15 @@ class extends Component
 
 <flux:main>
     <flux:header heading="Upload Harvest Records">
+        <flux:spacer />
+        <flux:button variant="primary" size="sm" icon="arrow-up-tray" wire:click="$set('showUploadModal', true)">
+            Upload CSV File
+        </flux:button>
     </flux:header>
 
     <div class="p-6">
-        <div class="mb-6">
-            <flux:button variant="primary" wire:click="$set('showUploadModal', true)">
-                Upload CSV File
-            </flux:button>
-        </div>
-
         <div class="flex items-center justify-between mb-4">
-            <flux:heading size="lg">Recent Uploads</flux:heading>
+            <flux:heading size="lg">Recent Upload Harvest Records</flux:heading>
             <flux:select wire:model.live="perPage" size="sm" class="w-28">
                 <flux:select.option value="25">25</flux:select.option>
                 <flux:select.option value="50">50</flux:select.option>

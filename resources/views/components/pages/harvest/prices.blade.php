@@ -199,7 +199,7 @@ class extends Component {
 <flux:main>
     <flux:header heading="Harvest Prices">
         <flux:spacer />
-        <flux:button icon="plus" wire:click="openCreatePriceModal">Add Price</flux:button>
+        <flux:button variant="primary" icon="plus" wire:click="openCreatePriceModal">Add Price</flux:button>
     </flux:header>
 
     <div class="p-6">
