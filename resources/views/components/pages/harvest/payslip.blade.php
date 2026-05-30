@@ -193,16 +193,13 @@ class extends Component
             <div class="mb-6">
                 <flux:field>
                     <flux:label>Harvester</flux:label>
-                    <flux:autocomplete wire:model.live="selectedHarvesterNumber" placeholder="Search by number, name, or prefix...">
+                    <flux:select wire:model.live="selectedHarvesterNumber" placeholder="Search by number, name, or prefix..." searchable>
                         @foreach ($this->harvesterOptions as $option)
-                            <flux:autocomplete.item value="{{ $option['value'] }}">
-                                <div class="flex items-center justify-between w-full">
-                                    <span class="font-medium">{{ $option['label'] }} - {{ $option['name'] }}</span>
-                                    <span class="text-xs text-zinc-500">{{ $option['prefix'] }}</span>
-                                </div>
-                            </flux:autocomplete.item>
+                            <flux:select.option value="{{ $option['value'] }}">
+                                {{ $option['label'] }} - {{ $option['name'] }} ({{ $option['prefix'] }})
+                            </flux:select.option>
                         @endforeach
-                    </flux:autocomplete>
+                    </flux:select>
                 </flux:field>
             </div>
 
