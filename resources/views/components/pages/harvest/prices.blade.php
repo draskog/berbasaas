@@ -205,7 +205,7 @@ class extends Component {
     <div class="p-6">
         <div class="flex items-center justify-between mb-6">
             <div class="flex-1">
-                <flux:radio.group wire:model.live="productFilter" variant="pills">
+                <flux:radio.group wire:model.live="productFilter" label="Product" variant="pills">
                     <flux:radio label="All" value="all" />
                     @foreach($this->products as $product)
                         <flux:radio :label="$product->name" :value="$product->id" />

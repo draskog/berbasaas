@@ -16,7 +16,7 @@ class extends Component
 {
     use WithPagination;
 
-    public int $selectedYear;
+    public string|int $selectedYear = '';
 
     public int $perPage = 25;
 
@@ -87,10 +87,13 @@ class extends Component
     public function allAssignments()
     {
         $query = HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
-            ->where('harvester_assignments.year', $this->selectedYear)
             ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
             ->select('harvester_assignments.*')
             ->with('harvester');
+
+        if ($this->selectedYear !== '') {
+            $query->where('harvester_assignments.year', $this->selectedYear);
+        }
 
         if ($this->selectedPrefix !== '') {
             $query->where('harvesters.prefix', $this->selectedPrefix);
@@ -113,12 +116,16 @@ class extends Component
     #[Computed]
     public function availablePrefixes()
     {
-        return HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
-            ->where('harvester_assignments.year', $this->selectedYear)
+        $query = HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
             ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
             ->whereNotNull('harvesters.prefix')
-            ->where('harvesters.prefix', '!=', '')
-            ->distinct()
+            ->where('harvesters.prefix', '!=', '');
+
+        if ($this->selectedYear !== '') {
+            $query->where('harvester_assignments.year', $this->selectedYear);
+        }
+
+        return $query->distinct()
             ->pluck('harvesters.prefix')
             ->sort()
             ->values();
@@ -127,12 +134,16 @@ class extends Component
     #[Computed]
     public function printAssignments()
     {
-        return HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
-            ->where('harvester_assignments.year', $this->selectedYear)
+        $query = HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
             ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
             ->select('harvester_assignments.*')
-            ->with('harvester')
-            ->when($this->selectedPrefix !== '', fn ($q) => $q->where('harvesters.prefix', $this->selectedPrefix))
+            ->with('harvester');
+
+        if ($this->selectedYear !== '') {
+            $query->where('harvester_assignments.year', $this->selectedYear);
+        }
+
+        return $query->when($this->selectedPrefix !== '', fn ($q) => $q->where('harvesters.prefix', $this->selectedPrefix))
             ->orderBy('harvester_assignments.number')
             ->get();
     }
@@ -298,8 +309,7 @@ class extends Component
 
             <div x-show="showPrintSettings" class="absolute mt-2 p-4 border rounded space-y-4 bg-white dark:bg-zinc-800 shadow-lg z-10">
                 <flux:field>
-                    <flux:label>Columns per row</flux:label>
-                    <flux:radio.group wire:model.live="printColumns" variant="pills">
+                    <flux:radio.group wire:model.live="printColumns" label="Columns per row" variant="pills">
                         <flux:radio label="2" value="2" />
                         <flux:radio label="3" value="3" />
                         <flux:radio label="4" value="4" />
@@ -319,16 +329,12 @@ class extends Component
     <div class="p-6">
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-4">
-                <div class="w-32">
-                    <flux:field>
-                        <flux:label>Year</flux:label>
-                        <flux:select wire:model.live="selectedYear">
-                            @foreach($this->availableYears as $year)
-                                <flux:select.option value="{{ $year }}">{{ $year }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
-                    </flux:field>
-                </div>
+                <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
+                    <flux:radio label="All" value="" />
+                    @foreach($this->availableYears as $year)
+                        <flux:radio label="{{ $year }}" value="{{ $year }}" />
+                    @endforeach
+                </flux:radio.group>
             </div>
             <flux:select wire:model.live="perPage" size="sm" class="w-28">
                 <flux:select.option value="25">25</flux:select.option>
@@ -340,7 +346,7 @@ class extends Component
 
         @if($this->availablePrefixes->isNotEmpty())
             <div class="mb-6">
-                <flux:radio.group wire:model.live="selectedPrefix" variant="pills">
+                <flux:radio.group wire:model.live="selectedPrefix" label="Prefix" variant="pills">
                     <flux:radio label="All" value="" />
                     @foreach($this->availablePrefixes as $prefix)
                         <flux:radio :label="$prefix" :value="$prefix" />
