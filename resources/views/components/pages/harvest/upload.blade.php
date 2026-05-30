@@ -185,6 +185,12 @@ class extends Component {
         );
     }
 
+    public function confirmResolveUpload (int $id): void
+    {
+        $this->resolvingUploadId = $id;
+        $this->showResolveModal = true;
+    }
+
     public function confirmDeleteUpload (int $id): void
     {
         $this->deletingUploadId = $id;
@@ -373,7 +379,7 @@ class extends Component {
                         <flux:table.cell>{{ $upload->uploadedBy->name }}</flux:table.cell>
                         <flux:table.cell class="flex gap-2">
                             @if($upload->invalid_count > 0)
-                                <flux:button size="sm" variant="primary" wire:click="$set('resolvingUploadId', {{ $upload->id }}); $set('showResolveModal', true)">
+                                <flux:button size="sm" variant="primary" wire:click="confirmResolveUpload({{ $upload->id }})">
                                     Resolve
                                 </flux:button>
                             @endif
