@@ -34,6 +34,35 @@ class extends Component
 
     public string $sortDirection = 'asc';
 
+    // Edit Harvester modal
+    public ?int $editingHarvesterId = null;
+
+    public string $editHarvesterName = '';
+
+    public string $editHarvesterPrefix = '';
+
+    public bool $editHarvesterActive = true;
+
+    public bool $showEditHarvesterModal = false;
+
+    // Edit Assignment modal
+    public ?int $editingAssignmentId = null;
+
+    public ?int $editAssignmentNumber = null;
+
+    public bool $showEditAssignmentModal = false;
+
+    // Add Harvester modal
+    public string $newHarvesterName = '';
+
+    public string $newHarvesterPrefix = '';
+
+    // Prefix filter
+    public string $selectedPrefix = '';
+
+    // Print config
+    public int $printColumns = 3;
+
     #[Computed]
     public function availableYears()
     {
@@ -57,16 +86,55 @@ class extends Component
     #[Computed]
     public function allAssignments()
     {
-        $query = HarvesterAssignment::where('company_id', auth()->user()->company_id)
-            ->where('year', $this->selectedYear)
-            ->with('harvester')
-            ->orderBy($this->sortBy, $this->sortDirection);
+        $query = HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
+            ->where('harvester_assignments.year', $this->selectedYear)
+            ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
+            ->select('harvester_assignments.*')
+            ->with('harvester');
+
+        if ($this->selectedPrefix !== '') {
+            $query->where('harvesters.prefix', $this->selectedPrefix);
+        }
+
+        $sortColumn = match ($this->sortBy) {
+            'prefix' => 'harvesters.prefix',
+            'name' => 'harvesters.name',
+            default => 'harvester_assignments.number',
+        };
+        $query->orderBy($sortColumn, $this->sortDirection);
 
         if ($this->perPage === 0) {
             return $query->get();
         }
 
         return $query->paginate($this->perPage);
+    }
+
+    #[Computed]
+    public function availablePrefixes()
+    {
+        return HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
+            ->where('harvester_assignments.year', $this->selectedYear)
+            ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
+            ->whereNotNull('harvesters.prefix')
+            ->where('harvesters.prefix', '!=', '')
+            ->distinct()
+            ->pluck('harvesters.prefix')
+            ->sort()
+            ->values();
+    }
+
+    #[Computed]
+    public function printAssignments()
+    {
+        return HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
+            ->where('harvester_assignments.year', $this->selectedYear)
+            ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
+            ->select('harvester_assignments.*')
+            ->with('harvester')
+            ->when($this->selectedPrefix !== '', fn ($q) => $q->where('harvesters.prefix', $this->selectedPrefix))
+            ->orderBy('harvester_assignments.number')
+            ->get();
     }
 
     public function mount(): void
@@ -133,12 +201,91 @@ class extends Component
         $this->showDeleteModal = false;
         Flux::toast(text: 'Assignment deleted.', variant: 'warning');
     }
+
+    public function createHarvester(): void
+    {
+        $this->validate([
+            'newHarvesterName' => 'required|string|max:255',
+            'newHarvesterPrefix' => 'nullable|string|max:10',
+        ]);
+
+        Harvester::create([
+            'company_id' => auth()->user()->company_id,
+            'name' => $this->newHarvesterName,
+            'prefix' => $this->newHarvesterPrefix ?: null,
+            'active' => true,
+        ]);
+
+        $this->reset(['newHarvesterName', 'newHarvesterPrefix']);
+        $this->dispatch('close-modal', name: 'create-harvester');
+        Flux::toast(text: 'Harvester added.', variant: 'success');
+    }
+
+    public function editHarvester(int $id): void
+    {
+        $harvester = Harvester::where('company_id', auth()->user()->company_id)->findOrFail($id);
+        $this->editingHarvesterId = $id;
+        $this->editHarvesterName = $harvester->name;
+        $this->editHarvesterPrefix = $harvester->prefix ?? '';
+        $this->editHarvesterActive = $harvester->active;
+        $this->showEditHarvesterModal = true;
+    }
+
+    public function updateHarvester(): void
+    {
+        $this->validate([
+            'editHarvesterName' => 'required|string|max:255',
+            'editHarvesterPrefix' => 'nullable|string|max:10',
+        ]);
+
+        Harvester::where('company_id', auth()->user()->company_id)
+            ->findOrFail($this->editingHarvesterId)
+            ->update([
+                'name' => $this->editHarvesterName,
+                'prefix' => $this->editHarvesterPrefix ?: null,
+                'active' => $this->editHarvesterActive,
+            ]);
+
+        $this->showEditHarvesterModal = false;
+        Flux::toast(text: 'Harvester updated.', variant: 'success');
+    }
+
+    public function editAssignment(int $id): void
+    {
+        $assignment = HarvesterAssignment::where('company_id', auth()->user()->company_id)->findOrFail($id);
+        $this->editingAssignmentId = $id;
+        $this->editAssignmentNumber = $assignment->number;
+        $this->showEditAssignmentModal = true;
+    }
+
+    public function updateAssignment(): void
+    {
+        $this->validate([
+            'editAssignmentNumber' => 'required|integer|min:1|max:200',
+        ]);
+
+        HarvesterAssignment::where('company_id', auth()->user()->company_id)
+            ->findOrFail($this->editingAssignmentId)
+            ->update(['number' => $this->editAssignmentNumber]);
+
+        $this->showEditAssignmentModal = false;
+        Flux::toast(text: 'Assignment updated.', variant: 'success');
+    }
+
+    public function updatedSelectedYear(): void
+    {
+        $this->selectedPrefix = '';
+        $this->resetPage();
+    }
 }; ?>
 
 
 <flux:main>
     <flux:header heading="Harvesters">
         <flux:spacer />
+        <flux:modal.trigger name="create-harvester">
+            <flux:button icon="user-plus">Add Harvester</flux:button>
+        </flux:modal.trigger>
         <flux:modal.trigger name="create-assignment">
             <flux:button icon="plus">Add Assignment</flux:button>
         </flux:modal.trigger>
@@ -164,6 +311,17 @@ class extends Component
             </flux:select>
         </div>
 
+        @if($this->availablePrefixes->isNotEmpty())
+            <div class="mb-6">
+                <flux:radio.group wire:model.live="selectedPrefix" variant="pills">
+                    <flux:radio label="All" value="" />
+                    @foreach($this->availablePrefixes as $prefix)
+                        <flux:radio :label="$prefix" :value="$prefix" />
+                    @endforeach
+                </flux:radio.group>
+            </div>
+        @endif
+
         <flux:table :paginate="$this->perPage > 0 ? $this->allAssignments : null">
             <flux:table.columns>
                 <flux:table.column sortable :sorted="$sortBy === 'number'" :direction="$sortDirection" wire:click="sort('number')">Number</flux:table.column>
@@ -179,7 +337,11 @@ class extends Component
                         <flux:table.cell>{{ $assignment->harvester?->name }}</flux:table.cell>
                         <flux:table.cell>{{ $assignment->harvester?->prefix ?? '—' }}</flux:table.cell>
                         <flux:table.cell>
-                            <flux:button variant="danger" size="sm" wire:click="confirmDeleteAssignment({{ $assignment->id }})">Delete</flux:button>
+                            <div class="flex gap-1">
+                                <flux:button size="sm" wire:click="editHarvester({{ $assignment->harvester_id }})">Edit Harvester</flux:button>
+                                <flux:button size="sm" wire:click="editAssignment({{ $assignment->id }})">Edit Assignment</flux:button>
+                                <flux:button variant="danger" size="sm" wire:click="confirmDeleteAssignment({{ $assignment->id }})">Delete</flux:button>
+                            </div>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
@@ -189,46 +351,152 @@ class extends Component
                 @endforelse
             </flux:table.rows>
         </flux:table>
+
+        <div class="mt-6 print:hidden" x-data="{ showPrintSettings: false }">
+            <flux:button icon="printer" @click="showPrintSettings = !showPrintSettings">Print Labels</flux:button>
+
+            <div x-show="showPrintSettings" class="mt-4 p-4 border rounded space-y-4">
+                <flux:field>
+                    <flux:label>Columns per row</flux:label>
+                    <flux:radio.group wire:model.live="printColumns" variant="pills">
+                        <flux:radio label="2" value="2" />
+                        <flux:radio label="3" value="3" />
+                        <flux:radio label="4" value="4" />
+                    </flux:radio.group>
+                </flux:field>
+                <flux:button onclick="window.print()" icon="printer" variant="primary">Print</flux:button>
+            </div>
+        </div>
     </div>
+
+    <flux:modal name="create-harvester">
+        <flux:heading>Add Harvester</flux:heading>
+
+        <div class="mt-6 space-y-4">
+            <flux:field>
+                <flux:label>Name</flux:label>
+                <flux:input wire:model="newHarvesterName" />
+                <flux:error name="newHarvesterName" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Prefix</flux:label>
+                <flux:input wire:model="newHarvesterPrefix" />
+                <flux:error name="newHarvesterPrefix" />
+            </flux:field>
+        </div>
+
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:modal.close>
+                <flux:button variant="ghost">Cancel</flux:button>
+            </flux:modal.close>
+            <flux:button variant="primary" wire:click="createHarvester">Save</flux:button>
+        </div>
+    </flux:modal>
 
     <flux:modal name="create-assignment">
-    <flux:heading>Add Harvester Assignment</flux:heading>
-    <flux:subheading>Assign a harvester for {{ $this->selectedYear }}</flux:subheading>
+        <flux:heading>Add Harvester Assignment</flux:heading>
+        <flux:subheading>Assign a harvester for {{ $this->selectedYear }}</flux:subheading>
 
-    <div class="mt-6 space-y-4">
-        <flux:field>
-            <flux:label>Assignment Number</flux:label>
-            <flux:input type="number" wire:model="newNumber" />
-            <flux:error name="newNumber" />
-        </flux:field>
+        <div class="mt-6 space-y-4">
+            <flux:field>
+                <flux:label>Assignment Number</flux:label>
+                <flux:input type="number" wire:model="newNumber" />
+                <flux:error name="newNumber" />
+            </flux:field>
 
-        <flux:field>
-            <flux:label>Harvester</flux:label>
-            <flux:select wire:model="newHarvesterId">
-                <flux:select.option value="">Select a harvester...</flux:select.option>
-                @foreach($this->harvesters as $harvester)
-                    <flux:select.option value="{{ $harvester->id }}">{{ $harvester->name }} @if($harvester->prefix)({{ $harvester->prefix }})@endif</flux:select.option>
-                @endforeach
-            </flux:select>
-            <flux:error name="newHarvesterId" />
-        </flux:field>
+            <flux:field>
+                <flux:label>Harvester</flux:label>
+                <flux:select wire:model="newHarvesterId">
+                    <flux:select.option value="">Select a harvester...</flux:select.option>
+                    @foreach($this->harvesters as $harvester)
+                        <flux:select.option value="{{ $harvester->id }}">{{ $harvester->name }} @if($harvester->prefix)({{ $harvester->prefix }})@endif</flux:select.option>
+                    @endforeach
+                </flux:select>
+                <flux:error name="newHarvesterId" />
+            </flux:field>
+        </div>
+
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:modal.close>
+                <flux:button variant="ghost">Cancel</flux:button>
+            </flux:modal.close>
+            <flux:button variant="primary" wire:click="createAssignment">Save</flux:button>
+        </div>
+    </flux:modal>
+
+    <flux:modal name="edit-harvester" wire:model="showEditHarvesterModal">
+        <flux:heading>Edit Harvester</flux:heading>
+
+        <div class="mt-6 space-y-4">
+            <flux:field>
+                <flux:label>Name</flux:label>
+                <flux:input wire:model="editHarvesterName" />
+                <flux:error name="editHarvesterName" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Prefix</flux:label>
+                <flux:input wire:model="editHarvesterPrefix" />
+                <flux:error name="editHarvesterPrefix" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Active</flux:label>
+                <flux:switch wire:model="editHarvesterActive" />
+            </flux:field>
+        </div>
+
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:button variant="ghost" wire:click="$set('showEditHarvesterModal', false)">Cancel</flux:button>
+            <flux:button variant="primary" wire:click="updateHarvester">Save</flux:button>
+        </div>
+    </flux:modal>
+
+    <flux:modal name="edit-assignment" wire:model="showEditAssignmentModal">
+        <flux:heading>Edit Harvester Assignment</flux:heading>
+
+        <div class="mt-6 space-y-4">
+            <flux:field>
+                <flux:label>Assignment Number</flux:label>
+                <flux:input type="number" wire:model="editAssignmentNumber" />
+                <flux:error name="editAssignmentNumber" />
+            </flux:field>
+        </div>
+
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:button variant="ghost" wire:click="$set('showEditAssignmentModal', false)">Cancel</flux:button>
+            <flux:button variant="primary" wire:click="updateAssignment">Save</flux:button>
+        </div>
+    </flux:modal>
+
+    <flux:modal name="confirm-delete-assignment" :dismissible="false" wire:model="showDeleteModal">
+        <flux:heading>Delete Assignment</flux:heading>
+        <flux:text>Are you sure you want to delete this harvester assignment? This cannot be undone.</flux:text>
+
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">Cancel</flux:button>
+            <flux:button variant="danger" wire:click="deleteAssignment">Delete</flux:button>
+        </div>
+    </flux:modal>
+
+    <div class="hidden print:block">
+        <style>
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        </style>
+        <div style="display: grid; grid-template-columns: repeat({{ $printColumns }}, 1fr); gap: 4mm; padding: 10mm;">
+            @foreach($this->printAssignments as $assignment)
+                <div style="border: 0.3mm solid #999; padding: 3mm; min-height: 25mm; break-inside: avoid;">
+                    <div style="font-size: 20pt; font-weight: 700; line-height: 1;">{{ $assignment->number }}</div>
+                    <div style="font-size: 9pt; margin-top: 2mm;">{{ $assignment->harvester?->name }}</div>
+                    @if($assignment->harvester?->prefix)
+                        <div style="font-size: 8pt; color: #555; margin-top: 1mm;">{{ $assignment->harvester->prefix }}</div>
+                    @endif
+                </div>
+            @endforeach
+        </div>
     </div>
-
-    <div class="mt-6 flex gap-2 justify-end">
-        <flux:modal.close>
-            <flux:button variant="ghost">Cancel</flux:button>
-        </flux:modal.close>
-        <flux:button variant="primary" wire:click="createAssignment">Save</flux:button>
-    </div>
-</flux:modal>
-
-<flux:modal name="confirm-delete-assignment" :dismissible="false" wire:model="showDeleteModal">
-    <flux:heading>Delete Assignment</flux:heading>
-    <flux:text>Are you sure you want to delete this harvester assignment? This cannot be undone.</flux:text>
-
-    <div class="mt-6 flex gap-2 justify-end">
-        <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">Cancel</flux:button>
-        <flux:button variant="danger" wire:click="deleteAssignment">Delete</flux:button>
-    </div>
-</flux:modal>
 </flux:main>
