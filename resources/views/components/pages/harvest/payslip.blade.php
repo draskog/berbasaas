@@ -35,9 +35,18 @@ class extends Component {
     #[Computed]
     public function harvesterNumbers ()
     {
-        return HarvestRecord::where('company_id', auth()->user()->company_id)
-            ->whereYear('weighed_at', $this->selectedYear)
-            ->distinct()
+        $query = HarvestRecord::where('company_id', auth()->user()->company_id)
+            ->whereYear('weighed_at', $this->selectedYear);
+
+        if ($this->dateFrom) {
+            $query->whereDate('weighed_at', '>=', $this->dateFrom);
+        }
+
+        if ($this->dateTo) {
+            $query->whereDate('weighed_at', '<=', $this->dateTo);
+        }
+
+        return $query->distinct()
             ->pluck('harvester_number')
             ->sort()
             ->values();
