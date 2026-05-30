@@ -6,7 +6,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Services\HarvestImportService;
 use Illuminate\Database\Seeder;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Illuminate\Http\UploadedFile;
 
 class HarvestRecordSeeder extends Seeder
 {
