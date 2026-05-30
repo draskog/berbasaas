@@ -293,15 +293,32 @@ class extends Component
 
     <div class="p-6">
         <div class="flex items-center justify-between mb-4">
-            <div class="w-32">
-                <flux:field>
-                    <flux:label>Year</flux:label>
-                    <flux:select wire:model.live="selectedYear">
-                        @foreach($this->availableYears as $year)
-                            <flux:select.option value="{{ $year }}">{{ $year }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                </flux:field>
+            <div class="flex items-center gap-4">
+                <div class="w-32">
+                    <flux:field>
+                        <flux:label>Year</flux:label>
+                        <flux:select wire:model.live="selectedYear">
+                            @foreach($this->availableYears as $year)
+                                <flux:select.option value="{{ $year }}">{{ $year }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    </flux:field>
+                </div>
+                <div class="print:hidden" x-data="{ showPrintSettings: false }">
+                    <flux:button icon="printer" @click="showPrintSettings = !showPrintSettings">Print Labels</flux:button>
+
+                    <div x-show="showPrintSettings" class="absolute mt-2 p-4 border rounded space-y-4 bg-white dark:bg-zinc-800 shadow-lg z-10">
+                        <flux:field>
+                            <flux:label>Columns per row</flux:label>
+                            <flux:radio.group wire:model.live="printColumns" variant="pills">
+                                <flux:radio label="2" value="2" />
+                                <flux:radio label="3" value="3" />
+                                <flux:radio label="4" value="4" />
+                            </flux:radio.group>
+                        </flux:field>
+                        <flux:button onclick="window.print()" icon="printer" variant="primary">Print</flux:button>
+                    </div>
+                </div>
             </div>
             <flux:select wire:model.live="perPage" size="sm" class="w-28">
                 <flux:select.option value="25">25</flux:select.option>
@@ -351,22 +368,6 @@ class extends Component
                 @endforelse
             </flux:table.rows>
         </flux:table>
-
-        <div class="mt-6 print:hidden" x-data="{ showPrintSettings: false }">
-            <flux:button icon="printer" @click="showPrintSettings = !showPrintSettings">Print Labels</flux:button>
-
-            <div x-show="showPrintSettings" class="mt-4 p-4 border rounded space-y-4">
-                <flux:field>
-                    <flux:label>Columns per row</flux:label>
-                    <flux:radio.group wire:model.live="printColumns" variant="pills">
-                        <flux:radio label="2" value="2" />
-                        <flux:radio label="3" value="3" />
-                        <flux:radio label="4" value="4" />
-                    </flux:radio.group>
-                </flux:field>
-                <flux:button onclick="window.print()" icon="printer" variant="primary">Print</flux:button>
-            </div>
-        </div>
     </div>
 
     <flux:modal name="create-harvester">
