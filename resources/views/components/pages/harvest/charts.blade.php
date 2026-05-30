@@ -65,11 +65,28 @@ class extends Component {
     {
         $years = $this->availableYears;
         $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
-        $this->fromDate = now()->startOfYear()->format('Y-m-d');
-        $this->toDate = now()->endOfYear()->format('Y-m-d');
-        $product = $this->products->first();
-        if ($product) {
-            $this->selectedProductId = $product->id;
+        $this->updateDatesForSelectedYear();
+    }
+
+    public function updatedSelectedYear(): void
+    {
+        $this->updateDatesForSelectedYear();
+    }
+
+    private function updateDatesForSelectedYear(): void
+    {
+        if ($this->fromDate) {
+            $fromCarbon = \Carbon\Carbon::parse($this->fromDate);
+            $this->fromDate = \Carbon\Carbon::create($this->selectedYear, $fromCarbon->month, $fromCarbon->day)->format('Y-m-d');
+        } else {
+            $this->fromDate = \Carbon\Carbon::create($this->selectedYear, 1, 1)->format('Y-m-d');
+        }
+
+        if ($this->toDate) {
+            $toCarbon = \Carbon\Carbon::parse($this->toDate);
+            $this->toDate = \Carbon\Carbon::create($this->selectedYear, $toCarbon->month, $toCarbon->day)->format('Y-m-d');
+        } else {
+            $this->toDate = \Carbon\Carbon::create($this->selectedYear, 12, 31)->format('Y-m-d');
         }
     }
 
@@ -330,6 +347,47 @@ class extends Component {
             ],
         ];
     }
+
+    #[Computed]
+    public function dailyChartRows()
+    {
+        $data = $this->baseQuery()
+            ->selectRaw('DATE(weighed_at) as date, SUM(weight) as total_weight')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->map(fn($row) => [
+                'date' => \Carbon\Carbon::parse($row->date)->format('d.m.Y'),
+                'total_weight' => round($row->total_weight, 2),
+            ]);
+
+        if ($data->count() === 1) {
+            $firstDate = \Carbon\Carbon::createFromFormat('d.m.Y', $data->first()['date'])->subDay();
+            $data->prepend([
+                'date' => $firstDate->format('d.m.Y'),
+                'total_weight' => 0,
+            ]);
+        }
+
+        return $data;
+    }
+
+    #[Computed]
+    public function harvesterChartRows()
+    {
+        $names = $this->harvesterNames();
+
+        return $this->baseQuery()
+            ->selectRaw('harvester_number, SUM(weight) as total_weight')
+            ->groupBy('harvester_number')
+            ->orderByDesc('total_weight')
+            ->limit(20)
+            ->get()
+            ->map(fn($row) => [
+                'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
+                'total_weight' => round($row->total_weight, 2),
+            ]);
+    }
 }; ?>
 
 
@@ -409,120 +467,93 @@ class extends Component {
                 @endif
             </div>
 
-            <!-- Tab Navigation -->
-            <flux:tabs wire:model="activeTab" class="mb-6">
-                <flux:tab name="daily">Daily Summary</flux:tab>
-                <flux:tab name="harvesters">Harvesters</flux:tab>
-                <flux:tab name="products">Products</flux:tab>
-            </flux:tabs>
+            <!-- Tabs -->
+            <flux:tab.group>
+                <flux:tabs wire:model.live="activeTab" class="mb-6">
+                    <flux:tab name="daily">Daily Summary</flux:tab>
+                    <flux:tab name="harvesters">Harvesters</flux:tab>
+                    <flux:tab name="products">Products</flux:tab>
+                </flux:tabs>
 
-            <!-- Data Tables -->
-            <!-- Daily Summary Tab -->
-            <flux:tab.panel name="daily">
-                <flux:card>
-                    <flux:table>
-                        <flux:table.columns>
-                            <flux:table.column sortable :sorted="$chartDailySortBy === 'date'" :direction="$chartDailySortDirection" wire:click="sortChartDaily('date')">Date</flux:table.column>
-                            <flux:table.column sortable :sorted="$chartDailySortBy === 'bucket_count'" :direction="$chartDailySortDirection" wire:click="sortChartDaily('bucket_count')">Buckets</flux:table.column>
-                            <flux:table.column sortable :sorted="$chartDailySortBy === 'total_weight'" :direction="$chartDailySortDirection" wire:click="sortChartDaily('total_weight')">Total kg</flux:table.column>
-                        </flux:table.columns>
+                <!-- Daily Summary Tab -->
+                <flux:tab.panel name="daily">
+                    @if ($this->dailyChartRows->isNotEmpty())
+                        <flux:card>
+                            <flux:chart :value="$this->dailyChartRows->toArray()" class="aspect-3/1">
+                                <flux:chart.svg>
+                                    <flux:chart.bar field="total_weight" class="text-blue-500" />
+                                    <flux:chart.axis axis="x" field="date">
+                                        <flux:chart.axis.tick />
+                                        <flux:chart.axis.line />
+                                    </flux:chart.axis>
+                                    <flux:chart.axis axis="y">
+                                        <flux:chart.axis.grid />
+                                        <flux:chart.axis.tick />
+                                    </flux:chart.axis>
+                                </flux:chart.svg>
+                            </flux:chart>
+                        </flux:card>
+                    @else
+                        <flux:card>
+                            <div class="flex items-center justify-center h-96 text-zinc-500">No data available</div>
+                        </flux:card>
+                    @endif
+                </flux:tab.panel>
 
-                        <flux:table.rows>
-                            @forelse ($this->dailyData as $row)
-                                <flux:table.row>
-                                    <flux:table.cell>{{ \Carbon\Carbon::parse($row['date'])->format('d.m.Y') }}</flux:table.cell>
-                                    <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
-                                </flux:table.row>
-                            @empty
-                                <flux:table.row>
-                                    <flux:table.cell colspan="3" class="text-center text-gray-500">No data</flux:table.cell>
-                                </flux:table.row>
-                            @endforelse
+                <!-- Harvester Summary Tab -->
+                <flux:tab.panel name="harvesters">
+                    @if ($this->harvesterChartRows->isNotEmpty())
+                        <flux:card>
+                            <flux:chart :value="$this->harvesterChartRows->toArray()" class="aspect-3/1">
+                                <flux:chart.svg>
+                                    <flux:chart.bar field="total_weight" class="text-green-500" />
+                                    <flux:chart.axis axis="x" field="name">
+                                        <flux:chart.axis.tick />
+                                        <flux:chart.axis.line />
+                                    </flux:chart.axis>
+                                    <flux:chart.axis axis="y">
+                                        <flux:chart.axis.grid />
+                                        <flux:chart.axis.tick />
+                                    </flux:chart.axis>
+                                </flux:chart.svg>
+                            </flux:chart>
+                        </flux:card>
+                    @else
+                        <flux:card>
+                            <div class="flex items-center justify-center h-96 text-zinc-500">No data available</div>
+                        </flux:card>
+                    @endif
+                </flux:tab.panel>
 
-                            @if (!empty($this->dailyData))
-                                <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                                    <flux:table.cell>Total</flux:table.cell>
-                                    <flux:table.cell>{{ $this->dailyTotals['buckets'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($this->dailyTotals['weight'], 3, ',', '.') }}</flux:table.cell>
-                                </flux:table.row>
-                            @endif
-                        </flux:table.rows>
-                    </flux:table>
-                </flux:card>
-            </flux:tab.panel>
-
-            <!-- Harvester Summary Tab -->
-            <flux:tab.panel name="harvesters">
-                <flux:card>
-                    <flux:table>
-                        <flux:table.columns>
-                            <flux:table.column sortable :sorted="$chartHarvesterSortBy === 'harvester_number'" :direction="$chartHarvesterSortDirection" wire:click="sortChartHarvesters('harvester_number')">#</flux:table.column>
-                            <flux:table.column>Name</flux:table.column>
-                            <flux:table.column sortable :sorted="$chartHarvesterSortBy === 'bucket_count'" :direction="$chartHarvesterSortDirection" wire:click="sortChartHarvesters('bucket_count')">Buckets</flux:table.column>
-                            <flux:table.column sortable :sorted="$chartHarvesterSortBy === 'total_weight'" :direction="$chartHarvesterSortDirection" wire:click="sortChartHarvesters('total_weight')">Total kg</flux:table.column>
-                        </flux:table.columns>
-
-                        <flux:table.rows>
-                            @forelse ($this->harvesterData as $row)
-                                <flux:table.row>
-                                    <flux:table.cell>{{ $row['number'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
-                                </flux:table.row>
-                            @empty
-                                <flux:table.row>
-                                    <flux:table.cell colspan="4" class="text-center text-gray-500">No data</flux:table.cell>
-                                </flux:table.row>
-                            @endforelse
-
-                            @if (!empty($this->harvesterData))
-                                <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                                    <flux:table.cell colspan="2">Total</flux:table.cell>
-                                    <flux:table.cell>{{ $this->harvesterTotals['buckets'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($this->harvesterTotals['weight'], 3, ',', '.') }}</flux:table.cell>
-                                </flux:table.row>
-                            @endif
-                        </flux:table.rows>
-                    </flux:table>
-                </flux:card>
-            </flux:tab.panel>
-
-            <!-- Products Summary Tab -->
-            <flux:tab.panel name="products">
-                <flux:card>
-                    <flux:table>
-                        <flux:table.columns>
-                            <flux:table.column sortable :sorted="$chartProductSortBy === 'name'" :direction="$chartProductSortDirection" wire:click="sortChartProducts('name')">Product</flux:table.column>
-                            <flux:table.column sortable :sorted="$chartProductSortBy === 'bucket_count'" :direction="$chartProductSortDirection" wire:click="sortChartProducts('bucket_count')">Buckets</flux:table.column>
-                            <flux:table.column sortable :sorted="$chartProductSortBy === 'total_weight'" :direction="$chartProductSortDirection" wire:click="sortChartProducts('total_weight')">Total kg</flux:table.column>
-                        </flux:table.columns>
-
-                        <flux:table.rows>
-                            @forelse ($this->productData as $row)
-                                <flux:table.row>
-                                    <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
-                                </flux:table.row>
-                            @empty
-                                <flux:table.row>
-                                    <flux:table.cell colspan="3" class="text-center text-gray-500">No data</flux:table.cell>
-                                </flux:table.row>
-                            @endforelse
-
-                            @if (!empty($this->productData))
-                                <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                                    <flux:table.cell>Total</flux:table.cell>
-                                    <flux:table.cell>{{ $this->productTotals['buckets'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($this->productTotals['weight'], 3, ',', '.') }}</flux:table.cell>
-                                </flux:table.row>
-                            @endif
-                        </flux:table.rows>
-                    </flux:table>
-                </flux:card>
-            </flux:tab.panel>
+                <!-- Products Summary Tab -->
+                <flux:tab.panel name="products">
+                    @if (count($this->productData) > 0)
+                        <flux:card>
+                            <div class="overflow-x-auto">
+                                <flux:table>
+                                    <flux:table.columns>
+                                        <flux:table.column>Product</flux:table.column>
+                                        <flux:table.column class="text-right">Weight (kg)</flux:table.column>
+                                        <flux:table.column class="text-right">Buckets</flux:table.column>
+                                    </flux:table.columns>
+                                    <flux:table.rows>
+                                        @foreach ($this->productData as $row)
+                                            <flux:table.row>
+                                                <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
+                                                <flux:table.cell class="text-right">{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
+                                                <flux:table.cell class="text-right">{{ $row['bucket_count'] }}</flux:table.cell>
+                                            </flux:table.row>
+                                        @endforeach
+                                    </flux:table.rows>
+                                </flux:table>
+                            </div>
+                        </flux:card>
+                    @else
+                        <flux:card>
+                            <div class="flex items-center justify-center h-96 text-zinc-500">No data available</div>
+                        </flux:card>
+                    @endif
+                </flux:tab.panel>
+            </flux:tab.group>
         </div>
     </flux:main>
-
