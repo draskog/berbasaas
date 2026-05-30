@@ -325,19 +325,19 @@ class extends Component
         <flux:table :paginate="$this->perPage > 0 ? $this->allAssignments : null">
             <flux:table.columns>
                 <flux:table.column sortable :sorted="$sortBy === 'number'" :direction="$sortDirection" wire:click="sort('number')">Number</flux:table.column>
-                <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">Name</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'prefix'" :direction="$sortDirection" wire:click="sort('prefix')">Prefix</flux:table.column>
-                <flux:table.column>Actions</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">Name</flux:table.column>
+                <flux:table.column class="text-right">Actions</flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
                 @forelse($this->allAssignments as $assignment)
                     <flux:table.row>
                         <flux:table.cell>{{ $assignment->number }}</flux:table.cell>
-                        <flux:table.cell>{{ $assignment->harvester?->name }}</flux:table.cell>
                         <flux:table.cell>{{ $assignment->harvester?->prefix ?? '—' }}</flux:table.cell>
-                        <flux:table.cell>
-                            <div class="flex gap-1">
+                        <flux:table.cell>{{ $assignment->harvester?->name }}</flux:table.cell>
+                        <flux:table.cell class="text-right">
+                            <div class="flex gap-1 justify-end">
                                 <flux:button size="sm" wire:click="editHarvester({{ $assignment->harvester_id }})">Edit Harvester</flux:button>
                                 <flux:button size="sm" wire:click="editAssignment({{ $assignment->id }})">Edit Assignment</flux:button>
                                 <flux:button variant="danger" size="sm" wire:click="confirmDeleteAssignment({{ $assignment->id }})">Delete</flux:button>
