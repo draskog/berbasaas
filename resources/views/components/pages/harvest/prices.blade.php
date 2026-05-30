@@ -19,6 +19,8 @@ class extends Component {
 
     public ?int $selectedProductId = null;
 
+    public string $productFilter = '';
+
     public int $perPage = 25;
 
     public array $prices = [];
@@ -63,13 +65,12 @@ class extends Component {
     #[Computed]
     public function pricesForProduct()
     {
-        if (! $this->selectedProductId) {
-            return [];
-        }
-
         $query = HarvestPrice::where('company_id', auth()->user()->company_id)
-            ->where('product_id', $this->selectedProductId)
             ->orderBy($this->sortBy, $this->sortDirection);
+
+        if ($this->productFilter !== '' && $this->productFilter !== 'all') {
+            $query->where('product_id', $this->productFilter);
+        }
 
         if ($this->perPage === 0) {
             return $query->get();
@@ -81,10 +82,7 @@ class extends Component {
     public function mount(): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
-        $product = $this->products->first();
-        if ($product) {
-            $this->selectedProductId = $product->id;
-        }
+        $this->productFilter = 'all';
     }
 
     public function updatedPerPage(): void
@@ -103,7 +101,7 @@ class extends Component {
         $this->resetPage();
     }
 
-    #[On('updated-selectedProductId')]
+    #[On('updated-productFilter')]
     public function updatePrices(): void
     {
         $this->resetPage();
@@ -111,7 +109,9 @@ class extends Component {
 
     public function openCreatePriceModal(): void
     {
-        $this->newProductId = $this->selectedProductId;
+        if ($this->productFilter !== '' && $this->productFilter !== 'all') {
+            $this->newProductId = (int) $this->productFilter;
+        }
         $this->showCreatePriceModal = true;
     }
 
@@ -203,19 +203,14 @@ class extends Component {
     </flux:header>
 
     <div class="p-6">
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-4">
-                <div class="w-48">
-                    <flux:field>
-                        <flux:label>Product</flux:label>
-                        <flux:select wire:model.live="selectedProductId">
-                            <flux:select.option value="">Select a product...</flux:select.option>
-                            @foreach($this->products as $product)
-                                <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
-                    </flux:field>
-                </div>
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex-1">
+                <flux:radio.group wire:model.live="productFilter" variant="pills">
+                    <flux:radio label="All" value="all" />
+                    @foreach($this->products as $product)
+                        <flux:radio :label="$product->name" :value="$product->id" />
+                    @endforeach
+                </flux:radio.group>
             </div>
             <flux:select wire:model.live="perPage" size="sm" class="w-28">
                 <flux:select.option value="25">25</flux:select.option>
@@ -225,37 +220,36 @@ class extends Component {
             </flux:select>
         </div>
 
+        <flux:table :paginate="$this->perPage > 0 ? $this->pricesForProduct : null">
+            <flux:table.columns>
+                <flux:table.column sortable :sorted="$sortBy === 'product_id'" :direction="$sortDirection" wire:click="sort('product_id')">Product</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'price_per_kg'" :direction="$sortDirection" wire:click="sort('price_per_kg')">Price (per kg)</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'effective_from'" :direction="$sortDirection" wire:click="sort('effective_from')">Effective From</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'effective_to'" :direction="$sortDirection" wire:click="sort('effective_to')">Effective To</flux:table.column>
+                <flux:table.column>Actions</flux:table.column>
+            </flux:table.columns>
 
-        @if($this->selectedProductId)
-            <flux:table :paginate="$this->perPage > 0 ? $this->pricesForProduct : null">
-                <flux:table.columns>
-                    <flux:table.column sortable :sorted="$sortBy === 'price_per_kg'" :direction="$sortDirection" wire:click="sort('price_per_kg')">Price (per kg)</flux:table.column>
-                    <flux:table.column sortable :sorted="$sortBy === 'effective_from'" :direction="$sortDirection" wire:click="sort('effective_from')">Effective From</flux:table.column>
-                    <flux:table.column sortable :sorted="$sortBy === 'effective_to'" :direction="$sortDirection" wire:click="sort('effective_to')">Effective To</flux:table.column>
-                    <flux:table.column>Actions</flux:table.column>
-                </flux:table.columns>
-
-                <flux:table.rows>
-                    @forelse($this->pricesForProduct as $price)
-                        <flux:table.row>
-                            <flux:table.cell>{{ number_format($price->price_per_kg, 3, ',', '.') }}</flux:table.cell>
-                            <flux:table.cell>{{ $price->effective_from->format('d.m.Y') }}</flux:table.cell>
-                            <flux:table.cell>{{ $price->effective_to?->format('d.m.Y') ?? 'Current' }}</flux:table.cell>
-                            <flux:table.cell>
-                                <div class="flex gap-1">
-                                    <flux:button size="sm" wire:click="editPrice({{ $price->id }})">Edit</flux:button>
-                                    <flux:button variant="danger" size="sm" wire:click="confirmDeletePrice({{ $price->id }})">Delete</flux:button>
-                                </div>
-                            </flux:table.cell>
-                        </flux:table.row>
-                    @empty
-                        <flux:table.row>
-                            <flux:table.cell colspan="4" class="text-center text-gray-500">No prices recorded</flux:table.cell>
-                        </flux:table.row>
-                    @endforelse
-                </flux:table.rows>
-            </flux:table>
-        @endif
+            <flux:table.rows>
+                @forelse($this->pricesForProduct as $price)
+                    <flux:table.row>
+                        <flux:table.cell>{{ $price->product->name }}</flux:table.cell>
+                        <flux:table.cell>{{ number_format($price->price_per_kg, 3, ',', '.') }}</flux:table.cell>
+                        <flux:table.cell>{{ $price->effective_from->format('d.m.Y') }}</flux:table.cell>
+                        <flux:table.cell>{{ $price->effective_to?->format('d.m.Y') ?? 'Current' }}</flux:table.cell>
+                        <flux:table.cell>
+                            <div class="flex gap-1">
+                                <flux:button size="sm" wire:click="editPrice({{ $price->id }})">Edit</flux:button>
+                                <flux:button variant="danger" size="sm" wire:click="confirmDeletePrice({{ $price->id }})">Delete</flux:button>
+                            </div>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @empty
+                    <flux:table.row>
+                        <flux:table.cell colspan="5" class="text-center text-gray-500">No prices recorded</flux:table.cell>
+                    </flux:table.row>
+                @endforelse
+            </flux:table.rows>
+        </flux:table>
     </div>
 
     <flux:modal name="create-price" wire:model="showCreatePriceModal">
