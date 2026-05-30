@@ -16,7 +16,7 @@ class extends Component
 {
     use WithPagination;
 
-    public string|int $selectedYear = '';
+    public mixed $selectedYear = '';
 
     public int $perPage = 25;
 
@@ -360,7 +360,8 @@ class extends Component
                 <flux:table.column sortable :sorted="$sortBy === 'number'" :direction="$sortDirection" wire:click="sort('number')">Number</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'prefix'" :direction="$sortDirection" wire:click="sort('prefix')">Prefix</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">Name</flux:table.column>
-                <flux:table.column class="text-right">Actions</flux:table.column>
+                <flux:table.column>Harvest Year</flux:table.column>
+                <flux:table.column class="text-right w-fit whitespace-nowrap">Actions</flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
@@ -369,17 +370,21 @@ class extends Component
                         <flux:table.cell>{{ $assignment->number }}</flux:table.cell>
                         <flux:table.cell>{{ $assignment->harvester?->prefix ?? '—' }}</flux:table.cell>
                         <flux:table.cell>{{ $assignment->harvester?->name }}</flux:table.cell>
+                        <flux:table.cell>{{ $assignment->year }}</flux:table.cell>
                         <flux:table.cell class="text-right">
-                            <div class="flex gap-1 justify-end">
-                                <flux:button size="sm" wire:click="editHarvester({{ $assignment->harvester_id }})">Edit Harvester</flux:button>
-                                <flux:button size="sm" wire:click="editAssignment({{ $assignment->id }})">Edit Assignment</flux:button>
-                                <flux:button variant="danger" size="sm" wire:click="confirmDeleteAssignment({{ $assignment->id }})">Delete</flux:button>
-                            </div>
+                            <flux:dropdown position="bottom" align="end">
+                                <flux:button icon="ellipsis-horizontal" size="sm" variant="subtle" />
+                                <flux:menu>
+                                    <flux:menu.item icon="pencil" wire:click="editHarvester({{ $assignment->harvester_id }})">Edit Harvester</flux:menu.item>
+                                    <flux:menu.item icon="pencil" wire:click="editAssignment({{ $assignment->id }})">Edit Assignment</flux:menu.item>
+                                    <flux:menu.item icon="trash" variant="danger" wire:click="confirmDeleteAssignment({{ $assignment->id }})">Delete</flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="4" class="text-center text-gray-500">No assignments for {{ $this->selectedYear }}</flux:table.cell>
+                        <flux:table.cell colspan="5" class="text-center text-gray-500">No assignments for {{ $this->selectedYear }}</flux:table.cell>
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>
