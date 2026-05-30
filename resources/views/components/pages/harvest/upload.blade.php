@@ -108,6 +108,7 @@ class extends Component
         );
 
         $this->uploadedFile = null;
+        $this->showUploadModal = false;
         Flux::toast(
             text: "Successfully imported {$upload->record_count} records from {$upload->original_filename} ({$upload->date_from} to {$upload->date_to})",
             variant: 'success'
