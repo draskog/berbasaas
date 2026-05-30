@@ -12,7 +12,7 @@ use Livewire\Volt\Component;
 
 new
 #[Layout('layouts.app')]
-#[Title('Charts · eBorovnica')]
+#[Title('Charts')]
 class extends Component {
     public int $selectedYear;
     public ?string $fromDate = null;

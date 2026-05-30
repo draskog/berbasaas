@@ -12,7 +12,7 @@ use Livewire\Volt\Component;
 
 new
 #[Layout('layouts.app')]
-#[Title('Payslip · eBorovnica')]
+#[Title('Payslip')]
 class extends Component {
     public int $selectedYear;
     public int $selectedHarvesterNumber = 0;

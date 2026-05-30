@@ -11,7 +11,7 @@ use Livewire\WithPagination;
 
 new
 #[Layout('layouts.app')]
-#[Title('Harvesters · eBorovnica')]
+#[Title('Harvesters')]
 class extends Component
 {
     use WithPagination;

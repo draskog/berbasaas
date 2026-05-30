@@ -13,7 +13,7 @@ use Livewire\WithPagination;
 
 new
 #[Layout('layouts.app.sidebar')]
-#[Title('Prices · eBorovnica')]
+#[Title('Prices')]
 class extends Component {
     use WithPagination;
 

@@ -16,9 +16,8 @@ use Livewire\WithPagination;
 
 new
 #[Layout('layouts.app')]
-#[Title('Upload · eBorovnica')]
-class extends Component
-{
+#[Title('Upload')]
+class extends Component {
     use WithFileUploads, WithPagination;
 
     public int $selectedProductId = 0;
@@ -52,7 +51,7 @@ class extends Component
     public int $filterYear = 0;
 
     #[Computed]
-    public function products()
+    public function products ()
     {
         return Product::where('company_id', auth()->user()->company_id)
             ->where('active', true)
@@ -61,11 +60,11 @@ class extends Component
     }
 
     #[Computed]
-    public function availableYears()
+    public function availableYears ()
     {
         return HarvestUpload::where('company_id', auth()->user()->company_id)
             ->pluck('date_from')
-            ->map(fn ($date) => $date->year)
+            ->map(fn($date) => $date->year)
             ->unique()
             ->sortDesc()
             ->values()
@@ -73,11 +72,11 @@ class extends Component
     }
 
     #[Computed]
-    public function recentUploads()
+    public function recentUploads ()
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
             ->withCount('harvestRecords as valid_count')
-            ->withCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
+            ->withCount(['stagingRecords as invalid_count' => fn($q) => $q->where('status', 'invalid')]);
 
         if ($this->filterYear !== 0) {
             $query->whereYear('date_from', $this->filterYear);
@@ -88,7 +87,7 @@ class extends Component
         }
 
         if ($this->filterStatus === 'valid') {
-            $query->doesntHave('stagingRecords', function ($q) {
+            $query->whereDoesntHave('stagingRecords', function ($q) {
                 $q->where('status', 'invalid');
             });
         } elseif ($this->filterStatus === 'invalid') {
@@ -98,7 +97,7 @@ class extends Component
         }
 
         if ($this->filterResolved === 'resolved') {
-            $query->doesntHave('stagingRecords', function ($q) {
+            $query->whereDoesntHave('stagingRecords', function ($q) {
                 $q->where('status', 'invalid');
             });
         } elseif ($this->filterResolved === 'unresolved') {
@@ -116,7 +115,7 @@ class extends Component
         return $query->paginate($this->perPage);
     }
 
-    public function mount(): void
+    public function mount (): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
         $currentYear = now()->year;
@@ -127,32 +126,32 @@ class extends Component
         }
     }
 
-    public function updatedPerPage(): void
+    public function updatedPerPage (): void
     {
         $this->resetPage();
     }
 
-    public function updatedFilterProduct(): void
+    public function updatedFilterProduct (): void
     {
         $this->resetPage();
     }
 
-    public function updatedFilterStatus(): void
+    public function updatedFilterStatus (): void
     {
         $this->resetPage();
     }
 
-    public function updatedFilterResolved(): void
+    public function updatedFilterResolved (): void
     {
         $this->resetPage();
     }
 
-    public function updatedFilterYear(): void
+    public function updatedFilterYear (): void
     {
         $this->resetPage();
     }
 
-    public function sort(string $column): void
+    public function sort (string $column): void
     {
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -163,7 +162,7 @@ class extends Component
         $this->resetPage();
     }
 
-    public function uploadFile(): void
+    public function uploadFile (): void
     {
         $this->validate([
             'selectedProductId' => 'required|exists:products,id',
@@ -186,13 +185,13 @@ class extends Component
         );
     }
 
-    public function confirmDeleteUpload(int $id): void
+    public function confirmDeleteUpload (int $id): void
     {
         $this->deletingUploadId = $id;
         $this->showDeleteModal = true;
     }
 
-    public function deleteUpload(): void
+    public function deleteUpload (): void
     {
         HarvestUpload::find($this->deletingUploadId)?->delete();
         $this->deletingUploadId = null;
@@ -200,7 +199,7 @@ class extends Component
         Flux::toast(text: 'Upload deleted.', variant: 'warning');
     }
 
-    public function autoResolve(int $uploadId): void
+    public function autoResolve (int $uploadId): void
     {
         $upload = HarvestUpload::findOrFail($uploadId);
 
@@ -235,7 +234,7 @@ class extends Component
             } else {
                 // Try to find closest harvester number
                 $closest = $validAssignments->keys()
-                    ->sortBy(fn ($num) => abs($num - $record->harvester_number))
+                    ->sortBy(fn($num) => abs($num - $record->harvester_number))
                     ->first();
 
                 if ($closest !== null && abs($closest - $record->harvester_number) <= 5) {
@@ -257,7 +256,7 @@ class extends Component
         Flux::toast(text: $message, variant: $resolved > 0 ? 'success' : 'warning');
     }
 
-    private function promoteRecord(HarvestRecordStaging $record): void
+    private function promoteRecord (HarvestRecordStaging $record): void
     {
         HarvestRecord::create([
             'company_id' => $record->company_id,
@@ -277,7 +276,7 @@ class extends Component
 
 <flux:main>
     <flux:header heading="Upload Harvest Records">
-        <flux:spacer />
+        <flux:spacer/>
         <flux:button variant="primary" size="sm" icon="arrow-up-tray" wire:click="$set('showUploadModal', true)">
             Upload CSV File
         </flux:button>
@@ -297,35 +296,35 @@ class extends Component
         <div class="space-y-4 mb-6">
             <div>
                 <flux:radio.group wire:model.live="filterYear" label="Year" variant="pills">
-                    <flux:radio value="0" label="All Years" />
+                    <flux:radio value="0" label="All Years"/>
                     @foreach($this->availableYears as $year)
-                        <flux:radio value="{{ $year }}" label="{{ $year }}" />
+                        <flux:radio value="{{ $year }}" label="{{ $year }}"/>
                     @endforeach
                 </flux:radio.group>
             </div>
 
             <div>
                 <flux:radio.group wire:model.live="filterProduct" label="Product" variant="pills">
-                    <flux:radio value="" label="All Products" />
+                    <flux:radio value="" label="All Products"/>
                     @foreach($this->products as $product)
-                        <flux:radio value="{{ $product->id }}" label="{{ $product->name }}" />
+                        <flux:radio value="{{ $product->id }}" label="{{ $product->name }}"/>
                     @endforeach
                 </flux:radio.group>
             </div>
 
             <div>
                 <flux:radio.group wire:model.live="filterStatus" label="Status" variant="pills">
-                    <flux:radio value="all" label="All" />
-                    <flux:radio value="valid" label="Valid" />
-                    <flux:radio value="invalid" label="Invalid" />
+                    <flux:radio value="all" label="All"/>
+                    <flux:radio value="valid" label="Valid"/>
+                    <flux:radio value="invalid" label="Invalid"/>
                 </flux:radio.group>
             </div>
 
             <div>
                 <flux:radio.group wire:model.live="filterResolved" label="Resolution Status" variant="pills">
-                    <flux:radio value="all" label="All" />
-                    <flux:radio value="resolved" label="Resolved" />
-                    <flux:radio value="unresolved" label="Unresolved" />
+                    <flux:radio value="all" label="All"/>
+                    <flux:radio value="resolved" label="Resolved"/>
+                    <flux:radio value="unresolved" label="Unresolved"/>
                 </flux:radio.group>
             </div>
         </div>
@@ -348,20 +347,22 @@ class extends Component
                         <flux:table.cell>{{ $upload->original_filename }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->product->name }}</flux:table.cell>
                         <flux:table.cell>
-                            @if($upload->invalid_count > 0)
-                                <flux:badge color="orange">{{ $upload->record_count }}</flux:badge>
-                            @else
+                            @if($upload->invalid_count === 0)
                                 <flux:badge color="green">{{ $upload->record_count }}</flux:badge>
+                            @else
+                                {{ $upload->record_count }}
                             @endif
                         </flux:table.cell>
                         <flux:table.cell>
-                            @if($upload->invalid_count === 0)
-                                <flux:badge color="green">{{ $upload->valid_count }}</flux:badge>
+                            {{ $upload->valid_count }}
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            @if($upload->invalid_count > 0)
+                                <flux:badge color="orange">{{ $upload->invalid_count }}</flux:badge>
                             @else
-                                {{ $upload->valid_count }}
+                                {{ $upload->invalid_count }}
                             @endif
                         </flux:table.cell>
-                        <flux:table.cell>{{ $upload->invalid_count }}</flux:table.cell>
                         <flux:table.cell>
                             @if($upload->date_from->isSameDay($upload->date_to))
                                 {{ $upload->date_from->format('d.m.Y') }}
@@ -417,14 +418,14 @@ class extends Component
     </flux:modal>
 
     <flux:modal name="confirm-delete-upload" :dismissible="false" wire:model="showDeleteModal">
-    <flux:heading>Delete Upload</flux:heading>
-    <flux:text>Are you sure you want to delete this upload? This cannot be undone.</flux:text>
+        <flux:heading>Delete Upload</flux:heading>
+        <flux:text>Are you sure you want to delete this upload? This cannot be undone.</flux:text>
 
-    <div class="mt-6 flex gap-2 justify-end">
-        <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">Cancel</flux:button>
-        <flux:button variant="danger" wire:click="deleteUpload">Delete</flux:button>
-    </div>
-</flux:modal>
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">Cancel</flux:button>
+            <flux:button variant="danger" wire:click="deleteUpload">Delete</flux:button>
+        </div>
+    </flux:modal>
 
     <flux:modal name="upload-csv" :dismissible="true" wire:model="showUploadModal">
         <flux:heading>Upload CSV File</flux:heading>
