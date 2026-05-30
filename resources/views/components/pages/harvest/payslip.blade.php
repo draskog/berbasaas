@@ -186,7 +186,6 @@ class extends Component
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-4">
                     <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
-                        <flux:radio label="All" value="" />
                         @foreach($this->availableYears as $year)
                             <flux:radio label="{{ $year }}" value="{{ $year }}" />
                         @endforeach
