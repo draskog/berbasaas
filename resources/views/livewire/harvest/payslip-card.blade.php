@@ -162,14 +162,14 @@ new class extends Component
                                 <flux:table.cell>{{ number_format($row['weight'], 3, ',', '.') }}</flux:table.cell>
                                 <flux:table.cell>
                                     @if ($row['price_per_kg'])
-                                        €{{ number_format($row['price_per_kg'], 3, ',', '.') }}
+                                        {{ number_format($row['price_per_kg'], 2, ',', '.') }}
                                     @else
                                         —
                                     @endif
                                 </flux:table.cell>
                                 <flux:table.cell>
                                     @if ($row['earnings'] !== null)
-                                        €{{ number_format($row['earnings'], 2, ',', '.') }}
+                                        {{ number_format($row['earnings'], 2, ',', '.') }}
                                     @else
                                         —
                                     @endif
@@ -194,7 +194,7 @@ new class extends Component
                 </div>
                 <div>
                     <flux:text size="sm" class="text-gray-500 dark:text-zinc-400">Total Earnings</flux:text>
-                    <flux:text size="md">€{{ number_format($this->payslipTotals['earnings'], 2, ',', '.') }}</flux:text>
+                    <flux:text size="md">{{ number_format($this->payslipTotals['earnings'], 2, ',', '.') }}</flux:text>
                 </div>
             </div>
         </div>
