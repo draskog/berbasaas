@@ -147,6 +147,13 @@ class HarvestImportService
 
         // Insert invalid records into staging
         foreach (array_chunk($stagingRecords, 500) as $chunk) {
+            // JSON-encode validation_reason since insert() bypasses model casts
+            foreach ($chunk as &$record) {
+                if (is_array($record['validation_reason'])) {
+                    $record['validation_reason'] = json_encode($record['validation_reason']);
+                }
+            }
+            unset($record);
             HarvestRecordStaging::insert($chunk);
         }
 
