@@ -178,7 +178,7 @@ class extends Component
             ]);
         }
 
-        return $query->paginate($this->perPage, pageName: 'daily')->map(fn ($row) => [
+        return $query->paginate($this->perPage, pageName: 'daily')->through(fn ($row) => [
             'date' => $row->date,
             'bucket_count' => $row->bucket_count,
             'total_weight' => round($row->total_weight, 3),
@@ -218,7 +218,7 @@ class extends Component
             ]);
         }
 
-        return $query->paginate($this->perPage, pageName: 'harv')->map(fn ($row) => [
+        return $query->paginate($this->perPage, pageName: 'harv')->through(fn ($row) => [
             'number' => $row->harvester_number,
             'name' => $names[$row->harvester_number] ?? "#{$row->harvester_number}",
             'bucket_count' => $row->bucket_count,
@@ -262,7 +262,7 @@ class extends Component
             ]);
         }
 
-        return $query->paginate($this->perPage, pageName: 'prod')->map(fn ($row) => [
+        return $query->paginate($this->perPage, pageName: 'prod')->through(fn ($row) => [
             'name' => $row->product->name,
             'bucket_count' => $row->bucket_count,
             'total_weight' => round($row->total_weight, 3),

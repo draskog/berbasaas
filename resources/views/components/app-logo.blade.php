@@ -7,7 +7,7 @@
         <x-slot name="logo">
             <div class="flex items-center justify-center w-full">
                 <!-- Full logo (hidden when collapsed) -->
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 312.65 85.53" class="h-6 w-auto in-data-flux-sidebar-collapsed-desktop:hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 312.65 85.53" class="h-6 in-data-flux-sidebar-collapsed-desktop:hidden" width="100%" height="100%">
                     <defs>
                         <style>.cls-1 { fill: #72be44; } .cls-2 { fill: #345094; }</style>
                     </defs>
@@ -47,7 +47,7 @@
                 </svg>
 
                 <!-- Collapsed logo (icon only) -->
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 85.53" class="h-6 w-auto hidden in-data-flux-sidebar-collapsed-desktop:block">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 85.53" class="h-6 hidden in-data-flux-sidebar-collapsed-desktop:block" width="100%" height="100%">
                     <defs>
                         <style>.cls-1 { fill: #72be44; } .cls-2 { fill: #345094; }</style>
                     </defs>
@@ -68,7 +68,7 @@
 @else
     <flux:brand {{ $attributes }}>
         <x-slot name="logo">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 312.65 85.53" class="h-6 w-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 312.65 85.53" class="h-6" width="100%" height="100%">
                 <defs>
                     <style>.cls-1 { fill: #72be44; } .cls-2 { fill: #345094; }</style>
                 </defs>

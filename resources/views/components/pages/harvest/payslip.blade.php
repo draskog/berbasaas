@@ -71,7 +71,9 @@ class extends Component {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->selectedYear)
             ->where('number', $this->selectedHarvesterNumber)
-            ->value('name');
+            ->first()
+            ?->harvester
+            ?->name;
     }
 
     private function priceAt(string $date): ?float
