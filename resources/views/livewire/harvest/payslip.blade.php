@@ -24,6 +24,10 @@ class extends Component {
     #[Url]
     public ?string $dateTo = null;
 
+    public bool $showDateRangeModal = false;
+
+    public ?string $dateRangeValue = null;
+
     #[Computed]
     public function availableYears ()
     {
@@ -56,6 +60,46 @@ class extends Component {
             ->values();
     }
 
+    #[Computed]
+    public function datesWithData(): array
+    {
+        return HarvestRecord::query()
+            ->where('company_id', auth()->user()->company_id)
+            ->whereYear('weighed_at', $this->selectedYear)
+            ->selectRaw('DATE(weighed_at) as record_date')
+            ->distinct()
+            ->pluck('record_date')
+            ->toArray();
+    }
+
+    #[Computed]
+    public function unavailableDates(): array
+    {
+        $start = Carbon::create($this->selectedYear, 1, 1);
+        $end = Carbon::create($this->selectedYear, 12, 31);
+        $with = array_flip($this->datesWithData);
+        $unavail = [];
+        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
+            $key = $d->format('Y-m-d');
+            if (! isset($with[$key])) {
+                $unavail[] = $key;
+            }
+        }
+        return $unavail;
+    }
+
+    #[Computed]
+    public function minDate(): string
+    {
+        return Carbon::create($this->selectedYear, 1, 1)->format('Y-m-d');
+    }
+
+    #[Computed]
+    public function maxDate(): string
+    {
+        return Carbon::create($this->selectedYear, 12, 31)->format('Y-m-d');
+    }
+
     public function mount (): void
     {
         $years = $this->availableYears;
@@ -66,12 +110,31 @@ class extends Component {
         if (! $this->dateFrom || ! $this->dateTo) {
             $this->updateDatesForSelectedYear();
         }
+
+        if ($this->dateFrom && $this->dateTo) {
+            $this->dateRangeValue = $this->dateFrom . '/' . $this->dateTo;
+        }
     }
 
     #[On('updated-selected-year')]
     public function updatedSelectedYear (): void
     {
         $this->updateDatesForSelectedYear();
+        if ($this->dateFrom && $this->dateTo) {
+            $this->dateRangeValue = $this->dateFrom . '/' . $this->dateTo;
+        }
+    }
+
+    public function updatedDateRangeValue(?string $value): void
+    {
+        if ($value && str_contains($value, '/')) {
+            [$from, $to] = explode('/', $value, 2);
+            if ($from && $to) {
+                $this->dateFrom = $from;
+                $this->dateTo = $to;
+                $this->showDateRangeModal = false;
+            }
+        }
     }
 
     private function updateDatesForSelectedYear (): void
@@ -127,8 +190,16 @@ class extends Component {
             </flux:radio.group>
         </div>
         <div class="mb-6 flex flex-wrap items-end gap-4">
-            <flux:input type="date" size="sm" wire:model.live="dateFrom" label="From"/>
-            <flux:input type="date" size="sm" wire:model.live="dateTo" label="To"/>
+            <flux:button
+                wire:click="$set('showDateRangeModal', true)"
+                variant="ghost"
+                size="sm"
+                icon="calendar-days"
+            >
+                {{ $dateFrom ? \Carbon\Carbon::parse($dateFrom)->isoFormat('D MMM YYYY') : '—' }}
+                –
+                {{ $dateTo ? \Carbon\Carbon::parse($dateTo)->isoFormat('D MMM YYYY') : '—' }}
+            </flux:button>
         </div>
         <div class="space-y-8">
             @foreach ($this->harvesterNumbers as $harvesterNumber)
@@ -149,6 +220,27 @@ class extends Component {
                 </div>
             @endforeach
         </div>
+
+        <flux:modal name="date-range-picker" wire:model="showDateRangeModal">
+            <flux:heading size="lg">Select Date Range</flux:heading>
+
+            <flux:calendar
+                mode="range"
+                week-numbers
+                locale="{{ app()->getLocale() }}"
+                :unavailable="$this->unavailableDates"
+                :min="$this->minDate"
+                :max="$this->maxDate"
+                wire:model.live="dateRangeValue"
+                class="mt-4"
+            />
+
+            <div class="mt-6 flex justify-end">
+                <flux:button variant="ghost" wire:click="$set('showDateRangeModal', false)">
+                    Close
+                </flux:button>
+            </div>
+        </flux:modal>
     </div>
 </flux:main>
 

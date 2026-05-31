@@ -28,6 +28,10 @@ class extends Component
     #[Url]
     public int $selectedProductId = 0;
 
+    public bool $showDateRangeModal = false;
+
+    public ?string $dateRangeValue = null;
+
     #[Url]
     public int $selectedHarvesterNumber = 0;
 
@@ -79,6 +83,46 @@ class extends Component
             ->values();
     }
 
+    #[Computed]
+    public function datesWithData(): array
+    {
+        return HarvestRecord::query()
+            ->where('company_id', auth()->user()->company_id)
+            ->whereYear('weighed_at', $this->selectedYear)
+            ->selectRaw('DATE(weighed_at) as record_date')
+            ->distinct()
+            ->pluck('record_date')
+            ->toArray();
+    }
+
+    #[Computed]
+    public function unavailableDates(): array
+    {
+        $start = Carbon::create($this->selectedYear, 1, 1);
+        $end = Carbon::create($this->selectedYear, 12, 31);
+        $with = array_flip($this->datesWithData);
+        $unavail = [];
+        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
+            $key = $d->format('Y-m-d');
+            if (! isset($with[$key])) {
+                $unavail[] = $key;
+            }
+        }
+        return $unavail;
+    }
+
+    #[Computed]
+    public function minDate(): string
+    {
+        return Carbon::create($this->selectedYear, 1, 1)->format('Y-m-d');
+    }
+
+    #[Computed]
+    public function maxDate(): string
+    {
+        return Carbon::create($this->selectedYear, 12, 31)->format('Y-m-d');
+    }
+
     public function mount(): void
     {
         $years = $this->availableYears;
@@ -89,11 +133,30 @@ class extends Component
         if (! $this->fromDate || ! $this->toDate) {
             $this->updateDatesForSelectedYear();
         }
+
+        if ($this->fromDate && $this->toDate) {
+            $this->dateRangeValue = $this->fromDate . '/' . $this->toDate;
+        }
     }
 
     public function updatedSelectedYear(): void
     {
         $this->updateDatesForSelectedYear();
+        if ($this->fromDate && $this->toDate) {
+            $this->dateRangeValue = $this->fromDate . '/' . $this->toDate;
+        }
+    }
+
+    public function updatedDateRangeValue(?string $value): void
+    {
+        if ($value && str_contains($value, '/')) {
+            [$from, $to] = explode('/', $value, 2);
+            if ($from && $to) {
+                $this->fromDate = $from;
+                $this->toDate = $to;
+                $this->showDateRangeModal = false;
+            }
+        }
     }
 
     private function updateDatesForSelectedYear(): void
@@ -494,8 +557,16 @@ class extends Component
 
             <!-- Date Filters -->
             <div class="mb-6 flex flex-wrap items-end gap-4">
-                <flux:input type="date" size="sm" wire:model.live="fromDate" label="From"/>
-                <flux:input type="date" size="sm" wire:model.live="toDate" label="To"/>
+                <flux:button
+                    wire:click="$set('showDateRangeModal', true)"
+                    variant="ghost"
+                    size="sm"
+                    icon="calendar-days"
+                >
+                    {{ $fromDate ? \Carbon\Carbon::parse($fromDate)->isoFormat('D MMM YYYY') : '—' }}
+                    –
+                    {{ $toDate ? \Carbon\Carbon::parse($toDate)->isoFormat('D MMM YYYY') : '—' }}
+                </flux:button>
             </div>
 
             <!-- Tabs -->
@@ -586,5 +657,26 @@ class extends Component
                     @endif
                 </flux:tab.panel>
             </flux:tab.group>
+
+            <flux:modal name="date-range-picker" wire:model="showDateRangeModal">
+                <flux:heading size="lg">Select Date Range</flux:heading>
+
+                <flux:calendar
+                    mode="range"
+                    week-numbers
+                    locale="{{ app()->getLocale() }}"
+                    :unavailable="$this->unavailableDates"
+                    :min="$this->minDate"
+                    :max="$this->maxDate"
+                    wire:model.live="dateRangeValue"
+                    class="mt-4"
+                />
+
+                <div class="mt-6 flex justify-end">
+                    <flux:button variant="ghost" wire:click="$set('showDateRangeModal', false)">
+                        Close
+                    </flux:button>
+                </div>
+            </flux:modal>
         </div>
     </flux:main>

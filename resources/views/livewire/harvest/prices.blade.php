@@ -49,6 +49,10 @@ class extends Component
 
     public bool $showEditPriceModal = false;
 
+    public ?string $newEffectiveDateRange = null;
+
+    public ?string $editEffectiveDateRange = null;
+
     public ?int $deletingPriceId = null;
 
     public bool $showDeleteModal = false;
@@ -73,6 +77,18 @@ class extends Component
             ->whereHas('harvestPrices', fn ($q) => $q->where('company_id', auth()->user()->company_id))
             ->orderBy('name')
             ->get();
+    }
+
+    #[Computed]
+    public function minPriceDate(): string
+    {
+        return now()->format('Y-m-d');
+    }
+
+    #[Computed]
+    public function maxPriceDate(): string
+    {
+        return now()->addYears(2)->format('Y-m-d');
     }
 
     #[Computed]
@@ -125,6 +141,7 @@ class extends Component
         if ($this->productFilter !== '' && $this->productFilter !== 'all') {
             $this->newProductId = (int) $this->productFilter;
         }
+        $this->newEffectiveDateRange = null;
         $this->showCreatePriceModal = true;
     }
 
@@ -177,7 +194,26 @@ class extends Component
         $this->editPricePerKg = (string) $price->price_per_kg;
         $this->editEffectiveFrom = $price->effective_from->format('Y-m-d');
         $this->editEffectiveTo = $price->effective_to?->format('Y-m-d');
+        $this->editEffectiveDateRange = $this->editEffectiveFrom . '/' . ($this->editEffectiveTo ?: '');
         $this->showEditPriceModal = true;
+    }
+
+    public function updatedNewEffectiveDateRange(?string $value): void
+    {
+        if ($value && str_contains($value, '/')) {
+            [$from, $to] = explode('/', $value, 2);
+            $this->newEffectiveFrom = $from ?: null;
+            $this->newEffectiveTo = $to ?: null;
+        }
+    }
+
+    public function updatedEditEffectiveDateRange(?string $value): void
+    {
+        if ($value && str_contains($value, '/')) {
+            [$from, $to] = explode('/', $value, 2);
+            $this->editEffectiveFrom = $from ?: null;
+            $this->editEffectiveTo = $to ?: null;
+        }
     }
 
     public function updatePrice(): void
@@ -287,14 +323,16 @@ class extends Component
         </flux:field>
 
         <flux:field>
-            <flux:label>Effective From</flux:label>
-            <flux:input type="date" wire:model="newEffectiveFrom" />
+            <flux:label>Effective Date Range</flux:label>
+            <flux:calendar
+                mode="range"
+                week-numbers
+                locale="{{ app()->getLocale() }}"
+                :min="$this->minPriceDate"
+                :max="$this->maxPriceDate"
+                wire:model.live="newEffectiveDateRange"
+            />
             <flux:error name="newEffectiveFrom" />
-        </flux:field>
-
-        <flux:field>
-            <flux:label>Effective To</flux:label>
-            <flux:input type="date" wire:model="newEffectiveTo" />
             <flux:error name="newEffectiveTo" />
         </flux:field>
     </div>
@@ -318,14 +356,16 @@ class extends Component
             </flux:field>
 
             <flux:field>
-                <flux:label>Effective From</flux:label>
-                <flux:input type="date" wire:model="editEffectiveFrom" />
+                <flux:label>Effective Date Range</flux:label>
+                <flux:calendar
+                    mode="range"
+                    week-numbers
+                    locale="{{ app()->getLocale() }}"
+                    :min="$this->minPriceDate"
+                    :max="$this->maxPriceDate"
+                    wire:model.live="editEffectiveDateRange"
+                />
                 <flux:error name="editEffectiveFrom" />
-            </flux:field>
-
-            <flux:field>
-                <flux:label>Effective To</flux:label>
-                <flux:input type="date" wire:model="editEffectiveTo" />
                 <flux:error name="editEffectiveTo" />
             </flux:field>
         </div>
