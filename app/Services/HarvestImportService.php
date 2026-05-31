@@ -15,10 +15,10 @@ class HarvestImportService
     public function parse(UploadedFile $file, int $companyId, int $productId, int $userId): HarvestUpload
     {
         $path = $file->getRealPath();
-        $handle = fopen($path, 'r');
+        $handle = fopen($path, 'rb');
 
         // Read header
-        $header = fgetcsv($handle);
+        $header = fgetcsv($handle, null, ',', '"');
         $columnCount = count($header);
 
         // Determine schema: full (≥90 cols) or simple (7 cols)
@@ -38,7 +38,7 @@ class HarvestImportService
         $dateTo = null;
         $rowCount = 0;
 
-        while (($row = fgetcsv($handle)) !== false) {
+        while (($row = fgetcsv($handle, null, ',', '"')) !== false) {
             if (empty($row) || ! isset($row[$productCol])) {
                 continue;
             }
@@ -99,6 +99,12 @@ class HarvestImportService
         // Load import settings for validation
         $settings = HarvestImportSettings::where('company_id', $companyId)->first();
 
+        // Auto-detect tare variation if no settings configured
+        $tareVariation = null;
+        if (! $settings) {
+            $tareVariation = $this->detectTareVariation($records);
+        }
+
         // Process records: validate and stage
         $validRecords = [];
         $stagingRecords = [];
@@ -118,6 +124,9 @@ class HarvestImportService
                 } elseif ($settings->tare_max !== null && $tare > $settings->tare_max) {
                     $reasons[] = 'tare_out_of_range';
                 }
+            } elseif ($tareVariation && $tare === 0.0) {
+                // Auto-detect: flag records with tare=0 when others have tare>0
+                $reasons[] = 'tare_out_of_range';
             }
 
             // Check if harvester exists for the year of weighed_at
@@ -158,6 +167,26 @@ class HarvestImportService
         }
 
         return $upload;
+    }
+
+    private function detectTareVariation(array $records): bool
+    {
+        $hasZeroTare = false;
+        $hasNonZeroTare = false;
+
+        foreach ($records as $record) {
+            if ($record['tare'] === 0.0) {
+                $hasZeroTare = true;
+            } elseif ($record['tare'] > 0) {
+                $hasNonZeroTare = true;
+            }
+
+            if ($hasZeroTare && $hasNonZeroTare) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function parseDateTime(string $dateStr, string $timeStr): ?Carbon
