@@ -192,6 +192,23 @@ class extends Component
     }
 
     #[Computed]
+    public function dailyWeightDisplay(): array
+    {
+        $kg = $this->dailyTotals['weight'];
+        if ($kg >= 1000) {
+            return [
+                'value' => number_format($kg / 1000, 2, ',', '.'),
+                'unit' => 't',
+            ];
+        }
+
+        return [
+            'value' => number_format($kg, 2, ',', '.'),
+            'unit' => 'kg',
+        ];
+    }
+
+    #[Computed]
     public function harvesterData()
     {
         $names = $this->harvesterNames();
@@ -416,28 +433,10 @@ class extends Component
 
     <flux:main>
         <flux:header heading="Harvest Charts">
+            Harvest Charts
         </flux:header>
 
         <div class="p-6">
-            <!-- Year Pills -->
-            <div class="mb-6">
-                <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
-                    @foreach($this->availableYears as $year)
-                        <flux:radio label="{{ $year }}" value="{{ $year }}" />
-                    @endforeach
-                </flux:radio.group>
-            </div>
-
-            <!-- Product Pills -->
-            <div class="mb-8">
-                <flux:radio.group wire:model.live="selectedProductId" label="Product" variant="pills">
-                    <flux:radio label="All" value="0" />
-                    @foreach ($this->products as $product)
-                        <flux:radio label="{{ $product->name }}" value="{{ $product->id }}" />
-                    @endforeach
-                </flux:radio.group>
-            </div>
-
             <!-- Summary Cards -->
             <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 @php
@@ -448,8 +447,8 @@ class extends Component
 
                 @if (!empty($dailyData))
                     <flux:card class="p-4">
-                        <flux:text size="sm" class="text-zinc-500">Total Harvest (kg)</flux:text>
-                        <div class="mt-2 text-2xl font-semibold">{{ number_format($this->dailyTotals['weight'], 3, ',', '.') }}</div>
+                        <flux:text size="sm" class="text-zinc-500">Total Harvest</flux:text>
+                        <div class="mt-2 text-2xl font-semibold">{{ $this->dailyWeightDisplay['value'] }} {{ $this->dailyWeightDisplay['unit'] }}</div>
                         <div class="text-xs text-zinc-400">{{ count($this->dailyData) }} days</div>
                     </flux:card>
 
@@ -473,6 +472,24 @@ class extends Component
                         <div class="mt-2 text-2xl font-semibold">{{ count($this->productData) }}</div>
                     </flux:card>
                 @endif
+            </div>
+            <!-- Year Pills -->
+            <div class="mb-6">
+                <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
+                    @foreach($this->availableYears as $year)
+                        <flux:radio label="{{ $year }}" value="{{ $year }}" />
+                    @endforeach
+                </flux:radio.group>
+            </div>
+
+            <!-- Product Pills -->
+            <div class="mb-8">
+                <flux:radio.group wire:model.live="selectedProductId" label="Product" variant="pills">
+                    <flux:radio label="All" value="0" />
+                    @foreach ($this->products as $product)
+                        <flux:radio label="{{ $product->name }}" value="{{ $product->id }}" />
+                    @endforeach
+                </flux:radio.group>
             </div>
 
             <!-- Date Filters -->

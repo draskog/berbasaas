@@ -96,8 +96,10 @@ class extends Component {
 
 
 <flux:main>
-    <flux:header heading="Harvesters Payslips" class="flex justify-end space-x-3 items-center">
-        <flux:button icon="printer" variant="primary" onclick="window.print()">Print</flux:button>
+    <flux:header heading="Harvesters Payslips" >
+        Harvesters Payslips
+        <flux:spacer/>
+        <flux:button icon="printer" variant="primary" size="sm" onclick="window.print()">Print</flux:button>
     </flux:header>
 
     <div class="p-6">

@@ -35,7 +35,7 @@ class extends Component
         }
 
         return [
-            'value' => number_format($kg, 1, ',', '.'),
+            'value' => number_format($kg, 2, ',', '.'),
             'unit' => 'kg',
         ];
     }
@@ -123,7 +123,7 @@ class extends Component
 
         <!-- Row 1: Counters -->
         <div class="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            <!-- Total Harvest (kg) -->
+            <!-- Total Harvest -->
             <a href="{{ route('harvest.reports') }}" wire:navigate class="block">
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
                     <flux:heading size="sm">Total Harvest</flux:heading>

@@ -292,7 +292,8 @@ class extends Component
 }; ?>
 
 <flux:main>
-    <flux:header heading="Upload Harvest Records">
+    <flux:header heading="Recent Upload Harvest Records">
+        Recent Upload Harvest Records
         <flux:spacer/>
         <flux:button variant="primary" size="sm" icon="arrow-up-tray" wire:click="$set('showUploadModal', true)">
             Upload CSV File
@@ -300,14 +301,8 @@ class extends Component
     </flux:header>
 
     <div class="p-6">
-        <div class="flex items-center justify-between mb-6">
-            <flux:heading size="lg">Recent Upload Harvest Records</flux:heading>
-            <flux:select wire:model.live="perPage" size="sm" class="w-28">
-                <flux:select.option value="25">25</flux:select.option>
-                <flux:select.option value="50">50</flux:select.option>
-                <flux:select.option value="100">100</flux:select.option>
-                <flux:select.option value="0">All</flux:select.option>
-            </flux:select>
+        <div class="flex items-center justify-end mb-6">
+
         </div>
 
         <div class="space-y-4 mb-6">
@@ -337,12 +332,18 @@ class extends Component
                 </flux:radio.group>
             </div>
 
-            <div>
+            <div class="flex justify-between items-center">
                 <flux:radio.group wire:model.live="filterResolved" label="Resolution Status" variant="pills">
                     <flux:radio value="all" label="All"/>
                     <flux:radio value="resolved" label="Resolved"/>
                     <flux:radio value="unresolved" label="Unresolved"/>
                 </flux:radio.group>
+                <flux:select wire:model.live="perPage" size="sm" class="w-28">
+                    <flux:select.option value="25">25</flux:select.option>
+                    <flux:select.option value="50">50</flux:select.option>
+                    <flux:select.option value="100">100</flux:select.option>
+                    <flux:select.option value="0">All</flux:select.option>
+                </flux:select>
             </div>
         </div>
 
@@ -355,7 +356,7 @@ class extends Component
                 <flux:table.column>Invalid</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">Date Range</flux:table.column>
                 <flux:table.column>Uploaded By</flux:table.column>
-                <flux:table.column>Actions</flux:table.column>
+                <flux:table.column align="center">Actions</flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
@@ -388,7 +389,7 @@ class extends Component
                             @endif
                         </flux:table.cell>
                         <flux:table.cell>{{ $upload->uploadedBy->name }}</flux:table.cell>
-                        <flux:table.cell class="flex gap-2">
+                        <flux:table.cell align="end" class="space-x-2">
                             @if($upload->invalid_count > 0)
                                 <flux:button size="sm" variant="primary" wire:click="confirmResolveUpload({{ $upload->id }})">
                                     Resolve

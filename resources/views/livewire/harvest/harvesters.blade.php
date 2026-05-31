@@ -13,8 +13,7 @@ use Livewire\WithPagination;
 new
 #[Layout('layouts.app')]
 #[Title('Harvesters')]
-class extends Component
-{
+class extends Component {
     use WithPagination;
 
     #[Url]
@@ -71,7 +70,7 @@ class extends Component
     public int $printColumns = 3;
 
     #[Computed]
-    public function availableYears()
+    public function availableYears ()
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->distinct()
@@ -82,7 +81,7 @@ class extends Component
     }
 
     #[Computed]
-    public function harvesters()
+    public function harvesters ()
     {
         return Harvester::where('company_id', auth()->user()->company_id)
             ->where('active', true)
@@ -91,7 +90,7 @@ class extends Component
     }
 
     #[Computed]
-    public function allAssignments()
+    public function allAssignments ()
     {
         $query = HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
             ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
@@ -121,7 +120,7 @@ class extends Component
     }
 
     #[Computed]
-    public function availablePrefixes()
+    public function availablePrefixes ()
     {
         $query = HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
             ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
@@ -139,7 +138,7 @@ class extends Component
     }
 
     #[Computed]
-    public function printAssignments()
+    public function printAssignments ()
     {
         $query = HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
             ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
@@ -150,24 +149,24 @@ class extends Component
             $query->where('harvester_assignments.year', $this->selectedYear);
         }
 
-        return $query->when($this->selectedPrefix !== '', fn ($q) => $q->where('harvesters.prefix', $this->selectedPrefix))
+        return $query->when($this->selectedPrefix !== '', fn($q) => $q->where('harvesters.prefix', $this->selectedPrefix))
             ->orderBy('harvester_assignments.number')
             ->get();
     }
 
-    public function mount(): void
+    public function mount (): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
         $years = $this->availableYears;
         $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
     }
 
-    public function updatedPerPage(): void
+    public function updatedPerPage (): void
     {
         $this->resetPage();
     }
 
-    public function sort(string $column): void
+    public function sort (string $column): void
     {
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -178,7 +177,7 @@ class extends Component
         $this->resetPage();
     }
 
-    public function createAssignment(): void
+    public function createAssignment (): void
     {
         $this->validate([
             'newNumber' => 'required|integer|min:1|max:200',
@@ -217,13 +216,13 @@ class extends Component
         Flux::toast(text: 'Assignment added.', variant: 'success');
     }
 
-    public function confirmDeleteAssignment(int $id): void
+    public function confirmDeleteAssignment (int $id): void
     {
         $this->deletingAssignmentId = $id;
         $this->showDeleteModal = true;
     }
 
-    public function deleteAssignment(): void
+    public function deleteAssignment (): void
     {
         HarvesterAssignment::find($this->deletingAssignmentId)?->delete();
         $this->deletingAssignmentId = null;
@@ -231,7 +230,7 @@ class extends Component
         Flux::toast(text: 'Assignment deleted.', variant: 'warning');
     }
 
-    public function createHarvester(): void
+    public function createHarvester (): void
     {
         $this->validate([
             'newHarvesterName' => 'required|string|max:255',
@@ -250,7 +249,7 @@ class extends Component
         Flux::toast(text: 'Harvester added.', variant: 'success');
     }
 
-    public function editHarvester(int $id): void
+    public function editHarvester (int $id): void
     {
         $harvester = Harvester::where('company_id', auth()->user()->company_id)->findOrFail($id);
         $this->editingHarvesterId = $id;
@@ -260,7 +259,7 @@ class extends Component
         $this->showEditHarvesterModal = true;
     }
 
-    public function updateHarvester(): void
+    public function updateHarvester (): void
     {
         $this->validate([
             'editHarvesterName' => 'required|string|max:255',
@@ -279,7 +278,7 @@ class extends Component
         Flux::toast(text: 'Harvester updated.', variant: 'success');
     }
 
-    public function editAssignment(int $id): void
+    public function editAssignment (int $id): void
     {
         $assignment = HarvesterAssignment::where('company_id', auth()->user()->company_id)->findOrFail($id);
         $this->editingAssignmentId = $id;
@@ -287,7 +286,7 @@ class extends Component
         $this->showEditAssignmentModal = true;
     }
 
-    public function updateAssignment(): void
+    public function updateAssignment (): void
     {
         $this->validate([
             'editAssignmentNumber' => 'required|integer|min:1|max:200',
@@ -301,7 +300,7 @@ class extends Component
         Flux::toast(text: 'Assignment updated.', variant: 'success');
     }
 
-    public function updatedSelectedYear(): void
+    public function updatedSelectedYear (): void
     {
         $this->selectedPrefix = '';
         $this->resetPage();
@@ -310,22 +309,26 @@ class extends Component
 
 
 <flux:main>
-    <flux:header heading="Harvesters" class="flex justify-end space-x-3 items-center">
-        <flux:modal.trigger name="create-assignment">
-            <flux:button icon="plus" size="sm" variant="primary" class="mr-3">Add Assignment</flux:button>
-        </flux:modal.trigger>
-        <flux:modal.trigger name="create-harvester">
-            <flux:button icon="user-plus" size="sm">Add Harvester</flux:button>
-        </flux:modal.trigger>
+    <flux:header heading="Harvesters">
+        Harvesters
+        <flux:spacer/>
+        <div class="space-x-3 items-center">
+            <flux:modal.trigger name="create-assignment">
+                <flux:button icon="plus" size="sm" variant="primary" class="mr-3">Add Assignment</flux:button>
+            </flux:modal.trigger>
+            <flux:modal.trigger name="create-harvester">
+                <flux:button icon="user-plus" size="sm">Add Harvester</flux:button>
+            </flux:modal.trigger>
+        </div>
     </flux:header>
 
     <div class="p-6">
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-4">
                 <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
-                    <flux:radio label="All" value="" />
+                    <flux:radio label="All" value=""/>
                     @foreach($this->availableYears as $year)
-                        <flux:radio label="{{ $year }}" value="{{ $year }}" />
+                        <flux:radio label="{{ $year }}" value="{{ $year }}"/>
                     @endforeach
                 </flux:radio.group>
             </div>
@@ -340,9 +343,9 @@ class extends Component
         @if($this->availablePrefixes->isNotEmpty())
             <div class="mb-6">
                 <flux:radio.group wire:model.live="selectedPrefix" label="Prefix" variant="pills">
-                    <flux:radio label="All" value="" />
+                    <flux:radio label="All" value=""/>
                     @foreach($this->availablePrefixes as $prefix)
-                        <flux:radio :label="$prefix" :value="$prefix" />
+                        <flux:radio :label="$prefix" :value="$prefix"/>
                     @endforeach
                 </flux:radio.group>
             </div>
@@ -354,7 +357,7 @@ class extends Component
                 <flux:table.column sortable :sorted="$sortBy === 'prefix'" :direction="$sortDirection" wire:click="sort('prefix')">Prefix</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">Name</flux:table.column>
                 <flux:table.column>Harvest Year</flux:table.column>
-                <flux:table.column class="text-right w-fit whitespace-nowrap">Actions</flux:table.column>
+                <flux:table.column align="center">Actions</flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
@@ -364,15 +367,10 @@ class extends Component
                         <flux:table.cell>{{ $assignment->harvester?->prefix ?? '—' }}</flux:table.cell>
                         <flux:table.cell>{{ $assignment->harvester?->name }}</flux:table.cell>
                         <flux:table.cell>{{ $assignment->year }}</flux:table.cell>
-                        <flux:table.cell class="text-right">
-                            <flux:dropdown position="bottom" align="end">
-                                <flux:button icon="ellipsis-horizontal" size="sm" variant="subtle" />
-                                <flux:menu>
-                                    <flux:menu.item icon="pencil" wire:click="editHarvester({{ $assignment->harvester_id }})">Edit Harvester</flux:menu.item>
-                                    <flux:menu.item icon="pencil" wire:click="editAssignment({{ $assignment->id }})">Edit Assignment</flux:menu.item>
-                                    <flux:menu.item icon="trash" variant="danger" wire:click="confirmDeleteAssignment({{ $assignment->id }})">Delete</flux:menu.item>
-                                </flux:menu>
-                            </flux:dropdown>
+                        <flux:table.cell align="end" class="space-x-2">
+                            <flux:button size="sm" wire:click="editHarvester({{ $assignment->harvester_id }})">Edit Harvester</flux:button>
+                            <flux:button size="sm" wire:click="editAssignment({{ $assignment->id }})">Edit Harvester</flux:button>
+                            <flux:button variant="danger" size="sm" wire:click="confirmDeleteAssignment({{ $assignment->id }})">Delete</flux:button>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
@@ -390,14 +388,14 @@ class extends Component
         <div class="mt-6 space-y-4">
             <flux:field>
                 <flux:label>Name</flux:label>
-                <flux:input wire:model="newHarvesterName" />
-                <flux:error name="newHarvesterName" />
+                <flux:input wire:model="newHarvesterName"/>
+                <flux:error name="newHarvesterName"/>
             </flux:field>
 
             <flux:field>
                 <flux:label>Prefix</flux:label>
-                <flux:input wire:model="newHarvesterPrefix" />
-                <flux:error name="newHarvesterPrefix" />
+                <flux:input wire:model="newHarvesterPrefix"/>
+                <flux:error name="newHarvesterPrefix"/>
             </flux:field>
         </div>
 
@@ -414,8 +412,8 @@ class extends Component
         <div class="mt-6 space-y-4">
             <flux:field>
                 <flux:label>Assignment Number</flux:label>
-                <flux:input type="number" wire:model="newNumber" />
-                <flux:error name="newNumber" />
+                <flux:input type="number" wire:model="newNumber"/>
+                <flux:error name="newNumber"/>
             </flux:field>
 
             <flux:field>
@@ -423,10 +421,12 @@ class extends Component
                 <flux:select wire:model="newHarvesterId">
                     <flux:select.option value="">Select a harvester...</flux:select.option>
                     @foreach($this->harvesters as $harvester)
-                        <flux:select.option value="{{ $harvester->id }}">{{ $harvester->name }} @if($harvester->prefix)({{ $harvester->prefix }})@endif</flux:select.option>
+                        <flux:select.option value="{{ $harvester->id }}">{{ $harvester->name }} @if($harvester->prefix)
+                                ({{ $harvester->prefix }})
+                            @endif</flux:select.option>
                     @endforeach
                 </flux:select>
-                <flux:error name="newHarvesterId" />
+                <flux:error name="newHarvesterId"/>
             </flux:field>
         </div>
 
@@ -442,19 +442,19 @@ class extends Component
         <div class="mt-6 space-y-4">
             <flux:field>
                 <flux:label>Name</flux:label>
-                <flux:input wire:model="editHarvesterName" />
-                <flux:error name="editHarvesterName" />
+                <flux:input wire:model="editHarvesterName"/>
+                <flux:error name="editHarvesterName"/>
             </flux:field>
 
             <flux:field>
                 <flux:label>Prefix</flux:label>
-                <flux:input wire:model="editHarvesterPrefix" />
-                <flux:error name="editHarvesterPrefix" />
+                <flux:input wire:model="editHarvesterPrefix"/>
+                <flux:error name="editHarvesterPrefix"/>
             </flux:field>
 
             <flux:field>
                 <flux:label>Active</flux:label>
-                <flux:switch wire:model="editHarvesterActive" />
+                <flux:switch wire:model="editHarvesterActive"/>
             </flux:field>
         </div>
 
@@ -470,8 +470,8 @@ class extends Component
         <div class="mt-6 space-y-4">
             <flux:field>
                 <flux:label>Assignment Number</flux:label>
-                <flux:input type="number" wire:model="editAssignmentNumber" />
-                <flux:error name="editAssignmentNumber" />
+                <flux:input type="number" wire:model="editAssignmentNumber"/>
+                <flux:error name="editAssignmentNumber"/>
             </flux:field>
         </div>
 

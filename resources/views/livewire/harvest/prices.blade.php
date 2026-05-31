@@ -211,8 +211,9 @@ class extends Component
 
 <flux:main>
     <flux:header heading="Harvest Prices">
+        Harvest Prices
         <flux:spacer />
-        <flux:button variant="primary" icon="plus" wire:click="openCreatePriceModal">Add Price</flux:button>
+        <flux:button variant="primary" icon="plus" size="sm" wire:click="openCreatePriceModal">Add Price</flux:button>
     </flux:header>
 
     <div class="p-6">
@@ -239,7 +240,7 @@ class extends Component
                 <flux:table.column sortable :sorted="$sortBy === 'price_per_kg'" :direction="$sortDirection" wire:click="sort('price_per_kg')">Price (per kg)</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'effective_from'" :direction="$sortDirection" wire:click="sort('effective_from')">Effective From</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'effective_to'" :direction="$sortDirection" wire:click="sort('effective_to')">Effective To</flux:table.column>
-                <flux:table.column>Actions</flux:table.column>
+                <flux:table.column align="center">Actions</flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
@@ -249,11 +250,9 @@ class extends Component
                         <flux:table.cell>{{ number_format($price->price_per_kg, 3, ',', '.') }}</flux:table.cell>
                         <flux:table.cell>{{ $price->effective_from->format('d.m.Y') }}</flux:table.cell>
                         <flux:table.cell>{{ $price->effective_to?->format('d.m.Y') ?? 'Current' }}</flux:table.cell>
-                        <flux:table.cell>
-                            <div class="flex gap-1">
-                                <flux:button size="sm" wire:click="editPrice({{ $price->id }})">Edit</flux:button>
-                                <flux:button variant="danger" size="sm" wire:click="confirmDeletePrice({{ $price->id }})">Delete</flux:button>
-                            </div>
+                        <flux:table.cell align="end" class="space-x-2">
+                            <flux:button size="sm" wire:click="editPrice({{ $price->id }})">Edit</flux:button>
+                            <flux:button variant="danger" size="sm" wire:click="confirmDeletePrice({{ $price->id }})">Delete</flux:button>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
