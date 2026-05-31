@@ -474,7 +474,7 @@ class extends Component
                 @endif
             </div>
             <!-- Year Pills -->
-            <div class="mb-6">
+            <div class="mb-6 flex flex-wrap items-end gap-4">
                 <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
                     @foreach($this->availableYears as $year)
                         <flux:radio label="{{ $year }}" value="{{ $year }}" />
@@ -483,7 +483,7 @@ class extends Component
             </div>
 
             <!-- Product Pills -->
-            <div class="mb-8">
+            <div class="mb-6 flex flex-wrap items-end gap-4">
                 <flux:radio.group wire:model.live="selectedProductId" label="Product" variant="pills">
                     <flux:radio label="All" value="0" />
                     @foreach ($this->products as $product)
@@ -493,19 +493,10 @@ class extends Component
             </div>
 
             <!-- Date Filters -->
-            <flux:card class="mb-8">
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <flux:field>
-                        <flux:label>From Date</flux:label>
-                        <flux:input type="date" wire:model.live="fromDate" />
-                    </flux:field>
-
-                    <flux:field>
-                        <flux:label>To Date</flux:label>
-                        <flux:input type="date" wire:model.live="toDate" />
-                    </flux:field>
-                </div>
-            </flux:card>
+            <div class="mb-6 flex flex-wrap items-end gap-4">
+                <flux:input type="date" size="sm" wire:model.live="fromDate" label="From"/>
+                <flux:input type="date" size="sm" wire:model.live="toDate" label="To"/>
+            </div>
 
             <!-- Tabs -->
             <flux:tab.group>
