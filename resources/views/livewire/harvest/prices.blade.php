@@ -8,22 +8,20 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Url;
+use Livewire\Attributes\Session;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 
 new
 #[Layout('layouts.app.sidebar')]
 #[Title('Prices')]
-class extends Component
-{
+class extends Component {
     use WithPagination;
 
-    #[Url]
     public ?int $selectedProductId = null;
 
-    #[Url]
-    public string $productFilter = '';
+    #[Session]
+    public string $selectedProduct = 'all';
 
     public int $perPage = 25;
 
@@ -62,7 +60,7 @@ class extends Component
     public string $sortDirection = 'desc';
 
     #[Computed]
-    public function products()
+    public function products ()
     {
         return Product::where('company_id', auth()->user()->company_id)
             ->where('active', true)
@@ -71,34 +69,34 @@ class extends Component
     }
 
     #[Computed]
-    public function filterProducts()
+    public function filterProducts ()
     {
         return Product::where('company_id', auth()->user()->company_id)
-            ->whereHas('harvestPrices', fn ($q) => $q->where('company_id', auth()->user()->company_id))
+            ->whereHas('harvestPrices', fn($q) => $q->where('company_id', auth()->user()->company_id))
             ->orderBy('name')
             ->get();
     }
 
     #[Computed]
-    public function minPriceDate(): string
+    public function minPriceDate (): string
     {
         return now()->format('Y-m-d');
     }
 
     #[Computed]
-    public function maxPriceDate(): string
+    public function maxPriceDate (): string
     {
         return now()->addYears(2)->format('Y-m-d');
     }
 
     #[Computed]
-    public function pricesForProduct()
+    public function pricesForProduct ()
     {
         $query = HarvestPrice::where('company_id', auth()->user()->company_id)
             ->orderBy($this->sortBy, $this->sortDirection);
 
-        if ($this->productFilter !== '' && $this->productFilter !== 'all') {
-            $query->where('product_id', $this->productFilter);
+        if ($this->selectedProduct !== 'all') {
+            $query->where('product_id', $this->selectedProduct);
         }
 
         if ($this->perPage === 0) {
@@ -108,18 +106,17 @@ class extends Component
         return $query->paginate($this->perPage);
     }
 
-    public function mount(): void
+    public function mount (): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
-        $this->productFilter = 'all';
     }
 
-    public function updatedPerPage(): void
+    public function updatedPerPage (): void
     {
         $this->resetPage();
     }
 
-    public function sort(string $column): void
+    public function sort (string $column): void
     {
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -130,22 +127,22 @@ class extends Component
         $this->resetPage();
     }
 
-    #[On('updated-productFilter')]
-    public function updatePrices(): void
+    #[On('updated-selectedProduct')]
+    public function updatePrices (): void
     {
         $this->resetPage();
     }
 
-    public function openCreatePriceModal(): void
+    public function openCreatePriceModal (): void
     {
-        if ($this->productFilter !== '' && $this->productFilter !== 'all') {
-            $this->newProductId = (int) $this->productFilter;
+        if ($this->selectedProduct !== 'all') {
+            $this->newProductId = (int) $this->selectedProduct;
         }
         $this->newEffectiveDateRange = null;
         $this->showCreatePriceModal = true;
     }
 
-    public function createPrice(): void
+    public function createPrice (): void
     {
         $this->validate([
             'newProductId' => 'required|exists:products,id',
@@ -173,13 +170,13 @@ class extends Component
         Flux::toast(text: 'Price added successfully.', variant: 'success');
     }
 
-    public function confirmDeletePrice(int $id): void
+    public function confirmDeletePrice (int $id): void
     {
         $this->deletingPriceId = $id;
         $this->showDeleteModal = true;
     }
 
-    public function deletePrice(): void
+    public function deletePrice (): void
     {
         HarvestPrice::find($this->deletingPriceId)?->delete();
         $this->deletingPriceId = null;
@@ -187,18 +184,18 @@ class extends Component
         Flux::toast(text: 'Price deleted.', variant: 'warning');
     }
 
-    public function editPrice(int $id): void
+    public function editPrice (int $id): void
     {
         $price = HarvestPrice::where('company_id', auth()->user()->company_id)->findOrFail($id);
         $this->editingPriceId = $id;
         $this->editPricePerKg = (string) $price->price_per_kg;
         $this->editEffectiveFrom = $price->effective_from->format('Y-m-d');
         $this->editEffectiveTo = $price->effective_to?->format('Y-m-d');
-        $this->editEffectiveDateRange = $this->editEffectiveFrom . '/' . ($this->editEffectiveTo ?: '');
+        $this->editEffectiveDateRange = $this->editEffectiveFrom.'/'.($this->editEffectiveTo ?: '');
         $this->showEditPriceModal = true;
     }
 
-    public function updatedNewEffectiveDateRange(?string $value): void
+    public function updatedNewEffectiveDateRange (?string $value): void
     {
         if ($value && str_contains($value, '/')) {
             [$from, $to] = explode('/', $value, 2);
@@ -207,7 +204,7 @@ class extends Component
         }
     }
 
-    public function updatedEditEffectiveDateRange(?string $value): void
+    public function updatedEditEffectiveDateRange (?string $value): void
     {
         if ($value && str_contains($value, '/')) {
             [$from, $to] = explode('/', $value, 2);
@@ -216,7 +213,7 @@ class extends Component
         }
     }
 
-    public function updatePrice(): void
+    public function updatePrice (): void
     {
         $this->validate([
             'editPricePerKg' => 'required|numeric|min:0',
@@ -248,17 +245,17 @@ class extends Component
 <flux:main>
     <flux:header heading="Harvest Prices">
         Harvest Prices
-        <flux:spacer />
+        <flux:spacer/>
         <flux:button variant="primary" icon="plus" size="sm" wire:click="openCreatePriceModal">Add Price</flux:button>
     </flux:header>
 
     <div class="p-6">
         <div class="flex items-center justify-between mb-6">
             <div class="flex-1">
-                <flux:radio.group wire:model.live="productFilter" label="Product" variant="pills">
-                    <flux:radio label="All" value="all" />
+                <flux:radio.group wire:model.live="selectedProduct" label="Product" variant="pills">
+                    <flux:radio label="All" value="all"/>
                     @foreach($this->filterProducts as $product)
-                        <flux:radio :label="$product->name" :value="$product->id" />
+                        <flux:radio :label="$product->name" :value="$product->id"/>
                     @endforeach
                 </flux:radio.group>
             </div>
@@ -301,49 +298,49 @@ class extends Component
     </div>
 
     <flux:modal name="create-price" wire:model="showCreatePriceModal">
-    <flux:heading>Add Price</flux:heading>
-    <flux:subheading>Set a new price for a product.</flux:subheading>
+        <flux:heading>Add Price</flux:heading>
+        <flux:subheading>Set a new price for a product.</flux:subheading>
 
-    <div class="mt-6 space-y-4">
-        <flux:field>
-            <flux:label>Product</flux:label>
-            <flux:select wire:model="newProductId">
-                <flux:select.option value="">Select product...</flux:select.option>
-                @foreach ($this->products as $product)
-                    <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
-                @endforeach
-            </flux:select>
-            <flux:error name="newProductId" />
-        </flux:field>
+        <div class="mt-6 space-y-4">
+            <flux:field>
+                <flux:label>Product</flux:label>
+                <flux:select wire:model="newProductId">
+                    <flux:select.option value="">Select product...</flux:select.option>
+                    @foreach ($this->products as $product)
+                        <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+                <flux:error name="newProductId"/>
+            </flux:field>
 
-        <flux:field>
-            <flux:label>Price per kg</flux:label>
-            <flux:input type="number" step="0.0001" wire:model="newPricePerKg" />
-            <flux:error name="newPricePerKg" />
-        </flux:field>
+            <flux:field>
+                <flux:label>Price per kg</flux:label>
+                <flux:input type="number" step="0.0001" wire:model="newPricePerKg"/>
+                <flux:error name="newPricePerKg"/>
+            </flux:field>
 
-        <flux:field>
-            <flux:label>Effective Date Range</flux:label>
-            <flux:calendar
-                mode="range"
-                week-numbers
-                locale="{{ app()->getLocale() }}"
-                :min="$this->minPriceDate"
-                :max="$this->maxPriceDate"
-                wire:model.live="newEffectiveDateRange"
-            />
-            <flux:error name="newEffectiveFrom" />
-            <flux:error name="newEffectiveTo" />
-        </flux:field>
-    </div>
+            <flux:field>
+                <flux:label>Effective Date Range</flux:label>
+                <flux:calendar
+                    mode="range"
+                    week-numbers
+                    locale="{{ app()->getLocale() }}"
+                    :min="$this->minPriceDate"
+                    :max="$this->maxPriceDate"
+                    wire:model.live="newEffectiveDateRange"
+                />
+                <flux:error name="newEffectiveFrom"/>
+                <flux:error name="newEffectiveTo"/>
+            </flux:field>
+        </div>
 
-    <div class="mt-6 flex gap-2 justify-end">
-        <flux:modal.close>
-            <flux:button variant="ghost">Cancel</flux:button>
-        </flux:modal.close>
-        <flux:button variant="primary" wire:click="createPrice">Save</flux:button>
-    </div>
-</flux:modal>
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:modal.close>
+                <flux:button variant="ghost">Cancel</flux:button>
+            </flux:modal.close>
+            <flux:button variant="primary" wire:click="createPrice">Save</flux:button>
+        </div>
+    </flux:modal>
 
     <flux:modal name="edit-price" wire:model="showEditPriceModal">
         <flux:heading>Edit Price</flux:heading>
@@ -351,8 +348,8 @@ class extends Component
         <div class="mt-6 space-y-4">
             <flux:field>
                 <flux:label>Price per kg</flux:label>
-                <flux:input type="number" step="0.0001" wire:model="editPricePerKg" />
-                <flux:error name="editPricePerKg" />
+                <flux:input type="number" step="0.0001" wire:model="editPricePerKg"/>
+                <flux:error name="editPricePerKg"/>
             </flux:field>
 
             <flux:field>

@@ -6,7 +6,7 @@ use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Url;
+use Livewire\Attributes\Session;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 
@@ -16,8 +16,12 @@ new
 class extends Component {
     use WithPagination;
 
-    #[Url]
-    public mixed $selectedYear = '';
+    #[Session]
+    public int $selectedYear = 0;
+
+    // Prefix filter
+    #[Session]
+    public string $selectedPrefix = '';
 
     public int $perPage = 25;
 
@@ -63,9 +67,6 @@ class extends Component {
     // Add Assignment modal
     public bool $showCreateAssignmentModal = false;
 
-    // Prefix filter
-    public string $selectedPrefix = '';
-
     // Print config
     public int $printColumns = 3;
 
@@ -97,7 +98,7 @@ class extends Component {
             ->select('harvester_assignments.*')
             ->with('harvester');
 
-        if ($this->selectedYear !== '') {
+        if ($this->selectedYear > 0) {
             $query->where('harvester_assignments.year', $this->selectedYear);
         }
 
@@ -127,7 +128,7 @@ class extends Component {
             ->whereNotNull('harvesters.prefix')
             ->where('harvesters.prefix', '!=', '');
 
-        if ($this->selectedYear !== '') {
+        if ($this->selectedYear > 0) {
             $query->where('harvester_assignments.year', $this->selectedYear);
         }
 
@@ -145,7 +146,7 @@ class extends Component {
             ->select('harvester_assignments.*')
             ->with('harvester');
 
-        if ($this->selectedYear !== '') {
+        if ($this->selectedYear > 0) {
             $query->where('harvester_assignments.year', $this->selectedYear);
         }
 
@@ -158,7 +159,6 @@ class extends Component {
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
         $years = $this->availableYears;
-        $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
     }
 
     public function updatedPerPage (): void
@@ -302,7 +302,7 @@ class extends Component {
 
     public function updatedSelectedYear (): void
     {
-        $this->selectedPrefix = '';
+        $this->reset('selectedPrefix');
         $this->resetPage();
     }
 }; ?>
@@ -326,7 +326,7 @@ class extends Component {
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-4">
                 <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
-                    <flux:radio label="All" value=""/>
+                    <flux:radio label="All" value="0"/>
                     @foreach($this->availableYears as $year)
                         <flux:radio label="{{ $year }}" value="{{ $year }}"/>
                     @endforeach
