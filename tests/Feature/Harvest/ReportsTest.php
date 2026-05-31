@@ -194,7 +194,7 @@ class ReportsTest extends TestCase
         $price = HarvestPrice::where('company_id', $this->company->id)
             ->where('product_id', $this->product->id)
             ->where('effective_from', '<=', now()->format('Y-m-d'))
-            ->where(fn($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', now()->format('Y-m-d')))
+            ->where(fn ($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', now()->format('Y-m-d')))
             ->value('price_per_kg');
 
         $earnings = 10.0 * $price;

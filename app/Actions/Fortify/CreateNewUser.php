@@ -26,7 +26,7 @@ class CreateNewUser implements CreatesNewUsers
         ])->validate();
 
         $company = Company::create([
-            'name' => $input['name'] . '\'s Company',
+            'name' => $input['name'].'\'s Company',
         ]);
 
         return User::create([

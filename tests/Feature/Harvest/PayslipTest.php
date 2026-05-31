@@ -3,10 +3,10 @@
 namespace Tests\Feature\Harvest;
 
 use App\Models\Company;
+use App\Models\HarvesterAssignment;
 use App\Models\HarvestPrice;
 use App\Models\HarvestRecord;
 use App\Models\HarvestUpload;
-use App\Models\HarvesterAssignment;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;

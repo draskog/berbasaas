@@ -35,7 +35,6 @@ describe('Harvesters Page', function () {
             ->assertSee('1');
     });
 
-
     it('creates new harvester assignment', function () {
         $harvester = Harvester::factory()->for($this->company)->create();
 

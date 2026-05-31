@@ -12,14 +12,13 @@ class HarvesterAssignmentSeeder extends Seeder
     /**
      * Run the database seeds.
      */
-    public function run (): void
+    public function run(): void
     {
         $company = Company::first();
 
         if (! $company) {
             return;
         }
-
 
         for ($number = 1; $number <= 150; $number++) {
             $harvester = Harvester::firstOrCreate(
