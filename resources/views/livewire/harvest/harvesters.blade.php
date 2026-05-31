@@ -34,7 +34,7 @@ class extends Component
 
     public string $sortBy = 'number';
 
-    public string $sortDirection = 'asc';
+    public string $sortDirection = 'desc';
 
     // Edit Harvester modal
     public ?int $editingHarvesterId = null;
@@ -311,11 +311,11 @@ class extends Component
 
 <flux:main>
     <flux:header heading="Harvesters" class="flex justify-end space-x-3 items-center">
-        <flux:modal.trigger name="create-harvester">
-            <flux:button icon="user-plus" size="sm" variant="primary" class="mr-3">Add Harvester</flux:button>
-        </flux:modal.trigger>
         <flux:modal.trigger name="create-assignment">
-            <flux:button icon="plus" size="sm" variant="primary">Add Assignment</flux:button>
+            <flux:button icon="plus" size="sm" variant="primary" class="mr-3">Add Assignment</flux:button>
+        </flux:modal.trigger>
+        <flux:modal.trigger name="create-harvester">
+            <flux:button icon="user-plus" size="sm">Add Harvester</flux:button>
         </flux:modal.trigger>
     </flux:header>
 
