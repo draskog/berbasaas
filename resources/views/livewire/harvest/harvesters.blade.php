@@ -189,7 +189,7 @@ class extends Component {
 
         // Verify harvester belongs to user's company
         if ($harvester->company_id !== auth()->user()->company_id) {
-            Flux::toast(text: 'Unauthorized harvester.', variant: 'danger');
+            Flux::toast(text: __('Unauthorized harvester.'), variant: 'danger');
 
             return;
         }
@@ -200,7 +200,7 @@ class extends Component {
             'year' => $this->selectedYear,
             'number' => $this->newNumber,
         ])->exists()) {
-            Flux::toast(text: 'An assignment with this number already exists for this year.', variant: 'warning');
+            Flux::toast(text: __('An assignment with this number already exists for this year.'), variant: 'warning');
 
             return;
         }
@@ -214,7 +214,7 @@ class extends Component {
 
         $this->reset(['newNumber', 'newHarvesterId']);
         $this->showCreateAssignmentModal = false;
-        Flux::toast(text: 'Assignment added.', variant: 'success');
+        Flux::toast(text: __('Assignment added.'), variant: 'success');
     }
 
     public function confirmDeleteAssignment (int $id): void
@@ -228,7 +228,7 @@ class extends Component {
         HarvesterAssignment::find($this->deletingAssignmentId)?->delete();
         $this->deletingAssignmentId = null;
         $this->showDeleteModal = false;
-        Flux::toast(text: 'Assignment deleted.', variant: 'warning');
+        Flux::toast(text: __('Assignment deleted.'), variant: 'warning');
     }
 
     public function createHarvester (): void
@@ -247,7 +247,7 @@ class extends Component {
 
         $this->reset(['newHarvesterName', 'newHarvesterPrefix']);
         $this->showCreateHarvesterModal = false;
-        Flux::toast(text: 'Harvester added.', variant: 'success');
+        Flux::toast(text: __('Harvester added.'), variant: 'success');
     }
 
     public function editHarvester (int $id): void
@@ -276,7 +276,7 @@ class extends Component {
             ]);
 
         $this->showEditHarvesterModal = false;
-        Flux::toast(text: 'Harvester updated.', variant: 'success');
+        Flux::toast(text: __('Harvester updated.'), variant: 'success');
     }
 
     public function editAssignment (int $id): void
@@ -310,15 +310,15 @@ class extends Component {
 
 
 <flux:main>
-    <flux:header heading="Harvesters">
-        Harvesters
+    <flux:header heading="{{ __('Harvesters') }}">
+        {{ __('Harvesters') }}
         <flux:spacer/>
         <div class="space-x-3 items-center">
             <flux:modal.trigger name="create-assignment">
-                <flux:button icon="plus" size="sm" variant="primary" class="mr-3">Add Assignment</flux:button>
+                <flux:button icon="plus" size="sm" variant="primary" class="mr-3">{{ __('Add Assignment') }}</flux:button>
             </flux:modal.trigger>
             <flux:modal.trigger name="create-harvester">
-                <flux:button icon="user-plus" size="sm">Add Harvester</flux:button>
+                <flux:button icon="user-plus" size="sm">{{ __('Add Harvester') }}</flux:button>
             </flux:modal.trigger>
         </div>
     </flux:header>
@@ -326,8 +326,8 @@ class extends Component {
     <div class="p-6">
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-4">
-                <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
-                    <flux:radio label="All" value="0"/>
+                <flux:radio.group wire:model.live="selectedYear" :label="__('Year')" variant="pills">
+                    <flux:radio :label="__('All')" value="0"/>
                     @foreach($this->availableYears as $year)
                         <flux:radio label="{{ $year }}" value="{{ $year }}"/>
                     @endforeach
@@ -337,14 +337,14 @@ class extends Component {
                 <flux:select.option value="25">25</flux:select.option>
                 <flux:select.option value="50">50</flux:select.option>
                 <flux:select.option value="100">100</flux:select.option>
-                <flux:select.option value="0">All</flux:select.option>
+                <flux:select.option value="0">{{ __('All') }}</flux:select.option>
             </flux:select>
         </div>
 
         @if($this->availablePrefixes->isNotEmpty())
             <div class="mb-6">
-                <flux:radio.group wire:model.live="selectedPrefix" label="Prefix" variant="pills">
-                    <flux:radio label="All" value=""/>
+                <flux:radio.group wire:model.live="selectedPrefix" :label="__('Prefix')" variant="pills">
+                    <flux:radio :label="__('All')" value=""/>
                     @foreach($this->availablePrefixes as $prefix)
                         <flux:radio :label="$prefix" :value="$prefix"/>
                     @endforeach
@@ -354,11 +354,11 @@ class extends Component {
 
         <flux:table :paginate="$this->perPage > 0 ? $this->allAssignments : null">
             <flux:table.columns>
-                <flux:table.column sortable :sorted="$sortBy === 'number'" :direction="$sortDirection" wire:click="sort('number')">Number</flux:table.column>
-                <flux:table.column sortable :sorted="$sortBy === 'prefix'" :direction="$sortDirection" wire:click="sort('prefix')">Prefix</flux:table.column>
-                <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">Name</flux:table.column>
-                <flux:table.column>Harvest Year</flux:table.column>
-                <flux:table.column align="center">Actions</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'number'" :direction="$sortDirection" wire:click="sort('number')">{{ __('Number') }}</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'prefix'" :direction="$sortDirection" wire:click="sort('prefix')">{{ __('Prefix') }}</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">{{ __('Name') }}</flux:table.column>
+                <flux:table.column>{{ __('Harvest Year') }}</flux:table.column>
+                <flux:table.column align="center">{{ __('Actions') }}</flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
@@ -369,14 +369,14 @@ class extends Component {
                         <flux:table.cell>{{ $assignment->harvester?->name }}</flux:table.cell>
                         <flux:table.cell>{{ $assignment->year }}</flux:table.cell>
                         <flux:table.cell align="end" class="space-x-2">
-                            <flux:button size="sm" wire:click="editHarvester({{ $assignment->harvester_id }})">Edit Harvester</flux:button>
-                            <flux:button size="sm" wire:click="editAssignment({{ $assignment->id }})">Edit Harvester</flux:button>
-                            <flux:button variant="danger" size="sm" wire:click="confirmDeleteAssignment({{ $assignment->id }})">Delete</flux:button>
+                            <flux:button size="sm" wire:click="editHarvester({{ $assignment->harvester_id }})">{{ __('Edit Harvester') }}</flux:button>
+                            <flux:button size="sm" wire:click="editAssignment({{ $assignment->id }})">{{ __('Edit Assignment') }}</flux:button>
+                            <flux:button variant="danger" size="sm" wire:click="confirmDeleteAssignment({{ $assignment->id }})">{{ __('Delete') }}</flux:button>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="5" class="text-center text-gray-500">No assignments for {{ $this->selectedYear }}</flux:table.cell>
+                        <flux:table.cell colspan="5" class="text-center text-gray-500">{{ __('No assignments for :year', ['year' => $this->selectedYear]) }}</flux:table.cell>
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>
@@ -384,43 +384,43 @@ class extends Component {
     </div>
 
     <flux:modal name="create-harvester" wire:model="showCreateHarvesterModal">
-        <flux:heading>Add Harvester</flux:heading>
+        <flux:heading>{{ __('Add Harvester') }}</flux:heading>
 
         <div class="mt-6 space-y-4">
             <flux:field>
-                <flux:label>Name</flux:label>
+                <flux:label>{{ __('Name') }}</flux:label>
                 <flux:input wire:model="newHarvesterName"/>
                 <flux:error name="newHarvesterName"/>
             </flux:field>
 
             <flux:field>
-                <flux:label>Prefix</flux:label>
+                <flux:label>{{ __('Prefix') }}</flux:label>
                 <flux:input wire:model="newHarvesterPrefix"/>
                 <flux:error name="newHarvesterPrefix"/>
             </flux:field>
         </div>
 
         <div class="mt-6 flex gap-2 justify-end">
-            <flux:button variant="ghost" wire:click="$set('showCreateHarvesterModal', false)">Cancel</flux:button>
-            <flux:button variant="primary" wire:click="createHarvester">Save</flux:button>
+            <flux:button variant="ghost" wire:click="$set('showCreateHarvesterModal', false)">{{ __('Cancel') }}</flux:button>
+            <flux:button variant="primary" wire:click="createHarvester">{{ __('Save') }}</flux:button>
         </div>
     </flux:modal>
 
     <flux:modal name="create-assignment" wire:model="showCreateAssignmentModal">
-        <flux:heading>Add Harvester Assignment</flux:heading>
-        <flux:subheading>Assign a harvester for {{ $this->selectedYear }}</flux:subheading>
+        <flux:heading>{{ __('Add Harvester Assignment') }}</flux:heading>
+        <flux:subheading>{{ __('Assign a harvester for :year', ['year' => $this->selectedYear]) }}</flux:subheading>
 
         <div class="mt-6 space-y-4">
             <flux:field>
-                <flux:label>Assignment Number</flux:label>
+                <flux:label>{{ __('Assignment Number') }}</flux:label>
                 <flux:input type="number" wire:model="newNumber"/>
                 <flux:error name="newNumber"/>
             </flux:field>
 
             <flux:field>
-                <flux:label>Harvester</flux:label>
+                <flux:label>{{ __('Harvester') }}</flux:label>
                 <flux:select wire:model="newHarvesterId">
-                    <flux:select.option value="">Select a harvester...</flux:select.option>
+                    <flux:select.option value="">{{ __('Select a harvester...') }}</flux:select.option>
                     @foreach($this->harvesters as $harvester)
                         <flux:select.option value="{{ $harvester->id }}">{{ $harvester->name }} @if($harvester->prefix)
                                 ({{ $harvester->prefix }})
@@ -432,63 +432,63 @@ class extends Component {
         </div>
 
         <div class="mt-6 flex gap-2 justify-end">
-            <flux:button variant="ghost" wire:click="$set('showCreateAssignmentModal', false)">Cancel</flux:button>
-            <flux:button variant="primary" wire:click="createAssignment">Save</flux:button>
+            <flux:button variant="ghost" wire:click="$set('showCreateAssignmentModal', false)">{{ __('Cancel') }}</flux:button>
+            <flux:button variant="primary" wire:click="createAssignment">{{ __('Save') }}</flux:button>
         </div>
     </flux:modal>
 
     <flux:modal name="edit-harvester" wire:model="showEditHarvesterModal">
-        <flux:heading>Edit Harvester</flux:heading>
+        <flux:heading>{{ __('Edit Harvester') }}</flux:heading>
 
         <div class="mt-6 space-y-4">
             <flux:field>
-                <flux:label>Name</flux:label>
+                <flux:label>{{ __('Name') }}</flux:label>
                 <flux:input wire:model="editHarvesterName"/>
                 <flux:error name="editHarvesterName"/>
             </flux:field>
 
             <flux:field>
-                <flux:label>Prefix</flux:label>
+                <flux:label>{{ __('Prefix') }}</flux:label>
                 <flux:input wire:model="editHarvesterPrefix"/>
                 <flux:error name="editHarvesterPrefix"/>
             </flux:field>
 
             <flux:field>
-                <flux:label>Active</flux:label>
+                <flux:label>{{ __('Active') }}</flux:label>
                 <flux:switch wire:model="editHarvesterActive"/>
             </flux:field>
         </div>
 
         <div class="mt-6 flex gap-2 justify-end">
-            <flux:button variant="ghost" wire:click="$set('showEditHarvesterModal', false)">Cancel</flux:button>
-            <flux:button variant="primary" wire:click="updateHarvester">Save</flux:button>
+            <flux:button variant="ghost" wire:click="$set('showEditHarvesterModal', false)">{{ __('Cancel') }}</flux:button>
+            <flux:button variant="primary" wire:click="updateHarvester">{{ __('Save') }}</flux:button>
         </div>
     </flux:modal>
 
     <flux:modal name="edit-assignment" wire:model="showEditAssignmentModal">
-        <flux:heading>Edit Harvester Assignment</flux:heading>
+        <flux:heading>{{ __('Edit Harvester Assignment') }}</flux:heading>
 
         <div class="mt-6 space-y-4">
             <flux:field>
-                <flux:label>Assignment Number</flux:label>
+                <flux:label>{{ __('Assignment Number') }}</flux:label>
                 <flux:input type="number" wire:model="editAssignmentNumber"/>
                 <flux:error name="editAssignmentNumber"/>
             </flux:field>
         </div>
 
         <div class="mt-6 flex gap-2 justify-end">
-            <flux:button variant="ghost" wire:click="$set('showEditAssignmentModal', false)">Cancel</flux:button>
-            <flux:button variant="primary" wire:click="updateAssignment">Save</flux:button>
+            <flux:button variant="ghost" wire:click="$set('showEditAssignmentModal', false)">{{ __('Cancel') }}</flux:button>
+            <flux:button variant="primary" wire:click="updateAssignment">{{ __('Save') }}</flux:button>
         </div>
     </flux:modal>
 
     <flux:modal name="confirm-delete-assignment" :dismissible="false" wire:model="showDeleteModal">
-        <flux:heading>Delete Assignment</flux:heading>
-        <flux:text>Are you sure you want to delete this harvester assignment? This cannot be undone.</flux:text>
+        <flux:heading>{{ __('Delete Assignment') }}</flux:heading>
+        <flux:text>{{ __('Are you sure you want to delete this harvester assignment? This cannot be undone.') }}</flux:text>
 
         <div class="mt-6 flex gap-2 justify-end">
-            <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">Cancel</flux:button>
-            <flux:button variant="danger" wire:click="deleteAssignment">Delete</flux:button>
+            <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">{{ __('Cancel') }}</flux:button>
+            <flux:button variant="danger" wire:click="deleteAssignment">{{ __('Delete') }}</flux:button>
         </div>
     </flux:modal>
 

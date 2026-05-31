@@ -370,7 +370,7 @@ class extends Component
 
 
     <flux:main>
-        <flux:header heading="Harvest Reports">
+        <flux:header heading="{{ __('Harvest Reports') }}">
         </flux:header>
 
         <div class="p-6">
@@ -380,14 +380,14 @@ class extends Component
                     <flux:select.option value="25">25</flux:select.option>
                     <flux:select.option value="50">50</flux:select.option>
                     <flux:select.option value="100">100</flux:select.option>
-                    <flux:select.option value="0">All</flux:select.option>
+                    <flux:select.option value="0">{{ __('All') }}</flux:select.option>
                 </flux:select>
             </div>
 
             <!-- Filter Pills -->
             <div class="space-y-4 mb-6">
                 <div>
-                    <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
+                    <flux:radio.group wire:model.live="selectedYear" label="{{ __('Year') }}" variant="pills">
                         @foreach($this->availableYears as $year)
                             <flux:radio value="{{ $year }}" label="{{ $year }}"/>
                         @endforeach
@@ -408,8 +408,8 @@ class extends Component
                 </div>
 
                 <div>
-                    <flux:radio.group wire:model.live="selectedProductId" label="Product" variant="pills">
-                        <flux:radio value="0" label="All" />
+                    <flux:radio.group wire:model.live="selectedProductId" label="{{ __('Product') }}" variant="pills">
+                        <flux:radio value="0" label="{{ __('All') }}" />
                         @foreach ($this->products as $product)
                             <flux:radio value="{{ $product->id }}" label="{{ $product->name }}"/>
                         @endforeach
@@ -417,8 +417,8 @@ class extends Component
                 </div>
 
                 <div>
-                    <flux:radio.group wire:model.live="selectedHarvesterNumber" label="Harvester" variant="pills">
-                        <flux:radio value="0" label="All" />
+                    <flux:radio.group wire:model.live="selectedHarvesterNumber" label="{{ __('Harvester') }}" variant="pills">
+                        <flux:radio value="0" label="{{ __('All') }}" />
                         @foreach ($this->harvesterNumbers as $number)
                             <flux:radio value="{{ $number }}" label="#{{ $number }}"/>
                         @endforeach
@@ -428,18 +428,18 @@ class extends Component
 
             <!-- Tab Navigation -->
             <flux:tabs wire:model="activeTab" class="mb-6">
-                <flux:tab name="daily">Daily Summary</flux:tab>
-                <flux:tab name="harvesters">Harvesters</flux:tab>
-                <flux:tab name="products">Products</flux:tab>
+                <flux:tab name="daily">{{ __('Daily Summary') }}</flux:tab>
+                <flux:tab name="harvesters">{{ __('Harvesters') }}</flux:tab>
+                <flux:tab name="products">{{ __('Products') }}</flux:tab>
             </flux:tabs>
 
             <!-- Daily Summary Tab -->
             <flux:tab.panel name="daily">
                 <flux:table :paginate="$this->perPage > 0 ? $this->dailyData : null">
                     <flux:table.columns>
-                        <flux:table.column sortable :sorted="$dailySortBy === 'date'" :direction="$dailySortDirection" wire:click="sortDaily('date')">Date</flux:table.column>
-                        <flux:table.column sortable :sorted="$dailySortBy === 'bucket_count'" :direction="$dailySortDirection" wire:click="sortDaily('bucket_count')">Buckets</flux:table.column>
-                        <flux:table.column sortable :sorted="$dailySortBy === 'total_weight'" :direction="$dailySortDirection" wire:click="sortDaily('total_weight')">Total kg</flux:table.column>
+                        <flux:table.column sortable :sorted="$dailySortBy === 'date'" :direction="$dailySortDirection" wire:click="sortDaily('date')">{{ __('Date') }}</flux:table.column>
+                        <flux:table.column sortable :sorted="$dailySortBy === 'bucket_count'" :direction="$dailySortDirection" wire:click="sortDaily('bucket_count')">{{ __('Buckets') }}</flux:table.column>
+                        <flux:table.column sortable :sorted="$dailySortBy === 'total_weight'" :direction="$dailySortDirection" wire:click="sortDaily('total_weight')">{{ __('Total kg') }}</flux:table.column>
                     </flux:table.columns>
 
                     <flux:table.rows>
@@ -451,13 +451,13 @@ class extends Component
                             </flux:table.row>
                         @empty
                             <flux:table.row>
-                                <flux:table.cell colspan="3" class="text-center text-gray-500">No data</flux:table.cell>
+                                <flux:table.cell colspan="3" class="text-center text-gray-500">{{ __('No data') }}</flux:table.cell>
                             </flux:table.row>
                         @endforelse
 
                         @if ($this->dailyData->isNotEmpty())
                             <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                                <flux:table.cell>Total</flux:table.cell>
+                                <flux:table.cell>{{ __('Total') }}</flux:table.cell>
                                 <flux:table.cell>{{ $this->dailyTotals['buckets'] }}</flux:table.cell>
                                 <flux:table.cell>{{ number_format($this->dailyTotals['weight'], 3, ',', '.') }}</flux:table.cell>
                             </flux:table.row>
@@ -471,10 +471,10 @@ class extends Component
                 <flux:table :paginate="$this->perPage > 0 ? $this->harvesterData : null">
                     <flux:table.columns>
                         <flux:table.column sortable :sorted="$harvesterSortBy === 'harvester_number'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('harvester_number')">#</flux:table.column>
-                        <flux:table.column>Name</flux:table.column>
-                        <flux:table.column sortable :sorted="$harvesterSortBy === 'bucket_count'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('bucket_count')">Buckets</flux:table.column>
-                        <flux:table.column sortable :sorted="$harvesterSortBy === 'total_weight'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('total_weight')">Total kg</flux:table.column>
-                        <flux:table.column>Earnings</flux:table.column>
+                        <flux:table.column>{{ __('Name') }}</flux:table.column>
+                        <flux:table.column sortable :sorted="$harvesterSortBy === 'bucket_count'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('bucket_count')">{{ __('Buckets') }}</flux:table.column>
+                        <flux:table.column sortable :sorted="$harvesterSortBy === 'total_weight'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('total_weight')">{{ __('Total kg') }}</flux:table.column>
+                        <flux:table.column>{{ __('Earnings') }}</flux:table.column>
                     </flux:table.columns>
 
                     <flux:table.rows>
@@ -494,13 +494,13 @@ class extends Component
                             </flux:table.row>
                         @empty
                             <flux:table.row>
-                                <flux:table.cell colspan="5" class="text-center text-gray-500">No data</flux:table.cell>
+                                <flux:table.cell colspan="5" class="text-center text-gray-500">{{ __('No data') }}</flux:table.cell>
                             </flux:table.row>
                         @endforelse
 
                         @if ($this->harvesterData->isNotEmpty())
                             <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                                <flux:table.cell colspan="2">Total</flux:table.cell>
+                                <flux:table.cell colspan="2">{{ __('Total') }}</flux:table.cell>
                                 <flux:table.cell>{{ $this->harvesterTotals['buckets'] }}</flux:table.cell>
                                 <flux:table.cell>{{ number_format($this->harvesterTotals['weight'], 3, ',', '.') }}</flux:table.cell>
                                 <flux:table.cell>€{{ number_format($this->harvesterTotals['earnings'], 2, ',', '.') }}</flux:table.cell>
@@ -514,10 +514,10 @@ class extends Component
             <flux:tab.panel name="products">
                 <flux:table :paginate="$this->perPage > 0 ? $this->productData : null">
                     <flux:table.columns>
-                        <flux:table.column>Product</flux:table.column>
-                        <flux:table.column sortable :sorted="$productSortBy === 'bucket_count'" :direction="$productSortDirection" wire:click="sortProducts('bucket_count')">Total kg</flux:table.column>
-                        <flux:table.column>Price/kg</flux:table.column>
-                        <flux:table.column sortable :sorted="$productSortBy === 'total_weight'" :direction="$productSortDirection" wire:click="sortProducts('total_weight')">Total Earnings</flux:table.column>
+                        <flux:table.column>{{ __('Product') }}</flux:table.column>
+                        <flux:table.column sortable :sorted="$productSortBy === 'bucket_count'" :direction="$productSortDirection" wire:click="sortProducts('bucket_count')">{{ __('Total kg') }}</flux:table.column>
+                        <flux:table.column>{{ __('Price/kg') }}</flux:table.column>
+                        <flux:table.column sortable :sorted="$productSortBy === 'total_weight'" :direction="$productSortDirection" wire:click="sortProducts('total_weight')">{{ __('Total Earnings') }}</flux:table.column>
                     </flux:table.columns>
 
                     <flux:table.rows>
@@ -542,13 +542,13 @@ class extends Component
                             </flux:table.row>
                         @empty
                             <flux:table.row>
-                                <flux:table.cell colspan="4" class="text-center text-gray-500">No data</flux:table.cell>
+                                <flux:table.cell colspan="4" class="text-center text-gray-500">{{ __('No data') }}</flux:table.cell>
                             </flux:table.row>
                         @endforelse
 
                         @if ($this->productData->isNotEmpty())
                             <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                                <flux:table.cell>Total</flux:table.cell>
+                                <flux:table.cell>{{ __('Total') }}</flux:table.cell>
                                 <flux:table.cell>{{ number_format($this->productTotals['weight'], 3, ',', '.') }}</flux:table.cell>
                                 <flux:table.cell>—</flux:table.cell>
                                 <flux:table.cell>€{{ number_format($this->productTotals['earnings'], 2, ',', '.') }}</flux:table.cell>
@@ -559,7 +559,7 @@ class extends Component
             </flux:tab.panel>
 
             <flux:modal name="date-range-picker" wire:model="showDateRangeModal">
-                <flux:heading size="lg">Select Date Range</flux:heading>
+                <flux:heading size="lg">{{ __('Select Date Range') }}</flux:heading>
 
                 <flux:calendar
                     mode="range"
@@ -574,7 +574,7 @@ class extends Component
 
                 <div class="mt-6 flex justify-end">
                     <flux:button variant="ghost" wire:click="$set('showDateRangeModal', false)">
-                        Close
+                        {{ __('Close') }}
                     </flux:button>
                 </div>
             </flux:modal>

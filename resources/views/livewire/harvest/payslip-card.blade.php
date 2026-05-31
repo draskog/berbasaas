@@ -139,7 +139,7 @@ new class extends Component
     <!-- Header: Harvester left, Company right -->
     <div class="border-b border-gray-200 pb-6 dark:border-zinc-700 flex justify-between items-start">
         <div>
-            <flux:heading size="lg">#{{ $this->harvesterNumber }} {{ $this->harvesterName() ?? 'Unknown' }}</flux:heading>
+            <flux:heading size="lg">#{{ $this->harvesterNumber }} {{ $this->harvesterName() ?? __('Unknown') }}</flux:heading>
         </div>
         <div class="text-right">
             <flux:text size="sm" class="text-gray-500 dark:text-zinc-400">{{ auth()->user()->company->name }}</flux:text>
@@ -148,7 +148,7 @@ new class extends Component
 
     @if (empty($this->payslipData))
         <div class="text-center text-gray-500 py-8">
-            <flux:text>No data for this harvester in the selected date range.</flux:text>
+            <flux:text>{{ __('No data for this harvester in the selected date range.') }}</flux:text>
         </div>
     @else
         <!-- Multi-column table layout -->
@@ -156,10 +156,10 @@ new class extends Component
             @foreach ($this->chunkedData as $chunk)
                 <flux:table>
                     <flux:table.columns>
-                        <flux:table.column>Date/Time</flux:table.column>
-                        <flux:table.column>Weight (kg)</flux:table.column>
-                        <flux:table.column>Price/kg</flux:table.column>
-                        <flux:table.column>Earnings</flux:table.column>
+                        <flux:table.column>{{ __('Date/Time') }}</flux:table.column>
+                        <flux:table.column>{{ __('Weight (kg)') }}</flux:table.column>
+                        <flux:table.column>{{ __('Price/kg') }}</flux:table.column>
+                        <flux:table.column>{{ __('Earnings') }}</flux:table.column>
                     </flux:table.columns>
 
                     <flux:table.rows>
@@ -192,15 +192,15 @@ new class extends Component
         <div class="border-t border-gray-200 pt-6 dark:border-zinc-700">
             <div class="flex flex-wrap gap-6 text-sm font-semibold">
                 <div>
-                    <flux:text size="sm" class="text-center text-gray-500 dark:text-zinc-400">Buckets</flux:text>
+                    <flux:text size="sm" class="text-center text-gray-500 dark:text-zinc-400">{{ __('Buckets') }}</flux:text>
                     <flux:text size="md" class="text-center">{{ $this->payslipTotals['buckets'] }}</flux:text>
                 </div>
                 <div>
-                    <flux:text size="sm" class="text-center text-gray-500 dark:text-zinc-400">Total Weight</flux:text>
+                    <flux:text size="sm" class="text-center text-gray-500 dark:text-zinc-400">{{ __('Total Weight') }}</flux:text>
                     <flux:text size="md" class="text-center">{{ number_format($this->payslipTotals['weight'], 3, ',', '.') }} kg</flux:text>
                 </div>
                 <div>
-                    <flux:text size="sm" class="text-center text-gray-500 dark:text-zinc-400">Total Earnings</flux:text>
+                    <flux:text size="sm" class="text-center text-gray-500 dark:text-zinc-400">{{ __('Total Earnings') }}</flux:text>
                     <flux:text size="md" class="text-center">{{ number_format($this->payslipTotals['earnings'], 2, ',', '.') }}</flux:text>
                 </div>
             </div>

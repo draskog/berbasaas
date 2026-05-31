@@ -358,7 +358,7 @@ class extends Component {
             'labels' => $data->map(fn($row) => Carbon::parse($row->date)->format('d.m'))->values()->toArray(),
             'datasets' => [
                 [
-                    'label' => 'Total kg',
+                    'label' => __('Total kg'),
                     'data' => $data->map(fn($row) => round($row->total_weight, 2))->values()->toArray(),
                     'backgroundColor' => 'rgba(59, 130, 246, 0.8)',
                     'borderColor' => 'rgba(59, 130, 246, 1)',
@@ -383,7 +383,7 @@ class extends Component {
             'labels' => $data->map(fn($row) => $names[$row->harvester_number] ?? "#$row->harvester_number")->values()->toArray(),
             'datasets' => [
                 [
-                    'label' => 'Total kg',
+                    'label' => __('Total kg'),
                     'data' => $data->map(fn($row) => round($row->total_weight, 2))->values()->toArray(),
                     'backgroundColor' => 'rgba(34, 197, 94, 0.8)',
                     'borderColor' => 'rgba(34, 197, 94, 1)',
@@ -411,7 +411,7 @@ class extends Component {
             'labels' => $allHours->keys()->map(fn($h) => sprintf('%02dh', $h))->values()->toArray(),
             'datasets' => [
                 [
-                    'label' => 'Buckets',
+                    'label' => __('Buckets'),
                     'data' => $allHours->values()->toArray(),
                     'backgroundColor' => 'rgba(168, 85, 247, 0.8)',
                     'borderColor' => 'rgba(168, 85, 247, 1)',
@@ -450,7 +450,7 @@ class extends Component {
             'labels' => $labels,
             'datasets' => [
                 [
-                    'label' => 'Cumulative kg',
+                    'label' => __('Cumulative kg'),
                     'data' => $data,
                     'borderColor' => 'rgba(239, 68, 68, 1)',
                     'backgroundColor' => 'rgba(239, 68, 68, 0.1)',
@@ -506,8 +506,8 @@ class extends Component {
 
 
 <flux:main>
-    <flux:header heading="Harvest Charts">
-        Harvest Charts
+    <flux:header heading="{{ __('Harvest Charts') }}">
+        {{ __('Harvest Charts') }}
     </flux:header>
 
     <div class="p-6">
@@ -521,35 +521,35 @@ class extends Component {
 
             @if ($dailyData !== null)
                 <flux:card class="p-4">
-                    <flux:text size="sm" class="text-zinc-500">Total Harvest</flux:text>
+                    <flux:text size="sm" class="text-zinc-500">{{ __('Total Harvest') }}</flux:text>
                     <div class="mt-2 text-2xl font-semibold">{{ $this->dailyWeightDisplay['value'] }} {{ $this->dailyWeightDisplay['unit'] }}</div>
-                    <div class="text-xs text-zinc-400">{{ count($this->dailyData) }} days</div>
+                    <div class="text-xs text-zinc-400">{{ count($this->dailyData) }} {{ __('days') }}</div>
                 </flux:card>
 
                 <flux:card class="p-4">
-                    <flux:text size="sm" class="text-zinc-500">Total Buckets</flux:text>
+                    <flux:text size="sm" class="text-zinc-500">{{ __('Total Buckets') }}</flux:text>
                     <div class="mt-2 text-2xl font-semibold">{{ $this->dailyTotals['buckets'] }}</div>
                 </flux:card>
             @endif
 
             @if ($harvesterData !== null)
                 <flux:card class="p-4">
-                    <flux:text size="sm" class="text-zinc-500">Top Harvester</flux:text>
-                    <div class="mt-2 text-lg font-semibold">{{ $this->harvesterData[0]['name'] ?? 'N/A' }}</div>
+                    <flux:text size="sm" class="text-zinc-500">{{ __('Top Harvester') }}</flux:text>
+                    <div class="mt-2 text-lg font-semibold">{{ $this->harvesterData[0]['name'] ?? __('Unknown') }}</div>
                     <div class="text-xs text-zinc-400">{{ number_format($this->harvesterData[0]['total_weight'] ?? 0, 3, ',', '.') }} kg</div>
                 </flux:card>
             @endif
 
             @if ($productData !== null)
                 <flux:card class="p-4">
-                    <flux:text size="sm" class="text-zinc-500">Product Count</flux:text>
+                    <flux:text size="sm" class="text-zinc-500">{{ __('Product Count') }}</flux:text>
                     <div class="mt-2 text-2xl font-semibold">{{ count($this->productData) }}</div>
                 </flux:card>
             @endif
         </div>
         <!-- Year Pills -->
         <div class="mb-6 flex flex-wrap items-end gap-4">
-            <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
+            <flux:radio.group wire:model.live="selectedYear" label="{{ __('Year') }}" variant="pills">
                 @foreach($this->availableYears as $year)
                     <flux:radio label="{{ $year }}" value="{{ $year }}"/>
                 @endforeach
@@ -558,8 +558,8 @@ class extends Component {
 
         <!-- Product Pills -->
         <div class="mb-6 flex flex-wrap items-end gap-4">
-            <flux:radio.group wire:model.live="selectedProductId" label="Product" variant="pills">
-                <flux:radio label="All" value="0"/>
+            <flux:radio.group wire:model.live="selectedProductId" label="{{ __('Product') }}" variant="pills">
+                <flux:radio label="{{ __('All') }}" value="0"/>
                 @foreach ($this->products as $product)
                     <flux:radio label="{{ $product->name }}" value="{{ $product->id }}"/>
                 @endforeach
@@ -583,9 +583,9 @@ class extends Component {
         <!-- Tabs -->
         <flux:tab.group>
             <flux:tabs wire:model.live="activeTab" class="mb-6">
-                <flux:tab name="daily">Daily Summary</flux:tab>
-                <flux:tab name="harvesters">Harvesters</flux:tab>
-                <flux:tab name="products">Products</flux:tab>
+                <flux:tab name="daily">{{ __('Daily Summary') }}</flux:tab>
+                <flux:tab name="harvesters">{{ __('Harvesters') }}</flux:tab>
+                <flux:tab name="products">{{ __('Products') }}</flux:tab>
             </flux:tabs>
 
             <!-- Daily Summary Tab -->
@@ -608,7 +608,7 @@ class extends Component {
                     </flux:card>
                 @else
                     <flux:card>
-                        <div class="flex items-center justify-center h-96 text-zinc-500">No data available</div>
+                        <div class="flex items-center justify-center h-96 text-zinc-500">{{ __('No data available') }}</div>
                     </flux:card>
                 @endif
             </flux:tab.panel>
@@ -633,7 +633,7 @@ class extends Component {
                     </flux:card>
                 @else
                     <flux:card>
-                        <div class="flex items-center justify-center h-96 text-zinc-500">No data available</div>
+                        <div class="flex items-center justify-center h-96 text-zinc-500">{{ __('No data available') }}</div>
                     </flux:card>
                 @endif
             </flux:tab.panel>
@@ -645,9 +645,9 @@ class extends Component {
                         <div class="overflow-x-auto">
                             <flux:table>
                                 <flux:table.columns>
-                                    <flux:table.column>Product</flux:table.column>
-                                    <flux:table.column class="text-right">Weight (kg)</flux:table.column>
-                                    <flux:table.column class="text-right">Buckets</flux:table.column>
+                                    <flux:table.column>{{ __('Product') }}</flux:table.column>
+                                    <flux:table.column class="text-right">{{ __('Weight (kg)') }}</flux:table.column>
+                                    <flux:table.column class="text-right">{{ __('Buckets') }}</flux:table.column>
                                 </flux:table.columns>
                                 <flux:table.rows>
                                     @foreach ($this->productData as $row)
@@ -663,14 +663,14 @@ class extends Component {
                     </flux:card>
                 @else
                     <flux:card>
-                        <div class="flex items-center justify-center h-96 text-zinc-500">No data available</div>
+                        <div class="flex items-center justify-center h-96 text-zinc-500">{{ __('No data available') }}</div>
                     </flux:card>
                 @endif
             </flux:tab.panel>
         </flux:tab.group>
 
         <flux:modal name="date-range-picker" wire:model="showDateRangeModal">
-            <flux:heading size="lg">Select Date Range</flux:heading>
+            <flux:heading size="lg">{{ __('Select Date Range') }}</flux:heading>
 
             <flux:calendar
                     mode="range"
@@ -685,7 +685,7 @@ class extends Component {
 
             <div class="mt-6 flex justify-end">
                 <flux:button variant="ghost" wire:click="$set('showDateRangeModal', false)">
-                    Close
+                    {{ __('Close') }}
                 </flux:button>
             </div>
         </flux:modal>

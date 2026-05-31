@@ -193,7 +193,12 @@ class extends Component {
         $this->uploadedFile = null;
         $this->showUploadModal = false;
         Flux::toast(
-            text: "Successfully imported $upload->record_count records from $upload->original_filename ($upload->date_from to $upload->date_to)",
+            text: __('Successfully imported :count records from :filename (:from to :to)', [
+                'count' => $upload->record_count,
+                'filename' => $upload->original_filename,
+                'from' => $upload->date_from->format('d.m.Y'),
+                'to' => $upload->date_to->format('d.m.Y'),
+            ]),
             variant: 'success'
         );
     }
@@ -216,7 +221,7 @@ class extends Component {
         $this->deletingUploadId = null;
         $this->showDeleteModal = false;
         $this->dispatch('$refresh');
-        Flux::toast(text: 'Upload deleted.', variant: 'warning');
+        Flux::toast(text: __('Upload deleted.'), variant: 'warning');
     }
 
     public function autoResolve (int $uploadId): void
@@ -225,7 +230,7 @@ class extends Component {
 
         // Authorize access
         if ($upload->company_id !== auth()->user()->company_id) {
-            Flux::toast(text: 'Unauthorized access.', variant: 'danger');
+            Flux::toast(text: __('Unauthorized access.'), variant: 'danger');
 
             return;
         }
@@ -270,8 +275,8 @@ class extends Component {
         $this->dispatch('$refresh');
 
         $message = $resolved === 0
-            ? 'No records could be auto-resolved. Please resolve manually.'
-            : "Auto-resolved $resolved record(s).";
+            ? __('No records could be auto-resolved. Please resolve manually.')
+            : __('Auto-resolved :count record(s).', ['count' => $resolved]);
 
         Flux::toast(text: $message, variant: $resolved > 0 ? 'success' : 'warning');
     }
@@ -295,11 +300,11 @@ class extends Component {
 }; ?>
 
 <flux:main>
-    <flux:header heading="Recent Upload Harvest Records">
-        Recent Upload Harvest Records
+    <flux:header heading="{{ __('Recent Upload Harvest Records') }}">
+        {{ __('Recent Upload Harvest Records') }}
         <flux:spacer/>
         <flux:button variant="primary" size="sm" icon="arrow-up-tray" wire:click="$set('showUploadModal', true)">
-            Upload CSV File
+            {{ __('Upload CSV File') }}
         </flux:button>
     </flux:header>
 
@@ -310,8 +315,8 @@ class extends Component {
 
         <div class="space-y-4 mb-6">
             <div>
-                <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
-                    <flux:radio value="0" label="All"/>
+                <flux:radio.group wire:model.live="selectedYear" label="{{ __('Year') }}" variant="pills">
+                    <flux:radio value="0" label="{{ __('All') }}"/>
                     @foreach($this->availableYears as $year)
                         <flux:radio value="{{ $year }}" label="{{ $year }}"/>
                     @endforeach
@@ -319,8 +324,8 @@ class extends Component {
             </div>
 
             <div>
-                <flux:radio.group wire:model.live="selectedProduct" label="Product" variant="pills">
-                    <flux:radio value="all" label="All"/>
+                <flux:radio.group wire:model.live="selectedProduct" label="{{ __('Product') }}" variant="pills">
+                    <flux:radio value="all" label="{{ __('All') }}"/>
                     @foreach($this->selectedProducts as $product)
                         <flux:radio value="{{ $product->id }}" label="{{ $product->name }}"/>
                     @endforeach
@@ -328,38 +333,38 @@ class extends Component {
             </div>
 
             <div>
-                <flux:radio.group wire:model.live="selectedStatus" label="Status" variant="pills">
-                    <flux:radio value="all" label="All"/>
-                    <flux:radio value="valid" label="Valid"/>
-                    <flux:radio value="invalid" label="Invalid"/>
+                <flux:radio.group wire:model.live="selectedStatus" label="{{ __('Status') }}" variant="pills">
+                    <flux:radio value="all" label="{{ __('All') }}"/>
+                    <flux:radio value="valid" label="{{ __('Valid') }}"/>
+                    <flux:radio value="invalid" label="{{ __('Invalid') }}"/>
                 </flux:radio.group>
             </div>
 
             <div class="flex justify-between items-center">
-                <flux:radio.group wire:model.live="selectedResolved" label="Resolution Status" variant="pills">
-                    <flux:radio value="all" label="All"/>
-                    <flux:radio value="resolved" label="Resolved"/>
-                    <flux:radio value="unresolved" label="Unresolved"/>
+                <flux:radio.group wire:model.live="selectedResolved" label="{{ __('Resolution Status') }}" variant="pills">
+                    <flux:radio value="all" label="{{ __('All') }}"/>
+                    <flux:radio value="resolved" label="{{ __('Resolved') }}"/>
+                    <flux:radio value="unresolved" label="{{ __('Unresolved') }}"/>
                 </flux:radio.group>
                 <flux:select wire:model.live="perPage" size="sm" class="w-28">
                     <flux:select.option value="25">25</flux:select.option>
                     <flux:select.option value="50">50</flux:select.option>
                     <flux:select.option value="100">100</flux:select.option>
-                    <flux:select.option value="0">All</flux:select.option>
+                    <flux:select.option value="0">{{ __('All') }}</flux:select.option>
                 </flux:select>
             </div>
         </div>
 
         <flux:table :paginate="$this->perPage > 0 ? $this->recentUploads : null">
             <flux:table.columns>
-                <flux:table.column sortable :sorted="$sortBy === 'original_filename'" :direction="$sortDirection" wire:click="sort('original_filename')">Filename</flux:table.column>
-                <flux:table.column>Product</flux:table.column>
-                <flux:table.column>Total</flux:table.column>
-                <flux:table.column>Valid</flux:table.column>
-                <flux:table.column>Invalid</flux:table.column>
-                <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">Date Range</flux:table.column>
-                <flux:table.column>Uploaded By</flux:table.column>
-                <flux:table.column align="center">Actions</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'original_filename'" :direction="$sortDirection" wire:click="sort('original_filename')">{{ __('Filename') }}</flux:table.column>
+                <flux:table.column>{{ __('Product') }}</flux:table.column>
+                <flux:table.column>{{ __('Total') }}</flux:table.column>
+                <flux:table.column>{{ __('Valid') }}</flux:table.column>
+                <flux:table.column>{{ __('Invalid') }}</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">{{ __('Date Range') }}</flux:table.column>
+                <flux:table.column>{{ __('Uploaded By') }}</flux:table.column>
+                <flux:table.column align="center">{{ __('Actions') }}</flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
@@ -395,16 +400,16 @@ class extends Component {
                         <flux:table.cell align="end" class="space-x-2">
                             @if($upload->invalid_count > 0)
                                 <flux:button size="sm" variant="primary" wire:click="confirmResolveUpload({{ $upload->id }})">
-                                    Resolve
+                                    {{ __('Resolve') }}
                                 </flux:button>
                             @endif
 
-                            <flux:button variant="danger" size="sm" wire:click="confirmDeleteUpload({{ $upload->id }})">Delete</flux:button>
+                            <flux:button variant="danger" size="sm" wire:click="confirmDeleteUpload({{ $upload->id }})">{{ __('Delete') }}</flux:button>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="8" class="text-center text-gray-500">No uploads yet</flux:table.cell>
+                        <flux:table.cell colspan="8" class="text-center text-gray-500">{{ __('No uploads yet') }}</flux:table.cell>
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>
@@ -417,9 +422,9 @@ class extends Component {
 
     <flux:modal name="resolve-upload" :dismissible="true" wire:model="showResolveModal">
         @if($resolvingUpload)
-            <flux:heading>Resolve {{ $resolvingUpload->invalid_count }} invalid record(s)</flux:heading>
+            <flux:heading>{{ __('Resolve :count invalid record(s)', ['count' => $resolvingUpload->invalid_count]) }}</flux:heading>
             <flux:text class="mt-4">
-                Choose how to handle the invalid records in this upload.
+                {{ __('Choose how to handle the invalid records in this upload.') }}
             </flux:text>
 
             <div class="mt-6 flex flex-col gap-3">
@@ -428,34 +433,34 @@ class extends Component {
                     wire:click="autoResolve({{ $resolvingUpload->id }})"
                     wire:loading.attr="disabled"
                 >
-                    <span wire:loading.remove>Resolve Automatically</span>
-                    <span wire:loading>Resolving...</span>
+                    <span wire:loading.remove>{{ __('Resolve Automatically') }}</span>
+                    <span wire:loading>{{ __('Resolving...') }}</span>
                 </flux:button>
                 <a href="{{ route('harvest.upload.review', $resolvingUpload) }}" wire:navigate>
-                    <flux:button variant="ghost" class="w-full">Resolve Manually</flux:button>
+                    <flux:button variant="ghost" class="w-full">{{ __('Resolve Manually') }}</flux:button>
                 </a>
             </div>
         @endif
     </flux:modal>
 
     <flux:modal name="confirm-delete-upload" :dismissible="false" wire:model="showDeleteModal">
-        <flux:heading>Delete Upload</flux:heading>
-        <flux:text>Are you sure you want to delete this upload? This cannot be undone.</flux:text>
+        <flux:heading>{{ __('Delete Upload') }}</flux:heading>
+        <flux:text>{{ __('Are you sure you want to delete this upload? This cannot be undone.') }}</flux:text>
 
         <div class="mt-6 flex gap-2 justify-end">
-            <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">Cancel</flux:button>
-            <flux:button variant="danger" wire:click="deleteUpload">Delete</flux:button>
+            <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">{{ __('Cancel') }}</flux:button>
+            <flux:button variant="danger" wire:click="deleteUpload">{{ __('Delete') }}</flux:button>
         </div>
     </flux:modal>
 
     <flux:modal name="upload-csv" :dismissible="true" wire:model="showUploadModal">
-        <flux:heading>Upload CSV File</flux:heading>
+        <flux:heading>{{ __('Upload CSV File') }}</flux:heading>
 
         <div class="mt-6 space-y-4">
             <flux:field>
-                <flux:label>Product</flux:label>
+                <flux:label>{{ __('Product') }}</flux:label>
                 <flux:select wire:model="selectedProductId">
-                    <flux:select.option value="">Select a product...</flux:select.option>
+                    <flux:select.option value="">{{ __('Select a product...') }}</flux:select.option>
                     @foreach($this->products as $product)
                         <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
                     @endforeach
@@ -464,17 +469,17 @@ class extends Component {
             </flux:field>
 
             <flux:field>
-                <flux:label>CSV File</flux:label>
+                <flux:label>{{ __('CSV File') }}</flux:label>
                 <flux:input type="file" wire:model="uploadedFile" accept=".csv"/>
                 <flux:error name="uploadedFile"/>
             </flux:field>
         </div>
 
         <div class="mt-6 flex gap-2 justify-end">
-            <flux:button variant="ghost" wire:click="$set('showUploadModal', false)">Cancel</flux:button>
+            <flux:button variant="ghost" wire:click="$set('showUploadModal', false)">{{ __('Cancel') }}</flux:button>
             <flux:button variant="primary" wire:click="uploadFile" wire:loading.attr="disabled">
-                <span wire:loading.remove>Upload</span>
-                <span wire:loading>Uploading...</span>
+                <span wire:loading.remove>{{ __('Upload') }}</span>
+                <span wire:loading>{{ __('Uploading...') }}</span>
             </flux:button>
         </div>
     </flux:modal>

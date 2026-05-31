@@ -184,15 +184,15 @@ class extends Component
 
 
 <flux:main>
-    <flux:header heading="Harvesters Payslips">
-        Harvesters Payslips
+    <flux:header heading="{{ __('Harvesters Payslips') }}">
+        {{ __('Harvesters Payslips') }}
         <flux:spacer/>
-        <flux:button icon="printer" variant="primary" size="sm" onclick="window.print()">Print</flux:button>
+        <flux:button icon="printer" variant="primary" size="sm" onclick="window.print()">{{ __('Print') }}</flux:button>
     </flux:header>
 
     <div class="p-6">
         <div class="mb-6 flex flex-wrap items-end gap-4">
-            <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
+            <flux:radio.group wire:model.live="selectedYear" label="{{ __('Year') }}" variant="pills">
                 @foreach($this->availableYears as $year)
                     <flux:radio label="{{ $year }}" value="{{ $year }}"/>
                 @endforeach
@@ -231,7 +231,7 @@ class extends Component
         </div>
 
         <flux:modal name="date-range-picker" wire:model="showDateRangeModal" :dismissible="false" class="md:max-w-3xl! md:w-3xl!">
-            <flux:heading size="lg">Select Date Range</flux:heading>
+            <flux:heading size="lg">{{ __('Select Date Range') }}</flux:heading>
 
             <flux:calendar
                 mode="range"
@@ -247,7 +247,7 @@ class extends Component
 
             <div class="mt-6 flex justify-end">
                 <flux:button variant="ghost" wire:click="$set('showDateRangeModal', false)">
-                    Close
+                    {{ __('Close') }}
                 </flux:button>
             </div>
         </flux:modal>

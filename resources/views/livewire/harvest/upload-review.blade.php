@@ -143,7 +143,7 @@ class extends Component {
         $stagingRecord = HarvestRecordStaging::findOrFail($recordId);
 
         if ($stagingRecord->upload_id !== $this->upload->id || $stagingRecord->company_id !== auth()->user()->company_id) {
-            Flux::toast(text: 'Unauthorized access.', variant: 'danger');
+            Flux::toast(text: __('Unauthorized access.'), variant: 'danger');
 
             return;
         }
@@ -157,7 +157,7 @@ class extends Component {
             $rule = new HarvesterExistsForYear(auth()->user()->company_id, $stagingRecord->weighed_at);
             $this->validate(
                 ["corrections.$recordId" => ['required', 'integer', 'min:1', 'max:200', $rule]],
-                ["corrections.$recordId.required" => 'Harvester number is required.']
+                ["corrections.$recordId.required" => __('Harvester number is required.')]
             );
             $harvesterNumber = (int) ($this->corrections[$recordId] ?? $stagingRecord->harvester_number);
         }
@@ -165,7 +165,7 @@ class extends Component {
         if (in_array('tare_out_of_range', $reasons, true)) {
             $this->validate(
                 ["correctedTares.$recordId" => ['required', 'numeric', 'min:0']],
-                ["correctedTares.$recordId.required" => 'Tare value is required.']
+                ["correctedTares.$recordId.required" => __('Tare value is required.')]
             );
             $tare = (float) ($this->correctedTares[$recordId] ?? $stagingRecord->tare);
             $weight = $stagingRecord->gross - $tare;
@@ -189,7 +189,7 @@ class extends Component {
         unset($this->corrections[$recordId], $this->correctedTares[$recordId]);
         $this->dispatch('$refresh');
 
-        Flux::toast(text: 'Record updated and promoted.', variant: 'success');
+        Flux::toast(text: __('Record updated and promoted.'), variant: 'success');
     }
 
     public function resolveSelected (): void
@@ -264,63 +264,63 @@ class extends Component {
         $this->dispatch('$refresh');
 
         $message = $skipped > 0
-            ? "Resolved $resolved record(s), skipped $skipped (missing or invalid input)."
-            : "Resolved $resolved record(s).";
+            ? __('Resolved :resolved record(s), skipped :skipped (missing or invalid input).', ['resolved' => $resolved, 'skipped' => $skipped])
+            : __('Resolved :resolved record(s).', ['resolved' => $resolved]);
 
         Flux::toast(text: $message, variant: $skipped > 0 ? 'warning' : 'success');
     }
 }; ?>
 
 <flux:main>
-    <flux:header heading="Review Upload: {{ $upload->original_filename }}">
+    <flux:header heading="{{ __('Review Upload: :filename', ['filename' => $upload->original_filename]) }}">
         <flux:spacer/>
         <a href="{{ route('harvest.upload') }}" wire:navigate>
-            <flux:button variant="ghost">Back</flux:button>
+            <flux:button variant="ghost">{{ __('Back') }}</flux:button>
         </a>
     </flux:header>
 
     <div class="p-6">
         @if($this->invalidRecords->isEmpty())
-            <flux:callout type="success" icon="check-circle" title="All Clear">
-                All harvester numbers are valid for {{ $this->year }}.
+            <flux:callout type="success" icon="check-circle" title="{{ __('All Clear') }}">
+                {{ __('All harvester numbers are valid for :year.', ['year' => $this->year]) }}
             </flux:callout>
         @else
             <div class="flex items-center justify-between mb-6">
                 <flux:text variant="subtle">
-                    {{ $this->perPage > 0 ? $this->invalidRecords->total() : $this->invalidRecords->count() }} record(s) need correction
+                    {{ __(':count record(s) need correction', ['count' => $this->perPage > 0 ? $this->invalidRecords->total() : $this->invalidRecords->count()]) }}
                 </flux:text>
                 <flux:select wire:model.live="perPage" size="sm" class="w-28">
                     <flux:select.option value="25">25</flux:select.option>
                     <flux:select.option value="50">50</flux:select.option>
                     <flux:select.option value="100">100</flux:select.option>
-                    <flux:select.option value="0">All</flux:select.option>
+                    <flux:select.option value="0">{{ __('All') }}</flux:select.option>
                 </flux:select>
             </div>
 
             <div class="mb-6">
-                <flux:radio.group wire:model.live="selectedReason" label="Reason" variant="pills">
-                    <flux:radio value="all" label="All"/>
-                    <flux:radio value="harvester_not_found" label="Harvester Not Found"/>
-                    <flux:radio value="tare_out_of_range" label="Tare Out of Range"/>
+                <flux:radio.group wire:model.live="selectedReason" label="{{ __('Reason') }}" variant="pills">
+                    <flux:radio value="all" label="{{ __('All') }}"/>
+                    <flux:radio value="harvester_not_found" label="{{ __('Harvester Not Found') }}"/>
+                    <flux:radio value="tare_out_of_range" label="{{ __('Tare Out of Range') }}"/>
                 </flux:radio.group>
             </div>
 
             @if(!empty($selectedIds))
                 <div class="flex flex-wrap items-end gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 mb-4">
-                    <flux:text class="font-medium">{{ count($selectedIds) }} selected</flux:text>
+                    <flux:text class="font-medium">{{ __(':count selected', ['count' => count($selectedIds)]) }}</flux:text>
                     <flux:field>
-                        <flux:label>Harvester # (for harvester errors)</flux:label>
+                        <flux:label>{{ __('Harvester # (for harvester errors)') }}</flux:label>
                         <flux:input wire:model="bulkHarvesterNumber" type="number" min="1" max="200" placeholder="#" size="sm" class="w-28"/>
                         <flux:error name="bulkHarvesterNumber"/>
                     </flux:field>
                     <flux:field>
-                        <flux:label>Tare (for tare errors)</flux:label>
+                        <flux:label>{{ __('Tare (for tare errors)') }}</flux:label>
                         <flux:input wire:model="bulkTare" type="number" step="0.001" min="0" placeholder="0.000" size="sm" class="w-32"/>
                         <flux:error name="bulkTare"/>
                     </flux:field>
                     <flux:button variant="primary" size="sm" wire:click="resolveSelected" wire:loading.attr="disabled">
-                        <span wire:loading.remove>Resolve Selected</span>
-                        <span wire:loading>Resolving...</span>
+                        <span wire:loading.remove>{{ __('Resolve Selected') }}</span>
+                        <span wire:loading>{{ __('Resolving...') }}</span>
                     </flux:button>
                 </div>
             @endif
@@ -330,15 +330,15 @@ class extends Component {
                     <flux:table.column class="w-12">
                         <flux:checkbox wire:model.live="selectAll"/>
                     </flux:table.column>
-                    <flux:table.column sortable :sorted="$sortBy === 'weighed_at'" :direction="$sortDirection" wire:click="sort('weighed_at')">Date / Time</flux:table.column>
-                    <flux:table.column sortable :sorted="$sortBy === 'weight'" :direction="$sortDirection" wire:click="sort('weight')">Weight (kg)</flux:table.column>
-                    <flux:table.column>Tare (kg)</flux:table.column>
-                    <flux:table.column>Corrected Tare</flux:table.column>
-                    <flux:table.column>Gross (kg)</flux:table.column>
-                    <flux:table.column>Original #</flux:table.column>
-                    <flux:table.column>Corrected #</flux:table.column>
-                    <flux:table.column>Reason</flux:table.column>
-                    <flux:table.column>Action</flux:table.column>
+                    <flux:table.column sortable :sorted="$sortBy === 'weighed_at'" :direction="$sortDirection" wire:click="sort('weighed_at')">{{ __('Date / Time') }}</flux:table.column>
+                    <flux:table.column sortable :sorted="$sortBy === 'weight'" :direction="$sortDirection" wire:click="sort('weight')">{{ __('Weight (kg)') }}</flux:table.column>
+                    <flux:table.column>{{ __('Tare (kg)') }}</flux:table.column>
+                    <flux:table.column>{{ __('Corrected Tare') }}</flux:table.column>
+                    <flux:table.column>{{ __('Gross (kg)') }}</flux:table.column>
+                    <flux:table.column>{{ __('Original #') }}</flux:table.column>
+                    <flux:table.column>{{ __('Corrected #') }}</flux:table.column>
+                    <flux:table.column>{{ __('Reason') }}</flux:table.column>
+                    <flux:table.column>{{ __('Action') }}</flux:table.column>
                 </flux:table.columns>
 
                 <flux:table.rows>
@@ -417,9 +417,9 @@ class extends Component {
                             <flux:table.cell>
                                 @foreach($reasons as $reason)
                                     @if($reason === 'harvester_not_found')
-                                        <flux:badge variant="warning" size="sm">Harvester not found</flux:badge>
+                                        <flux:badge variant="warning" size="sm">{{ __('Harvester not found') }}</flux:badge>
                                     @elseif($reason === 'tare_out_of_range')
-                                        <flux:badge variant="danger" size="sm">Tare out of range</flux:badge>
+                                        <flux:badge variant="danger" size="sm">{{ __('Tare out of range') }}</flux:badge>
                                     @else
                                         <flux:badge variant="zinc" size="sm">{{ $reason }}</flux:badge>
                                     @endif
@@ -432,7 +432,7 @@ class extends Component {
                                     wire:click="resolve({{ $record->id }})"
                                     wire:loading.attr="disabled"
                                 >
-                                    Save
+                                    {{ __('Save') }}
                                 </flux:button>
                             </flux:table.cell>
                         </flux:table.row>

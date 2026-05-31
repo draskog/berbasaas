@@ -168,7 +168,7 @@ class extends Component {
 
         $this->reset(['newProductId', 'newPricePerKg', 'newEffectiveFrom', 'newEffectiveTo']);
         $this->showCreatePriceModal = false;
-        Flux::toast(text: 'Price added successfully.', variant: 'success');
+        Flux::toast(text: __('Price added successfully.'), variant: 'success');
     }
 
     public function confirmDeletePrice (int $id): void
@@ -182,7 +182,7 @@ class extends Component {
         HarvestPrice::find($this->deletingPriceId)?->delete();
         $this->deletingPriceId = null;
         $this->showDeleteModal = false;
-        Flux::toast(text: 'Price deleted.', variant: 'warning');
+        Flux::toast(text: __('Price deleted.'), variant: 'warning');
     }
 
     public function editPrice (int $id): void
@@ -239,22 +239,22 @@ class extends Component {
         );
 
         $this->showEditPriceModal = false;
-        Flux::toast(text: 'Price updated.', variant: 'success');
+        Flux::toast(text: __('Price updated.'), variant: 'success');
     }
 }; ?>
 
 <flux:main>
-    <flux:header heading="Harvest Prices">
-        Harvest Prices
+    <flux:header heading="{{ __('Harvest Prices') }}">
+        {{ __('Harvest Prices') }}
         <flux:spacer/>
-        <flux:button variant="primary" icon="plus" size="sm" wire:click="openCreatePriceModal">Add Price</flux:button>
+        <flux:button variant="primary" icon="plus" size="sm" wire:click="openCreatePriceModal">{{ __('Add Price') }}</flux:button>
     </flux:header>
 
     <div class="p-6">
         <div class="flex items-center justify-between mb-6">
             <div class="flex-1">
-                <flux:radio.group wire:model.live="selectedProduct" label="Product" variant="pills">
-                    <flux:radio label="All" value="all"/>
+                <flux:radio.group wire:model.live="selectedProduct" label="{{ __('Product') }}" variant="pills">
+                    <flux:radio label="{{ __('All') }}" value="all"/>
                     @foreach($this->filterProducts as $product)
                         <flux:radio :label="$product->name" :value="$product->id"/>
                     @endforeach
@@ -264,17 +264,17 @@ class extends Component {
                 <flux:select.option value="25">25</flux:select.option>
                 <flux:select.option value="50">50</flux:select.option>
                 <flux:select.option value="100">100</flux:select.option>
-                <flux:select.option value="0">All</flux:select.option>
+                <flux:select.option value="0">{{ __('All') }}</flux:select.option>
             </flux:select>
         </div>
 
         <flux:table :paginate="$this->perPage > 0 ? $this->pricesForProduct : null">
             <flux:table.columns>
-                <flux:table.column sortable :sorted="$sortBy === 'product_id'" :direction="$sortDirection" wire:click="sort('product_id')">Product</flux:table.column>
-                <flux:table.column sortable :sorted="$sortBy === 'price_per_kg'" :direction="$sortDirection" wire:click="sort('price_per_kg')">Price (per kg)</flux:table.column>
-                <flux:table.column sortable :sorted="$sortBy === 'effective_from'" :direction="$sortDirection" wire:click="sort('effective_from')">Effective From</flux:table.column>
-                <flux:table.column sortable :sorted="$sortBy === 'effective_to'" :direction="$sortDirection" wire:click="sort('effective_to')">Effective To</flux:table.column>
-                <flux:table.column align="center">Actions</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'product_id'" :direction="$sortDirection" wire:click="sort('product_id')">{{ __('Product') }}</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'price_per_kg'" :direction="$sortDirection" wire:click="sort('price_per_kg')">{{ __('Price (per kg)') }}</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'effective_from'" :direction="$sortDirection" wire:click="sort('effective_from')">{{ __('Effective From') }}</flux:table.column>
+                <flux:table.column sortable :sorted="$sortBy === 'effective_to'" :direction="$sortDirection" wire:click="sort('effective_to')">{{ __('Effective To') }}</flux:table.column>
+                <flux:table.column align="center">{{ __('Actions') }}</flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
@@ -283,15 +283,15 @@ class extends Component {
                         <flux:table.cell>{{ $price->product->name }}</flux:table.cell>
                         <flux:table.cell>{{ number_format($price->price_per_kg, 3, ',', '.') }}</flux:table.cell>
                         <flux:table.cell>{{ $price->effective_from->format('d.m.Y') }}</flux:table.cell>
-                        <flux:table.cell>{{ $price->effective_to?->format('d.m.Y') ?? 'Current' }}</flux:table.cell>
+                        <flux:table.cell>{{ $price->effective_to?->format('d.m.Y') ?? __('Current') }}</flux:table.cell>
                         <flux:table.cell align="end" class="space-x-2">
-                            <flux:button size="sm" wire:click="editPrice({{ $price->id }})">Edit</flux:button>
-                            <flux:button variant="danger" size="sm" wire:click="confirmDeletePrice({{ $price->id }})">Delete</flux:button>
+                            <flux:button size="sm" wire:click="editPrice({{ $price->id }})">{{ __('Edit') }}</flux:button>
+                            <flux:button variant="danger" size="sm" wire:click="confirmDeletePrice({{ $price->id }})">{{ __('Delete') }}</flux:button>
                         </flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="5" class="text-center text-gray-500">No prices recorded</flux:table.cell>
+                        <flux:table.cell colspan="5" class="text-center text-gray-500">{{ __('No prices recorded') }}</flux:table.cell>
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>
@@ -299,14 +299,14 @@ class extends Component {
     </div>
 
     <flux:modal name="create-price" wire:model="showCreatePriceModal">
-        <flux:heading>Add Price</flux:heading>
-        <flux:subheading>Set a new price for a product.</flux:subheading>
+        <flux:heading>{{ __('Add Price') }}</flux:heading>
+        <flux:subheading>{{ __('Set a new price for a product.') }}</flux:subheading>
 
         <div class="mt-6 space-y-4">
             <flux:field>
-                <flux:label>Product</flux:label>
+                <flux:label>{{ __('Product') }}</flux:label>
                 <flux:select wire:model="newProductId">
-                    <flux:select.option value="">Select product...</flux:select.option>
+                    <flux:select.option value="">{{ __('Select product...') }}</flux:select.option>
                     @foreach ($this->products as $product)
                         <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
                     @endforeach
@@ -315,13 +315,13 @@ class extends Component {
             </flux:field>
 
             <flux:field>
-                <flux:label>Price per kg</flux:label>
+                <flux:label>{{ __('Price per kg') }}</flux:label>
                 <flux:input type="number" step="0.0001" wire:model="newPricePerKg"/>
                 <flux:error name="newPricePerKg"/>
             </flux:field>
 
             <flux:field>
-                <flux:label>Effective Date Range</flux:label>
+                <flux:label>{{ __('Effective Date Range') }}</flux:label>
                 <flux:calendar
                     mode="range"
                     week-numbers
@@ -337,24 +337,24 @@ class extends Component {
 
         <div class="mt-6 flex gap-2 justify-end">
             <flux:modal.close>
-                <flux:button variant="ghost">Cancel</flux:button>
+                <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
             </flux:modal.close>
-            <flux:button variant="primary" wire:click="createPrice">Save</flux:button>
+            <flux:button variant="primary" wire:click="createPrice">{{ __('Save') }}</flux:button>
         </div>
     </flux:modal>
 
     <flux:modal name="edit-price" wire:model="showEditPriceModal">
-        <flux:heading>Edit Price</flux:heading>
+        <flux:heading>{{ __('Edit Price') }}</flux:heading>
 
         <div class="mt-6 space-y-4">
             <flux:field>
-                <flux:label>Price per kg</flux:label>
+                <flux:label>{{ __('Price per kg') }}</flux:label>
                 <flux:input type="number" step="0.0001" wire:model="editPricePerKg"/>
                 <flux:error name="editPricePerKg"/>
             </flux:field>
 
             <flux:field>
-                <flux:label>Effective Date Range</flux:label>
+                <flux:label>{{ __('Effective Date Range') }}</flux:label>
                 <flux:calendar
                     mode="range"
                     week-numbers
@@ -369,18 +369,18 @@ class extends Component {
         </div>
 
         <div class="mt-6 flex gap-2 justify-end">
-            <flux:button variant="ghost" wire:click="$set('showEditPriceModal', false)">Cancel</flux:button>
-            <flux:button variant="primary" wire:click="updatePrice">Save</flux:button>
+            <flux:button variant="ghost" wire:click="$set('showEditPriceModal', false)">{{ __('Cancel') }}</flux:button>
+            <flux:button variant="primary" wire:click="updatePrice">{{ __('Save') }}</flux:button>
         </div>
     </flux:modal>
 
     <flux:modal name="confirm-delete-price" :dismissible="false" wire:model="showDeleteModal">
-        <flux:heading>Delete Price</flux:heading>
-        <flux:text>Are you sure you want to delete this price? This cannot be undone.</flux:text>
+        <flux:heading>{{ __('Delete Price') }}</flux:heading>
+        <flux:text>{{ __('Are you sure you want to delete this price? This cannot be undone.') }}</flux:text>
 
         <div class="mt-6 flex gap-2 justify-end">
-            <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">Cancel</flux:button>
-            <flux:button variant="danger" wire:click="deletePrice">Delete</flux:button>
+            <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">{{ __('Cancel') }}</flux:button>
+            <flux:button variant="danger" wire:click="deletePrice">{{ __('Delete') }}</flux:button>
         </div>
     </flux:modal>
 </flux:main>
