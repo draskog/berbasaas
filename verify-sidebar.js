@@ -6,7 +6,7 @@ const { chromium } = require('playwright');
   
   try {
     // Navigate to the app
-    await page.goto('http://eborovnica.test/dashboard', { waitUntil: 'networkidle' });
+    await page.goto('http://berbasaas.test/dashboard', { waitUntil: 'networkidle' });
     console.log('✅ Page loaded');
     
     // Wait for sidebar to be visible
