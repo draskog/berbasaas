@@ -559,5 +559,6 @@
     "Generate payslips for harvesters from validated records.": "Generišite platne listiće za berače iz validiranih zapisa.",
     "Go to Dashboard": "Idi na kontrolnu tablu",
     "Create Account": "Napravite nalog",
-    "Harvester :attribute does not exist for year :year.": "Berač :attribute ne postoji za godinu :year."
+    "Harvester :attribute does not exist for year :year.": "Berač :attribute ne postoji za godinu :year.",
+    "Toggle sidebar": "Prebaci bočnu traku"
 }
