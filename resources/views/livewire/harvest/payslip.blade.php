@@ -235,6 +235,7 @@ class extends Component
 
             <flux:calendar
                 mode="range"
+                selectable-header
                 week-numbers
                 locale="{{ app()->getLocale() }}"
                 :unavailable="$this->unavailableDates"
