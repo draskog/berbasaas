@@ -22,12 +22,12 @@ describe('Payslip Page', function () {
     });
 
     it('displays year selector', function () {
-        Livewire::test('pages.harvest.payslip')
+        Livewire::test('harvest.payslip')
             ->assertSee('Year');
     });
 
     it('displays harvester selector', function () {
-        Livewire::test('pages.harvest.payslip')
+        Livewire::test('harvest.payslip')
             ->assertSee('Harvester');
     });
 
@@ -35,7 +35,7 @@ describe('Payslip Page', function () {
         $year = now()->year;
         $oldYear = $year - 1;
 
-        Livewire::test('pages.harvest.payslip')
+        Livewire::test('harvest.payslip')
             ->set('selectedYear', $oldYear)
             ->assertSet('selectedYear', $oldYear);
     });
@@ -49,7 +49,7 @@ describe('Payslip Page', function () {
             ->for($harvester)
             ->create(['year' => $year, 'number' => 7]);
 
-        Livewire::test('pages.harvest.payslip')
+        Livewire::test('harvest.payslip')
             ->set('selectedYear', $year)
             ->assertSee('7');
     });
@@ -63,7 +63,7 @@ describe('Payslip Page', function () {
             ->for($harvester)
             ->create(['year' => $year, 'number' => 8]);
 
-        Livewire::test('pages.harvest.payslip')
+        Livewire::test('harvest.payslip')
             ->set('selectedYear', $year)
             ->set('selectedHarvesterNumber', 8)
             ->call('harvesterName')
@@ -89,7 +89,7 @@ describe('Payslip Page', function () {
                 'weighed_at' => now(),
             ]);
 
-        Livewire::test('pages.harvest.payslip')
+        Livewire::test('harvest.payslip')
             ->set('selectedYear', $year)
             ->set('selectedHarvesterNumber', 9)
             ->call('payslipData')
@@ -111,7 +111,7 @@ describe('Payslip Page', function () {
             ->for($product)
             ->create(['harvester_number' => 10, 'weight' => 25]);
 
-        Livewire::test('pages.harvest.payslip')
+        Livewire::test('harvest.payslip')
             ->set('selectedYear', $year)
             ->set('selectedHarvesterNumber', 10)
             ->call('payslipTotals')
@@ -141,7 +141,7 @@ describe('Payslip Page', function () {
                 'weight' => 100,
             ]);
 
-        Livewire::test('pages.harvest.payslip')
+        Livewire::test('harvest.payslip')
             ->set('selectedYear', $year)
             ->set('selectedHarvesterNumber', 11)
             ->call('payslipData')
@@ -149,7 +149,7 @@ describe('Payslip Page', function () {
     });
 
     it('handles no harvester selected', function () {
-        Livewire::test('pages.harvest.payslip')
+        Livewire::test('harvest.payslip')
             ->set('selectedHarvesterNumber', 0)
             ->assertSet('selectedHarvesterNumber', 0);
     });
@@ -164,18 +164,18 @@ describe('Payslip Page', function () {
             ->for($otherHarvester)
             ->create(['year' => $year, 'number' => 99]);
 
-        Livewire::test('pages.harvest.payslip')
+        Livewire::test('harvest.payslip')
             ->set('selectedYear', $year)
             ->assertDontSee('99');
     });
 
     it('displays company name in payslip', function () {
-        Livewire::test('pages.harvest.payslip')
+        Livewire::test('harvest.payslip')
             ->assertSee($this->company->name);
     });
 
     it('handles missing harvester name gracefully', function () {
-        Livewire::test('pages.harvest.payslip')
+        Livewire::test('harvest.payslip')
             ->set('selectedHarvesterNumber', 999)
             ->call('harvesterName')
             ->assertSet('selectedHarvesterNumber', 999);
@@ -196,7 +196,7 @@ describe('Payslip Page', function () {
             ->for($product)
             ->create(['harvester_number' => 12]);
 
-        Livewire::test('pages.harvest.payslip')
+        Livewire::test('harvest.payslip')
             ->set('selectedYear', $year)
             ->set('selectedHarvesterNumber', 12)
             ->call('payslipData')
@@ -212,7 +212,7 @@ describe('Payslip Page', function () {
             ->for($harvester)
             ->create(['year' => $year, 'number' => 13]);
 
-        Livewire::test('pages.harvest.payslip')
+        Livewire::test('harvest.payslip')
             ->set('selectedYear', $year)
             ->set('selectedHarvesterNumber', 13)
             ->assertStatus(200);

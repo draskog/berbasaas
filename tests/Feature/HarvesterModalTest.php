@@ -10,7 +10,7 @@ test('add harvester modal closes after submission', function () {
     $user = User::factory()->create(['company_id' => $company->id]);
 
     Livewire::actingAs($user)
-        ->test('pages.harvest.harvesters')
+        ->test('harvest.harvesters')
         ->set('showCreateHarvesterModal', true)
         ->set('newHarvesterName', 'Test Harvester')
         ->set('newHarvesterPrefix', 'TST')
@@ -28,7 +28,7 @@ test('add assignment modal closes after submission', function () {
     $harvester = Harvester::factory()->create(['company_id' => $company->id]);
 
     Livewire::actingAs($user)
-        ->test('pages.harvest.harvesters')
+        ->test('harvest.harvesters')
         ->set('showCreateAssignmentModal', true)
         ->set('newNumber', 1)
         ->set('newHarvesterId', $harvester->id)

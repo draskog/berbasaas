@@ -28,7 +28,7 @@ describe('Reports Page', function () {
             ->for($product)
             ->create(['weighed_at' => now()->format('Y-m-d'), 'weight' => 100]);
 
-        Livewire::test('pages.harvest.reports')
+        Livewire::test('harvest.reports')
             ->assertSee('Peaches');
     });
 
@@ -52,7 +52,7 @@ describe('Reports Page', function () {
             ->for($product)
             ->create(['weighed_at' => "$oldYear-06-15"]);
 
-        Livewire::test('pages.harvest.reports')
+        Livewire::test('harvest.reports')
             ->set('selectedYear', $oldYear)
             ->assertSee("$oldYear-06-15");
     });
@@ -73,14 +73,14 @@ describe('Reports Page', function () {
             ->for($product)
             ->create(['weighed_at' => now()->addMonths(2)->format('Y-m-15')]);
 
-        Livewire::test('pages.harvest.reports')
+        Livewire::test('harvest.reports')
             ->set('fromDate', now()->format('Y-m-01'))
             ->set('toDate', now()->addMonth()->format('Y-m-30'))
             ->assertSee('15');
     });
 
     it('switches between tabs', function () {
-        Livewire::test('pages.harvest.reports')
+        Livewire::test('harvest.reports')
             ->set('activeTab', 'daily')
             ->assertSet('activeTab', 'daily')
             ->set('activeTab', 'harvesters')
@@ -101,7 +101,7 @@ describe('Reports Page', function () {
             ->for($product)
             ->create(['weighed_at' => $today, 'weight' => 10]);
 
-        Livewire::test('pages.harvest.reports')
+        Livewire::test('harvest.reports')
             ->assertSee('30');
     });
 
@@ -120,7 +120,7 @@ describe('Reports Page', function () {
             ->for($product)
             ->create(['harvester_number' => 5, 'weight' => 15]);
 
-        Livewire::test('pages.harvest.reports')
+        Livewire::test('harvest.reports')
             ->set('activeTab', 'harvesters')
             ->assertSee('Bob');
     });
@@ -136,7 +136,7 @@ describe('Reports Page', function () {
             ->for($product)
             ->create(['weight' => 5]);
 
-        Livewire::test('pages.harvest.reports')
+        Livewire::test('harvest.reports')
             ->set('activeTab', 'products')
             ->assertSee('Strawberries')
             ->assertSee('10');
@@ -159,7 +159,7 @@ describe('Reports Page', function () {
             ->for($product2)
             ->create(['weight' => 50]);
 
-        Livewire::test('pages.harvest.reports')
+        Livewire::test('harvest.reports')
             ->set('selectedProductId', $product1->id)
             ->assertSee('100')
             ->assertDontSee('50');
@@ -181,7 +181,7 @@ describe('Reports Page', function () {
             ->for($product)
             ->create(['harvester_number' => 2, 'weight' => 50]);
 
-        Livewire::test('pages.harvest.reports')
+        Livewire::test('harvest.reports')
             ->set('selectedHarvesterNumber', 1)
             ->set('activeTab', 'harvesters')
             ->assertSee('100')
@@ -197,7 +197,7 @@ describe('Reports Page', function () {
             ->for($otherProduct)
             ->create();
 
-        Livewire::test('pages.harvest.reports')
+        Livewire::test('harvest.reports')
             ->assertDontSee('Secret');
     });
 });

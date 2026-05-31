@@ -15,7 +15,7 @@ beforeEach(function () {
 describe('Harvesters Page', function () {
 
     it('renders the page', function () {
-        Livewire::test('pages.harvest.harvesters')
+        Livewire::test('harvest.harvesters')
             ->assertStatus(200);
     });
 
@@ -30,7 +30,7 @@ describe('Harvesters Page', function () {
                 'number' => 1,
             ]);
 
-        Livewire::test('pages.harvest.harvesters')
+        Livewire::test('harvest.harvesters')
             ->assertSee('John Doe')
             ->assertSee('1');
     });
@@ -39,7 +39,7 @@ describe('Harvesters Page', function () {
     it('creates new harvester assignment', function () {
         $harvester = Harvester::factory()->for($this->company)->create();
 
-        Livewire::test('pages.harvest.harvesters')
+        Livewire::test('harvest.harvesters')
             ->set('newNumber', 42)
             ->set('newHarvesterId', $harvester->id)
             ->call('createAssignment')
@@ -55,7 +55,7 @@ describe('Harvesters Page', function () {
     it('validates harvester number is required', function () {
         $harvester = Harvester::factory()->for($this->company)->create();
 
-        Livewire::test('pages.harvest.harvesters')
+        Livewire::test('harvest.harvesters')
             ->set('newNumber', null)
             ->set('newHarvesterId', $harvester->id)
             ->call('createAssignment')
@@ -63,7 +63,7 @@ describe('Harvesters Page', function () {
     });
 
     it('validates harvester is required', function () {
-        Livewire::test('pages.harvest.harvesters')
+        Livewire::test('harvest.harvesters')
             ->set('newNumber', 42)
             ->set('newHarvesterId', null)
             ->call('createAssignment')
@@ -73,7 +73,7 @@ describe('Harvesters Page', function () {
     it('can be used to manage harvester assignments', function () {
         $harvester = Harvester::factory()->for($this->company)->create(['name' => 'Test Harvester']);
 
-        Livewire::test('pages.harvest.harvesters')
+        Livewire::test('harvest.harvesters')
             ->set('newNumber', 99)
             ->set('newHarvesterId', $harvester->id)
             ->call('createAssignment')
@@ -88,7 +88,7 @@ describe('Harvesters Page', function () {
     it('validates harvester number is at least 1', function () {
         $harvester = Harvester::factory()->for($this->company)->create();
 
-        Livewire::test('pages.harvest.harvesters')
+        Livewire::test('harvest.harvesters')
             ->set('newNumber', 0)
             ->set('newHarvesterId', $harvester->id)
             ->call('createAssignment')
@@ -100,7 +100,7 @@ describe('Harvesters Page', function () {
             ->for($this->company)
             ->create(['year' => now()->year]);
 
-        Livewire::test('pages.harvest.harvesters')
+        Livewire::test('harvest.harvesters')
             ->call('confirmDeleteAssignment', $assignment->id)
             ->call('deleteAssignment')
             ->assertHasNoErrors();
@@ -115,7 +115,7 @@ describe('Harvesters Page', function () {
             ->for($this->company)
             ->create(['year' => now()->year]);
 
-        Livewire::test('pages.harvest.harvesters')
+        Livewire::test('harvest.harvesters')
             ->call('confirmDeleteAssignment', $assignment->id)
             ->assertSet('deletingAssignmentId', $assignment->id);
     });
@@ -123,7 +123,7 @@ describe('Harvesters Page', function () {
     it('resets form after creating assignment', function () {
         $harvester = Harvester::factory()->for($this->company)->create();
 
-        Livewire::test('pages.harvest.harvesters')
+        Livewire::test('harvest.harvesters')
             ->set('newNumber', 42)
             ->set('newHarvesterId', $harvester->id)
             ->call('createAssignment')
@@ -139,7 +139,7 @@ describe('Harvesters Page', function () {
             ->for($otherHarvester)
             ->create(['year' => now()->year, 'number' => 99]);
 
-        Livewire::test('pages.harvest.harvesters')
+        Livewire::test('harvest.harvesters')
             ->assertDontSee('OtherCompanyHarvester');
     });
 });

@@ -21,7 +21,7 @@ describe('Upload Page', function () {
     it('displays products in selector', function () {
         Product::factory()->for($this->company)->create(['name' => 'Oranges']);
 
-        Livewire::test('pages.harvest.upload')
+        Livewire::test('harvest.upload')
             ->assertSee('Oranges');
     });
 
@@ -33,12 +33,12 @@ describe('Upload Page', function () {
             ->for($this->user, 'uploadedBy')
             ->create(['original_filename' => 'data.csv']);
 
-        Livewire::test('pages.harvest.upload')
+        Livewire::test('harvest.upload')
             ->assertSee('data.csv');
     });
 
     it('validates product is required for upload', function () {
-        Livewire::test('pages.harvest.upload')
+        Livewire::test('harvest.upload')
             ->set('selectedProductId', 0)
             ->set('uploadedFile', null)
             ->call('uploadFile')
@@ -48,7 +48,7 @@ describe('Upload Page', function () {
     it('validates file is required', function () {
         $product = Product::factory()->for($this->company)->create();
 
-        Livewire::test('pages.harvest.upload')
+        Livewire::test('harvest.upload')
             ->set('selectedProductId', $product->id)
             ->call('uploadFile')
             ->assertHasErrors('uploadedFile');
@@ -62,7 +62,7 @@ describe('Upload Page', function () {
             ->for($this->user, 'uploadedBy')
             ->create();
 
-        Livewire::test('pages.harvest.upload')
+        Livewire::test('harvest.upload')
             ->call('confirmDeleteUpload', $upload->id)
             ->call('deleteUpload')
             ->assertHasNoErrors();
@@ -78,7 +78,7 @@ describe('Upload Page', function () {
             ->for($this->user, 'uploadedBy')
             ->create();
 
-        Livewire::test('pages.harvest.upload')
+        Livewire::test('harvest.upload')
             ->call('confirmDeleteUpload', $upload->id)
             ->assertSet('deletingUploadId', $upload->id);
     });
@@ -95,7 +95,7 @@ describe('Upload Page', function () {
             ->for($otherUser, 'uploadedBy')
             ->create(['original_filename' => 'secret.csv']);
 
-        Livewire::test('pages.harvest.upload')
+        Livewire::test('harvest.upload')
             ->assertDontSee('secret.csv');
     });
 
@@ -107,7 +107,7 @@ describe('Upload Page', function () {
             ->for($this->user, 'uploadedBy')
             ->create();
 
-        Livewire::test('pages.harvest.upload')
+        Livewire::test('harvest.upload')
             ->assertSee($this->user->name);
     });
 
@@ -120,7 +120,7 @@ describe('Upload Page', function () {
             ->for($this->user, 'uploadedBy')
             ->create();
 
-        Livewire::test('pages.harvest.upload')
+        Livewire::test('harvest.upload')
             ->assertStatus(200);
 
         // Verify pagination shows only 20 uploads when default perPage is 25
