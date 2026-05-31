@@ -80,16 +80,32 @@ class extends Component {
             $fromCarbon = Carbon::parse($this->dateFrom);
             $this->dateFrom = Carbon::create($this->selectedYear, $fromCarbon->month, $fromCarbon->day)->format('Y-m-d');
         } else {
-            $monday = now()->startOfWeek();
-            $this->dateFrom = Carbon::create($this->selectedYear, $monday->month, $monday->day)->format('Y-m-d');
+            $latestDate = HarvestRecord::where('company_id', auth()->user()->company_id)
+                ->whereYear('weighed_at', $this->selectedYear)
+                ->max('weighed_at');
+
+            if ($latestDate) {
+                $this->dateFrom = Carbon::parse($latestDate)->subDays(7)->format('Y-m-d');
+            } else {
+                $monday = now()->startOfWeek();
+                $this->dateFrom = Carbon::create($this->selectedYear, $monday->month, $monday->day)->format('Y-m-d');
+            }
         }
 
         if ($this->dateTo) {
             $toCarbon = Carbon::parse($this->dateTo);
             $this->dateTo = Carbon::create($this->selectedYear, $toCarbon->month, $toCarbon->day)->format('Y-m-d');
         } else {
-            $today = now();
-            $this->dateTo = Carbon::create($this->selectedYear, $today->month, $today->day)->format('Y-m-d');
+            $latestDate = HarvestRecord::where('company_id', auth()->user()->company_id)
+                ->whereYear('weighed_at', $this->selectedYear)
+                ->max('weighed_at');
+
+            if ($latestDate) {
+                $this->dateTo = Carbon::parse($latestDate)->format('Y-m-d');
+            } else {
+                $today = now();
+                $this->dateTo = Carbon::create($this->selectedYear, $today->month, $today->day)->format('Y-m-d');
+            }
         }
     }
 }; ?>
