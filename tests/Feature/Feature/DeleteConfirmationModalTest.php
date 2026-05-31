@@ -23,8 +23,8 @@ test('delete confirmation modal appears on harvesters page', function () {
 
     $response->assertStatus(200);
     $response->assertSee('confirm-delete-assignment');
-    $response->assertSee('Delete Assignment');
-    $response->assertSee('Are you sure you want to delete this harvester assignment');
+    $response->assertSee($this->trans('Delete Assignment'));
+    $response->assertSee($this->trans('Are you sure you want to delete this harvester assignment? This cannot be undone.'));
 });
 
 test('delete confirmation modal appears on prices page', function () {
@@ -49,8 +49,8 @@ test('delete confirmation modal appears on prices page', function () {
 
     $response->assertStatus(200);
     $response->assertSee('confirm-delete-price');
-    $response->assertSee('Delete Price');
-    $response->assertSee('Are you sure you want to delete this price');
+    $response->assertSee($this->trans('Delete Price'));
+    $response->assertSee($this->trans('Are you sure you want to delete this price? This cannot be undone.'));
 });
 
 test('delete confirmation modal appears on upload page', function () {
@@ -78,6 +78,6 @@ test('delete confirmation modal appears on upload page', function () {
 
     $response->assertStatus(200);
     $response->assertSee('confirm-delete-upload');
-    $response->assertSee('Delete Upload');
-    $response->assertSee('Are you sure you want to delete this upload');
+    $response->assertSee($this->trans('Delete Upload'));
+    $response->assertSee($this->trans('Are you sure you want to delete this upload? This cannot be undone.'));
 });

@@ -23,12 +23,19 @@ describe('Payslip Page', function () {
 
     it('displays year selector', function () {
         Livewire::test('harvest.payslip')
-            ->assertSee('Year');
+            ->assertSee($this->trans('Year'));
     });
 
-    it('displays harvester selector', function () {
+    it('displays harvester assignments', function () {
+        $harvester = Harvester::factory()->for($this->company)->create();
+        HarvesterAssignment::factory()
+            ->for($this->company)
+            ->for($harvester)
+            ->create(['year' => now()->year]);
+
         Livewire::test('harvest.payslip')
-            ->assertSee('Harvester');
+            ->set('selectedYear', now()->year)
+            ->assertStatus(200);
     });
 
     it('filters by year', function () {

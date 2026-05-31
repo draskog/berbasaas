@@ -11,8 +11,8 @@ test('products settings page loads', function () {
     $this->actingAs($user)
         ->get('/settings/products')
         ->assertStatus(200)
-        ->assertSee('Products')
-        ->assertSee('Add Product');
+        ->assertSee($this->trans('Products'))
+        ->assertSee($this->trans('Add Product'));
 });
 
 test('can view products list', function () {
