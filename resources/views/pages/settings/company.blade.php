@@ -3,9 +3,11 @@
 use App\Models\Company;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new
+#[Title('Company settings')]
 class extends Component {
     public string $name = '';
 

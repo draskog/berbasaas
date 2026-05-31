@@ -646,15 +646,15 @@ class extends Component {
                             <flux:table>
                                 <flux:table.columns>
                                     <flux:table.column>{{ __('Product') }}</flux:table.column>
-                                    <flux:table.column class="text-right">{{ __('Weight (kg)') }}</flux:table.column>
-                                    <flux:table.column class="text-right">{{ __('Buckets') }}</flux:table.column>
+                                    <flux:table.column>{{ __('Weight (kg)') }}</flux:table.column>
+                                    <flux:table.column>{{ __('Buckets') }}</flux:table.column>
                                 </flux:table.columns>
                                 <flux:table.rows>
                                     @foreach ($this->productData as $row)
                                         <flux:table.row>
                                             <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
-                                            <flux:table.cell class="text-right">{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
-                                            <flux:table.cell class="text-right">{{ $row['bucket_count'] }}</flux:table.cell>
+                                            <flux:table.cell>{{ number_format($row['total_weight'], 2, ',', '.') }}</flux:table.cell>
+                                            <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
                                         </flux:table.row>
                                     @endforeach
                                 </flux:table.rows>

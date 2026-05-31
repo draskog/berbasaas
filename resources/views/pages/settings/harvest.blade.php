@@ -4,18 +4,19 @@ use App\Models\HarvestImportSettings;
 use App\Models\UserSettings;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new
-class extends Component
-{
+#[Title('Harvest settings')]
+class extends Component {
     public int $default_per_page = 25;
 
     public ?string $tare_min = null;
 
     public ?string $tare_max = null;
 
-    public function mount(): void
+    public function mount (): void
     {
         $this->default_per_page = Auth::user()->userSettings?->default_per_page ?? 25;
 
@@ -26,7 +27,7 @@ class extends Component
         }
     }
 
-    public function updateHarvestSettings(): void
+    public function updateHarvestSettings (): void
     {
         $this->validate([
             'default_per_page' => 'required|integer|in:25,50,100,0',
@@ -77,7 +78,7 @@ class extends Component
                         <flux:select.option value="100">100</flux:select.option>
                         <flux:select.option value="0">{{ __('All') }}</flux:select.option>
                     </flux:select>
-                    <flux:error name="default_per_page" />
+                    <flux:error name="default_per_page"/>
                 </div>
 
                 <div class="my-8 border-t border-zinc-200 pt-6 dark:border-zinc-700">
@@ -94,7 +95,7 @@ class extends Component
                             step="0.001"
                             placeholder="{{ __('No minimum') }}"
                         />
-                        <flux:error name="tare_min" />
+                        <flux:error name="tare_min"/>
 
                         <flux:input
                             type="number"
@@ -103,7 +104,7 @@ class extends Component
                             step="0.001"
                             placeholder="{{ __('No maximum') }}"
                         />
-                        <flux:error name="tare_max" />
+                        <flux:error name="tare_max"/>
                     </div>
                 </div>
 

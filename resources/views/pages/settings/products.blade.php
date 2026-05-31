@@ -5,9 +5,11 @@ use Flux\Flux;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new
+#[Title('Products')]
 class extends Component {
     public string $sortBy = 'name';
 

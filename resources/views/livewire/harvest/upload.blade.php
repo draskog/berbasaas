@@ -18,7 +18,7 @@ use Livewire\WithPagination;
 
 new
 #[Layout('layouts.app')]
-#[Title('Upload')]
+#[Title('Harvest Records')]
 class extends Component {
     use WithFileUploads, WithPagination;
 
