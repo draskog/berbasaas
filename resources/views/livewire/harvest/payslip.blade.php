@@ -4,24 +4,25 @@ use App\Models\HarvesterAssignment;
 use App\Models\HarvestPrice;
 use App\Models\HarvestRecord;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Url;
+use Livewire\Attributes\Session;
 use Livewire\Volt\Component;
 
 new
 #[Layout('layouts.app')]
 #[Title('Payslip')]
 class extends Component {
-    #[Url]
+    #[Session]
     public int $selectedYear = 0;
 
-    #[Url]
+    #[Session]
     public ?string $dateFrom = null;
 
-    #[Url]
+    #[Session]
     public ?string $dateTo = null;
 
     public bool $showDateRangeModal = false;
@@ -41,7 +42,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function harvesterNumbers ()
+    public function harvesterNumbers (): Collection
     {
         $query = HarvestRecord::where('company_id', auth()->user()->company_id)
             ->whereYear('weighed_at', $this->selectedYear);
@@ -61,7 +62,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function datesWithData(): array
+    public function datesWithData (): array
     {
         return HarvestRecord::query()
             ->where('company_id', auth()->user()->company_id)
@@ -73,29 +74,30 @@ class extends Component {
     }
 
     #[Computed]
-    public function unavailableDates(): array
+    public function unavailableDates (): array
     {
-        $start = Carbon::create($this->selectedYear, 1, 1);
+        $start = Carbon::create($this->selectedYear);
         $end = Carbon::create($this->selectedYear, 12, 31);
         $with = array_flip($this->datesWithData);
-        $unavail = [];
+        $unavailable = [];
         for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
             $key = $d->format('Y-m-d');
             if (! isset($with[$key])) {
-                $unavail[] = $key;
+                $unavailable[] = $key;
             }
         }
-        return $unavail;
+
+        return $unavailable;
     }
 
     #[Computed]
-    public function minDate(): string
+    public function minDate (): string
     {
-        return Carbon::create($this->selectedYear, 1, 1)->format('Y-m-d');
+        return Carbon::create($this->selectedYear)->format('Y-m-d');
     }
 
     #[Computed]
-    public function maxDate(): string
+    public function maxDate (): string
     {
         return Carbon::create($this->selectedYear, 12, 31)->format('Y-m-d');
     }
@@ -112,7 +114,7 @@ class extends Component {
         }
 
         if ($this->dateFrom && $this->dateTo) {
-            $this->dateRangeValue = $this->dateFrom . '/' . $this->dateTo;
+            $this->dateRangeValue = $this->dateFrom.'/'.$this->dateTo;
         }
     }
 
@@ -121,11 +123,11 @@ class extends Component {
     {
         $this->updateDatesForSelectedYear();
         if ($this->dateFrom && $this->dateTo) {
-            $this->dateRangeValue = $this->dateFrom . '/' . $this->dateTo;
+            $this->dateRangeValue = $this->dateFrom.'/'.$this->dateTo;
         }
     }
 
-    public function updatedDateRangeValue(?string $value): void
+    public function updatedDateRangeValue (?string $value): void
     {
         if ($value && str_contains($value, '/')) {
             [$from, $to] = explode('/', $value, 2);
@@ -175,7 +177,7 @@ class extends Component {
 
 
 <flux:main>
-    <flux:header heading="Harvesters Payslips" >
+    <flux:header heading="Harvesters Payslips">
         Harvesters Payslips
         <flux:spacer/>
         <flux:button icon="printer" variant="primary" size="sm" onclick="window.print()">Print</flux:button>
@@ -196,9 +198,9 @@ class extends Component {
                 size="sm"
                 icon="calendar-days"
             >
-                {{ $dateFrom ? \Carbon\Carbon::parse($dateFrom)->isoFormat('D MMM YYYY') : '—' }}
+                {{ $dateFrom ? Carbon::parse($dateFrom)->isoFormat('D MMM YYYY') : '—' }}
                 –
-                {{ $dateTo ? \Carbon\Carbon::parse($dateTo)->isoFormat('D MMM YYYY') : '—' }}
+                {{ $dateTo ? Carbon::parse($dateTo)->isoFormat('D MMM YYYY') : '—' }}
             </flux:button>
         </div>
         <div class="space-y-8">
@@ -221,7 +223,7 @@ class extends Component {
             @endforeach
         </div>
 
-        <flux:modal name="date-range-picker" wire:model="showDateRangeModal">
+        <flux:modal name="date-range-picker" wire:model="showDateRangeModal" :dismissible="false" class="md:max-w-3xl! md:w-3xl!">
             <flux:heading size="lg">Select Date Range</flux:heading>
 
             <flux:calendar

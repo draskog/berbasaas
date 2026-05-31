@@ -1,10 +1,12 @@
 <?php
 
+use App\Models\Harvester;
 use App\Models\HarvesterAssignment;
 use App\Models\HarvestRecord;
 use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -14,8 +16,7 @@ use Livewire\Volt\Component;
 new
 #[Layout('layouts.app')]
 #[Title('Charts')]
-class extends Component
-{
+class extends Component {
     #[Url]
     public int $selectedYear = 0;
 
@@ -51,21 +52,22 @@ class extends Component
     public string $chartProductSortDirection = 'desc';
 
     #[Computed]
-    public function availableYears()
+    public function availableYears (): Collection
     {
-        return HarvesterAssignment::where('company_id', auth()->user()->company_id)
-            ->distinct()
-            ->pluck('year')
+        return HarvestRecord::where('company_id', auth()->user()->company_id)
+            ->get()
+            ->map(fn($record) => $record->weighed_at->year)
+            ->unique()
             ->sort()
             ->reverse()
             ->values();
     }
 
     #[Computed]
-    public function products()
+    public function products (): Collection
     {
         return Product::where('company_id', auth()->user()->company_id)
-            ->whereHas('harvestRecords', fn ($q) => $q
+            ->whereHas('harvestRecords', fn($q) => $q
                 ->where('company_id', auth()->user()->company_id)
                 ->whereYear('weighed_at', $this->selectedYear))
             ->orderBy('name')
@@ -73,7 +75,7 @@ class extends Component
     }
 
     #[Computed]
-    public function harvesterNumbers()
+    public function harvesterNumbers (): Collection
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->selectedYear)
@@ -84,7 +86,7 @@ class extends Component
     }
 
     #[Computed]
-    public function datesWithData(): array
+    public function datesWithData (): array
     {
         return HarvestRecord::query()
             ->where('company_id', auth()->user()->company_id)
@@ -96,34 +98,35 @@ class extends Component
     }
 
     #[Computed]
-    public function unavailableDates(): array
+    public function unavailableDates (): array
     {
-        $start = Carbon::create($this->selectedYear, 1, 1);
+        $start = Carbon::create($this->selectedYear);
         $end = Carbon::create($this->selectedYear, 12, 31);
         $with = array_flip($this->datesWithData);
-        $unavail = [];
+        $unavailable = [];
         for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
             $key = $d->format('Y-m-d');
             if (! isset($with[$key])) {
-                $unavail[] = $key;
+                $unavailable[] = $key;
             }
         }
-        return $unavail;
+
+        return $unavailable;
     }
 
     #[Computed]
-    public function minDate(): string
+    public function minDate (): string
     {
-        return Carbon::create($this->selectedYear, 1, 1)->format('Y-m-d');
+        return Carbon::create($this->selectedYear)->format('Y-m-d');
     }
 
     #[Computed]
-    public function maxDate(): string
+    public function maxDate (): string
     {
         return Carbon::create($this->selectedYear, 12, 31)->format('Y-m-d');
     }
 
-    public function mount(): void
+    public function mount (): void
     {
         $years = $this->availableYears;
         if (! $this->selectedYear) {
@@ -135,19 +138,19 @@ class extends Component
         }
 
         if ($this->fromDate && $this->toDate) {
-            $this->dateRangeValue = $this->fromDate . '/' . $this->toDate;
+            $this->dateRangeValue = $this->fromDate.'/'.$this->toDate;
         }
     }
 
-    public function updatedSelectedYear(): void
+    public function updatedSelectedYear (): void
     {
         $this->updateDatesForSelectedYear();
         if ($this->fromDate && $this->toDate) {
-            $this->dateRangeValue = $this->fromDate . '/' . $this->toDate;
+            $this->dateRangeValue = $this->fromDate.'/'.$this->toDate;
         }
     }
 
-    public function updatedDateRangeValue(?string $value): void
+    public function updatedDateRangeValue (?string $value): void
     {
         if ($value && str_contains($value, '/')) {
             [$from, $to] = explode('/', $value, 2);
@@ -159,13 +162,13 @@ class extends Component
         }
     }
 
-    private function updateDatesForSelectedYear(): void
+    private function updateDatesForSelectedYear (): void
     {
         if ($this->fromDate) {
             $fromCarbon = Carbon::parse($this->fromDate);
             $this->fromDate = Carbon::create($this->selectedYear, $fromCarbon->month, $fromCarbon->day)->format('Y-m-d');
         } else {
-            $this->fromDate = Carbon::create($this->selectedYear, 1, 1)->format('Y-m-d');
+            $this->fromDate = Carbon::create($this->selectedYear)->format('Y-m-d');
         }
 
         if ($this->toDate) {
@@ -176,7 +179,7 @@ class extends Component
         }
     }
 
-    public function sortChartDaily(string $column): void
+    public function sortChartDaily (string $column): void
     {
         if ($this->chartDailySortBy === $column) {
             $this->chartDailySortDirection = $this->chartDailySortDirection === 'asc' ? 'desc' : 'asc';
@@ -186,7 +189,7 @@ class extends Component
         }
     }
 
-    public function sortChartHarvesters(string $column): void
+    public function sortChartHarvesters (string $column): void
     {
         if ($this->chartHarvesterSortBy === $column) {
             $this->chartHarvesterSortDirection = $this->chartHarvesterSortDirection === 'asc' ? 'desc' : 'asc';
@@ -196,7 +199,7 @@ class extends Component
         }
     }
 
-    public function sortChartProducts(string $column): void
+    public function sortChartProducts (string $column): void
     {
         if ($this->chartProductSortBy === $column) {
             $this->chartProductSortDirection = $this->chartProductSortDirection === 'asc' ? 'desc' : 'asc';
@@ -206,16 +209,16 @@ class extends Component
         }
     }
 
-    private function baseQuery(): Builder
+    private function baseQuery (): Builder
     {
         return HarvestRecord::where('company_id', auth()->user()->company_id)
-            ->when($this->fromDate, fn ($q) => $q->whereDate('weighed_at', '>=', $this->fromDate))
-            ->when($this->toDate, fn ($q) => $q->whereDate('weighed_at', '<=', $this->toDate))
-            ->when($this->selectedProductId, fn ($q) => $q->where('product_id', $this->selectedProductId))
-            ->when($this->selectedHarvesterNumber, fn ($q) => $q->where('harvester_number', $this->selectedHarvesterNumber));
+            ->when($this->fromDate, fn($q) => $q->whereDate('weighed_at', '>=', $this->fromDate))
+            ->when($this->toDate, fn($q) => $q->whereDate('weighed_at', '<=', $this->toDate))
+            ->when($this->selectedProductId, fn($q) => $q->where('product_id', $this->selectedProductId))
+            ->when($this->selectedHarvesterNumber, fn($q) => $q->where('harvester_number', $this->selectedHarvesterNumber));
     }
 
-    private function harvesterNames(): array
+    private function harvesterNames (): array
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->selectedYear)
@@ -226,14 +229,14 @@ class extends Component
     }
 
     #[Computed]
-    public function dailyData()
+    public function dailyData ()
     {
         return $this->baseQuery()
             ->selectRaw('DATE(weighed_at) as date, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('date')
             ->orderBy($this->chartDailySortBy, $this->chartDailySortDirection)
             ->get()
-            ->map(fn ($row) => [
+            ->map(fn($row) => [
                 'date' => $row->date,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
@@ -241,7 +244,7 @@ class extends Component
     }
 
     #[Computed]
-    public function dailyTotals()
+    public function dailyTotals (): array
     {
         $data = $this->dailyData;
         if ($data->isEmpty()) {
@@ -255,7 +258,7 @@ class extends Component
     }
 
     #[Computed]
-    public function dailyWeightDisplay(): array
+    public function dailyWeightDisplay (): array
     {
         $kg = $this->dailyTotals['weight'];
         if ($kg >= 1000) {
@@ -272,7 +275,7 @@ class extends Component
     }
 
     #[Computed]
-    public function harvesterData()
+    public function harvesterData ()
     {
         $names = $this->harvesterNames();
 
@@ -281,16 +284,16 @@ class extends Component
             ->groupBy('harvester_number')
             ->orderBy($this->chartHarvesterSortBy, $this->chartHarvesterSortDirection)
             ->get()
-            ->map(fn ($row) => [
+            ->map(fn($row) => [
                 'number' => $row->harvester_number,
-                'name' => $names[$row->harvester_number] ?? "#{$row->harvester_number}",
+                'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
             ]);
     }
 
     #[Computed]
-    public function harvesterTotals()
+    public function harvesterTotals (): array
     {
         $data = $this->harvesterData;
         if ($data->isEmpty()) {
@@ -304,24 +307,24 @@ class extends Component
     }
 
     #[Computed]
-    public function productData()
+    public function productData (): Collection
     {
         return $this->baseQuery()
             ->selectRaw('product_id, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('product_id')
             ->with('product')
             ->get()
-            ->map(fn ($row) => [
+            ->map(fn($row) => [
                 'name' => $row->product->name,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
             ])
-            ->sortBy(fn ($row) => $row[$this->chartProductSortBy], SORT_REGULAR, $this->chartProductSortDirection === 'desc')
+            ->sortBy(fn($row) => $row[$this->chartProductSortBy], SORT_REGULAR, $this->chartProductSortDirection === 'desc')
             ->values();
     }
 
     #[Computed]
-    public function productTotals()
+    public function productTotals (): array
     {
         $data = $this->productData;
         if ($data->isEmpty()) {
@@ -335,7 +338,7 @@ class extends Component
     }
 
     #[Computed]
-    public function dailyKgChartData()
+    public function dailyKgChartData (): array
     {
         $data = $this->baseQuery()
             ->selectRaw('DATE(weighed_at) as date, SUM(weight) as total_weight')
@@ -344,11 +347,11 @@ class extends Component
             ->get();
 
         return [
-            'labels' => $data->map(fn ($row) => Carbon::parse($row->date)->format('d.m'))->values()->toArray(),
+            'labels' => $data->map(fn($row) => Carbon::parse($row->date)->format('d.m'))->values()->toArray(),
             'datasets' => [
                 [
                     'label' => 'Total kg',
-                    'data' => $data->map(fn ($row) => round($row->total_weight, 2))->values()->toArray(),
+                    'data' => $data->map(fn($row) => round($row->total_weight, 2))->values()->toArray(),
                     'backgroundColor' => 'rgba(59, 130, 246, 0.8)',
                     'borderColor' => 'rgba(59, 130, 246, 1)',
                     'borderWidth' => 1,
@@ -358,7 +361,7 @@ class extends Component
     }
 
     #[Computed]
-    public function harvesterComparisonChartData()
+    public function harvesterComparisonChartData (): array
     {
         $names = $this->harvesterNames();
         $data = $this->baseQuery()
@@ -369,11 +372,11 @@ class extends Component
             ->get();
 
         return [
-            'labels' => $data->map(fn ($row) => $names[$row->harvester_number] ?? "#$row->harvester_number")->values()->toArray(),
+            'labels' => $data->map(fn($row) => $names[$row->harvester_number] ?? "#$row->harvester_number")->values()->toArray(),
             'datasets' => [
                 [
                     'label' => 'Total kg',
-                    'data' => $data->map(fn ($row) => round($row->total_weight, 2))->values()->toArray(),
+                    'data' => $data->map(fn($row) => round($row->total_weight, 2))->values()->toArray(),
                     'backgroundColor' => 'rgba(34, 197, 94, 0.8)',
                     'borderColor' => 'rgba(34, 197, 94, 1)',
                     'borderWidth' => 1,
@@ -383,7 +386,7 @@ class extends Component
     }
 
     #[Computed]
-    public function hourlyDistributionChartData()
+    public function hourlyDistributionChartData (): array
     {
         $data = $this->baseQuery()
             ->selectRaw('HOUR(weighed_at) as hour, COUNT(*) as bucket_count')
@@ -391,13 +394,13 @@ class extends Component
             ->orderBy('hour')
             ->get();
 
-        $allHours = collect(range(0, 23))->mapWithKeys(fn ($h) => [$h => 0]);
+        $allHours = collect(range(0, 23))->mapWithKeys(fn($h) => [$h => 0]);
         foreach ($data as $row) {
             $allHours[$row->hour] = $row->bucket_count;
         }
 
         return [
-            'labels' => $allHours->keys()->map(fn ($h) => sprintf('%02dh', $h))->values()->toArray(),
+            'labels' => $allHours->keys()->map(fn($h) => sprintf('%02dh', $h))->values()->toArray(),
             'datasets' => [
                 [
                     'label' => 'Buckets',
@@ -411,7 +414,7 @@ class extends Component
     }
 
     #[Computed]
-    public function cumulativeKgChartData()
+    public function cumulativeKgChartData (): array
     {
         $records = $this->baseQuery()
             ->selectRaw('weighed_at, weight')
@@ -431,8 +434,8 @@ class extends Component
         // Limit to every 50th point to avoid overcrowding
         if (count($labels) > 50) {
             $step = ceil(count($labels) / 50);
-            $labels = collect($labels)->filter(fn ($_, $i) => $i % $step === 0)->values()->toArray();
-            $data = collect($data)->filter(fn ($_, $i) => $i % $step === 0)->values()->toArray();
+            $labels = collect($labels)->filter(fn($_, $i) => $i % $step === 0)->values()->toArray();
+            $data = collect($data)->filter(fn($_, $i) => $i % $step === 0)->values()->toArray();
         }
 
         return [
@@ -452,14 +455,14 @@ class extends Component
     }
 
     #[Computed]
-    public function dailyChartRows()
+    public function dailyChartRows ()
     {
         $data = $this->baseQuery()
             ->selectRaw('DATE(weighed_at) as date, SUM(weight) as total_weight')
             ->groupBy('date')
             ->orderBy('date')
             ->get()
-            ->map(fn ($row) => [
+            ->map(fn($row) => [
                 'date' => Carbon::parse($row->date)->format('d.m.Y'),
                 'total_weight' => round($row->total_weight, 2),
             ]);
@@ -476,7 +479,7 @@ class extends Component
     }
 
     #[Computed]
-    public function harvesterChartRows()
+    public function harvesterChartRows ()
     {
         $names = $this->harvesterNames();
 
@@ -486,7 +489,7 @@ class extends Component
             ->orderByDesc('total_weight')
             ->limit(20)
             ->get()
-            ->map(fn ($row) => [
+            ->map(fn($row) => [
                 'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
                 'total_weight' => round($row->total_weight, 2),
             ]);
@@ -494,189 +497,189 @@ class extends Component
 }; ?>
 
 
-    <flux:main>
-        <flux:header heading="Harvest Charts">
-            Harvest Charts
-        </flux:header>
+<flux:main>
+    <flux:header heading="Harvest Charts">
+        Harvest Charts
+    </flux:header>
 
-        <div class="p-6">
-            <!-- Summary Cards -->
-            <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                @php
-                    $dailyData = $this->dailyData;
-                    $harvesterData = $this->harvesterData;
-                    $productData = $this->productData;
-                @endphp
+    <div class="p-6">
+        <!-- Summary Cards -->
+        <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            @php
+                $dailyData = $this->dailyData;
+                $harvesterData = $this->harvesterData;
+                $productData = $this->productData;
+            @endphp
 
-                @if (!empty($dailyData))
-                    <flux:card class="p-4">
-                        <flux:text size="sm" class="text-zinc-500">Total Harvest</flux:text>
-                        <div class="mt-2 text-2xl font-semibold">{{ $this->dailyWeightDisplay['value'] }} {{ $this->dailyWeightDisplay['unit'] }}</div>
-                        <div class="text-xs text-zinc-400">{{ count($this->dailyData) }} days</div>
+            @if ($dailyData !== null)
+                <flux:card class="p-4">
+                    <flux:text size="sm" class="text-zinc-500">Total Harvest</flux:text>
+                    <div class="mt-2 text-2xl font-semibold">{{ $this->dailyWeightDisplay['value'] }} {{ $this->dailyWeightDisplay['unit'] }}</div>
+                    <div class="text-xs text-zinc-400">{{ count($this->dailyData) }} days</div>
+                </flux:card>
+
+                <flux:card class="p-4">
+                    <flux:text size="sm" class="text-zinc-500">Total Buckets</flux:text>
+                    <div class="mt-2 text-2xl font-semibold">{{ $this->dailyTotals['buckets'] }}</div>
+                </flux:card>
+            @endif
+
+            @if ($harvesterData !== null)
+                <flux:card class="p-4">
+                    <flux:text size="sm" class="text-zinc-500">Top Harvester</flux:text>
+                    <div class="mt-2 text-lg font-semibold">{{ $this->harvesterData[0]['name'] ?? 'N/A' }}</div>
+                    <div class="text-xs text-zinc-400">{{ number_format($this->harvesterData[0]['total_weight'] ?? 0, 3, ',', '.') }} kg</div>
+                </flux:card>
+            @endif
+
+            @if ($productData !== null)
+                <flux:card class="p-4">
+                    <flux:text size="sm" class="text-zinc-500">Product Count</flux:text>
+                    <div class="mt-2 text-2xl font-semibold">{{ count($this->productData) }}</div>
+                </flux:card>
+            @endif
+        </div>
+        <!-- Year Pills -->
+        <div class="mb-6 flex flex-wrap items-end gap-4">
+            <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
+                @foreach($this->availableYears as $year)
+                    <flux:radio label="{{ $year }}" value="{{ $year }}"/>
+                @endforeach
+            </flux:radio.group>
+        </div>
+
+        <!-- Product Pills -->
+        <div class="mb-6 flex flex-wrap items-end gap-4">
+            <flux:radio.group wire:model.live="selectedProductId" label="Product" variant="pills">
+                <flux:radio label="All" value="0"/>
+                @foreach ($this->products as $product)
+                    <flux:radio label="{{ $product->name }}" value="{{ $product->id }}"/>
+                @endforeach
+            </flux:radio.group>
+        </div>
+
+        <!-- Date Filters -->
+        <div class="mb-6 flex flex-wrap items-end gap-4">
+            <flux:button
+                wire:click="$set('showDateRangeModal', true)"
+                variant="ghost"
+                size="sm"
+                icon="calendar-days"
+            >
+                {{ $fromDate ? Carbon::parse($fromDate)->isoFormat('D MMM YYYY') : '—' }}
+                –
+                {{ $toDate ? Carbon::parse($toDate)->isoFormat('D MMM YYYY') : '—' }}
+            </flux:button>
+        </div>
+
+        <!-- Tabs -->
+        <flux:tab.group>
+            <flux:tabs wire:model.live="activeTab" class="mb-6">
+                <flux:tab name="daily">Daily Summary</flux:tab>
+                <flux:tab name="harvesters">Harvesters</flux:tab>
+                <flux:tab name="products">Products</flux:tab>
+            </flux:tabs>
+
+            <!-- Daily Summary Tab -->
+            <flux:tab.panel name="daily">
+                @if ($this->dailyChartRows->isNotEmpty())
+                    <flux:card>
+                        <flux:chart :value="$this->dailyChartRows->toArray()" class="aspect-3/1">
+                            <flux:chart.svg>
+                                <flux:chart.bar field="total_weight" class="text-blue-500"/>
+                                <flux:chart.axis axis="x" field="date">
+                                    <flux:chart.axis.tick/>
+                                    <flux:chart.axis.line/>
+                                </flux:chart.axis>
+                                <flux:chart.axis axis="y">
+                                    <flux:chart.axis.grid/>
+                                    <flux:chart.axis.tick/>
+                                </flux:chart.axis>
+                            </flux:chart.svg>
+                        </flux:chart>
                     </flux:card>
-
-                    <flux:card class="p-4">
-                        <flux:text size="sm" class="text-zinc-500">Total Buckets</flux:text>
-                        <div class="mt-2 text-2xl font-semibold">{{ $this->dailyTotals['buckets'] }}</div>
+                @else
+                    <flux:card>
+                        <div class="flex items-center justify-center h-96 text-zinc-500">No data available</div>
                     </flux:card>
                 @endif
+            </flux:tab.panel>
 
-                @if (!empty($harvesterData))
-                    <flux:card class="p-4">
-                        <flux:text size="sm" class="text-zinc-500">Top Harvester</flux:text>
-                        <div class="mt-2 text-lg font-semibold">{{ $this->harvesterData[0]['name'] ?? 'N/A' }}</div>
-                        <div class="text-xs text-zinc-400">{{ number_format($this->harvesterData[0]['total_weight'] ?? 0, 3, ',', '.') }} kg</div>
+            <!-- Harvester Summary Tab -->
+            <flux:tab.panel name="harvesters">
+                @if ($this->harvesterChartRows->isNotEmpty())
+                    <flux:card>
+                        <flux:chart :value="$this->harvesterChartRows->toArray()" class="aspect-3/1">
+                            <flux:chart.svg>
+                                <flux:chart.bar field="total_weight" class="text-green-500"/>
+                                <flux:chart.axis axis="x" field="name">
+                                    <flux:chart.axis.tick/>
+                                    <flux:chart.axis.line/>
+                                </flux:chart.axis>
+                                <flux:chart.axis axis="y">
+                                    <flux:chart.axis.grid/>
+                                    <flux:chart.axis.tick/>
+                                </flux:chart.axis>
+                            </flux:chart.svg>
+                        </flux:chart>
+                    </flux:card>
+                @else
+                    <flux:card>
+                        <div class="flex items-center justify-center h-96 text-zinc-500">No data available</div>
                     </flux:card>
                 @endif
+            </flux:tab.panel>
 
-                @if (!empty($productData))
-                    <flux:card class="p-4">
-                        <flux:text size="sm" class="text-zinc-500">Product Count</flux:text>
-                        <div class="mt-2 text-2xl font-semibold">{{ count($this->productData) }}</div>
+            <!-- Products Summary Tab -->
+            <flux:tab.panel name="products">
+                @if (count($this->productData) > 0)
+                    <flux:card>
+                        <div class="overflow-x-auto">
+                            <flux:table>
+                                <flux:table.columns>
+                                    <flux:table.column>Product</flux:table.column>
+                                    <flux:table.column class="text-right">Weight (kg)</flux:table.column>
+                                    <flux:table.column class="text-right">Buckets</flux:table.column>
+                                </flux:table.columns>
+                                <flux:table.rows>
+                                    @foreach ($this->productData as $row)
+                                        <flux:table.row>
+                                            <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
+                                            <flux:table.cell class="text-right">{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
+                                            <flux:table.cell class="text-right">{{ $row['bucket_count'] }}</flux:table.cell>
+                                        </flux:table.row>
+                                    @endforeach
+                                </flux:table.rows>
+                            </flux:table>
+                        </div>
+                    </flux:card>
+                @else
+                    <flux:card>
+                        <div class="flex items-center justify-center h-96 text-zinc-500">No data available</div>
                     </flux:card>
                 @endif
-            </div>
-            <!-- Year Pills -->
-            <div class="mb-6 flex flex-wrap items-end gap-4">
-                <flux:radio.group wire:model.live="selectedYear" label="Year" variant="pills">
-                    @foreach($this->availableYears as $year)
-                        <flux:radio label="{{ $year }}" value="{{ $year }}" />
-                    @endforeach
-                </flux:radio.group>
-            </div>
+            </flux:tab.panel>
+        </flux:tab.group>
 
-            <!-- Product Pills -->
-            <div class="mb-6 flex flex-wrap items-end gap-4">
-                <flux:radio.group wire:model.live="selectedProductId" label="Product" variant="pills">
-                    <flux:radio label="All" value="0" />
-                    @foreach ($this->products as $product)
-                        <flux:radio label="{{ $product->name }}" value="{{ $product->id }}" />
-                    @endforeach
-                </flux:radio.group>
-            </div>
+        <flux:modal name="date-range-picker" wire:model="showDateRangeModal">
+            <flux:heading size="lg">Select Date Range</flux:heading>
 
-            <!-- Date Filters -->
-            <div class="mb-6 flex flex-wrap items-end gap-4">
-                <flux:button
-                    wire:click="$set('showDateRangeModal', true)"
-                    variant="ghost"
-                    size="sm"
-                    icon="calendar-days"
-                >
-                    {{ $fromDate ? \Carbon\Carbon::parse($fromDate)->isoFormat('D MMM YYYY') : '—' }}
-                    –
-                    {{ $toDate ? \Carbon\Carbon::parse($toDate)->isoFormat('D MMM YYYY') : '—' }}
+            <flux:calendar
+                mode="range"
+                week-numbers
+                locale="{{ app()->getLocale() }}"
+                :unavailable="$this->unavailableDates"
+                :min="$this->minDate"
+                :max="$this->maxDate"
+                wire:model.live="dateRangeValue"
+                class="mt-4"
+            />
+
+            <div class="mt-6 flex justify-end">
+                <flux:button variant="ghost" wire:click="$set('showDateRangeModal', false)">
+                    Close
                 </flux:button>
             </div>
-
-            <!-- Tabs -->
-            <flux:tab.group>
-                <flux:tabs wire:model.live="activeTab" class="mb-6">
-                    <flux:tab name="daily">Daily Summary</flux:tab>
-                    <flux:tab name="harvesters">Harvesters</flux:tab>
-                    <flux:tab name="products">Products</flux:tab>
-                </flux:tabs>
-
-                <!-- Daily Summary Tab -->
-                <flux:tab.panel name="daily">
-                    @if ($this->dailyChartRows->isNotEmpty())
-                        <flux:card>
-                            <flux:chart :value="$this->dailyChartRows->toArray()" class="aspect-3/1">
-                                <flux:chart.svg>
-                                    <flux:chart.bar field="total_weight" class="text-blue-500" />
-                                    <flux:chart.axis axis="x" field="date">
-                                        <flux:chart.axis.tick />
-                                        <flux:chart.axis.line />
-                                    </flux:chart.axis>
-                                    <flux:chart.axis axis="y">
-                                        <flux:chart.axis.grid />
-                                        <flux:chart.axis.tick />
-                                    </flux:chart.axis>
-                                </flux:chart.svg>
-                            </flux:chart>
-                        </flux:card>
-                    @else
-                        <flux:card>
-                            <div class="flex items-center justify-center h-96 text-zinc-500">No data available</div>
-                        </flux:card>
-                    @endif
-                </flux:tab.panel>
-
-                <!-- Harvester Summary Tab -->
-                <flux:tab.panel name="harvesters">
-                    @if ($this->harvesterChartRows->isNotEmpty())
-                        <flux:card>
-                            <flux:chart :value="$this->harvesterChartRows->toArray()" class="aspect-3/1">
-                                <flux:chart.svg>
-                                    <flux:chart.bar field="total_weight" class="text-green-500" />
-                                    <flux:chart.axis axis="x" field="name">
-                                        <flux:chart.axis.tick />
-                                        <flux:chart.axis.line />
-                                    </flux:chart.axis>
-                                    <flux:chart.axis axis="y">
-                                        <flux:chart.axis.grid />
-                                        <flux:chart.axis.tick />
-                                    </flux:chart.axis>
-                                </flux:chart.svg>
-                            </flux:chart>
-                        </flux:card>
-                    @else
-                        <flux:card>
-                            <div class="flex items-center justify-center h-96 text-zinc-500">No data available</div>
-                        </flux:card>
-                    @endif
-                </flux:tab.panel>
-
-                <!-- Products Summary Tab -->
-                <flux:tab.panel name="products">
-                    @if (count($this->productData) > 0)
-                        <flux:card>
-                            <div class="overflow-x-auto">
-                                <flux:table>
-                                    <flux:table.columns>
-                                        <flux:table.column>Product</flux:table.column>
-                                        <flux:table.column class="text-right">Weight (kg)</flux:table.column>
-                                        <flux:table.column class="text-right">Buckets</flux:table.column>
-                                    </flux:table.columns>
-                                    <flux:table.rows>
-                                        @foreach ($this->productData as $row)
-                                            <flux:table.row>
-                                                <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
-                                                <flux:table.cell class="text-right">{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
-                                                <flux:table.cell class="text-right">{{ $row['bucket_count'] }}</flux:table.cell>
-                                            </flux:table.row>
-                                        @endforeach
-                                    </flux:table.rows>
-                                </flux:table>
-                            </div>
-                        </flux:card>
-                    @else
-                        <flux:card>
-                            <div class="flex items-center justify-center h-96 text-zinc-500">No data available</div>
-                        </flux:card>
-                    @endif
-                </flux:tab.panel>
-            </flux:tab.group>
-
-            <flux:modal name="date-range-picker" wire:model="showDateRangeModal">
-                <flux:heading size="lg">Select Date Range</flux:heading>
-
-                <flux:calendar
-                    mode="range"
-                    week-numbers
-                    locale="{{ app()->getLocale() }}"
-                    :unavailable="$this->unavailableDates"
-                    :min="$this->minDate"
-                    :max="$this->maxDate"
-                    wire:model.live="dateRangeValue"
-                    class="mt-4"
-                />
-
-                <div class="mt-6 flex justify-end">
-                    <flux:button variant="ghost" wire:click="$set('showDateRangeModal', false)">
-                        Close
-                    </flux:button>
-                </div>
-            </flux:modal>
-        </div>
-    </flux:main>
+        </flux:modal>
+    </div>
+</flux:main>
