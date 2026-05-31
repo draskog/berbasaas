@@ -22,7 +22,7 @@ readonly class HarvesterExistsForYear implements ValidationRule
             ->exists();
 
         if (! $exists) {
-            $fail("Harvester :attribute does not exist for year {$this->weighedAt->year}.");
+            $fail(__('Harvester :attribute does not exist for year :year.', ['year' => $this->weighedAt->year]));
         }
     }
 }

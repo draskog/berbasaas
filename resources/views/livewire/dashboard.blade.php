@@ -78,7 +78,7 @@ class extends Component
             ->first();
 
         return [
-            'name' => $assignment?->harvester?->name ?? 'Harvester #'.$record->harvester_number,
+            'name' => $assignment?->harvester?->name ?? __('Harvester #:number', ['number' => $record->harvester_number]),
             'weight' => $record->total_weight,
         ];
     }
@@ -104,7 +104,7 @@ class extends Component
 
         return [
             'weight' => $record->weight,
-            'harvester_name' => $assignment?->harvester?->name ?? 'Harvester #'.$record->harvester_number,
+            'harvester_name' => $assignment?->harvester?->name ?? __('Harvester #:number', ['number' => $record->harvester_number]),
             'date' => $record->weighed_at,
         ];
     }
@@ -119,29 +119,29 @@ class extends Component
 }; ?>
 <flux:main>
     <div class="p-6">
-        <flux:heading size="lg" class="mb-6">Dashboard</flux:heading>
+        <flux:heading size="lg" class="mb-6">{{ __('Dashboard') }}</flux:heading>
 
         <!-- Row 1: Counters -->
         <div class="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <!-- Total Harvest -->
             <a href="{{ route('harvest.reports') }}" wire:navigate class="block">
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
-                    <flux:heading size="sm">Total Harvest</flux:heading>
+                    <flux:heading size="sm">{{ __('Total Harvest') }}</flux:heading>
                     <flux:text class="text-2xl font-bold mt-2">
                         {{ $this->currentYearKgDisplay['value'] }} {{ $this->currentYearKgDisplay['unit'] }}
                     </flux:text>
-                    <flux:text size="sm" class="text-gray-500 mt-1">This year</flux:text>
+                    <flux:text size="sm" class="text-gray-500 mt-1">{{ __('This year') }}</flux:text>
                 </flux:card>
             </a>
 
             <!-- Total Buckets -->
             <a href="{{ route('harvest.reports') }}" wire:navigate class="block">
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
-                    <flux:heading size="sm">Total Buckets</flux:heading>
+                    <flux:heading size="sm">{{ __('Total Buckets') }}</flux:heading>
                     <flux:text class="text-2xl font-bold mt-2">
                         {{ number_format($this->currentYearBuckets, 0, ',', '.') }}
                     </flux:text>
-                    <flux:text size="sm" class="text-gray-500 mt-1">Weigh-ins this year</flux:text>
+                    <flux:text size="sm" class="text-gray-500 mt-1">{{ __('Weigh-ins this year') }}</flux:text>
                 </flux:card>
             </a>
 
@@ -149,14 +149,14 @@ class extends Component
             <a href="{{ route('harvest.upload') }}" wire:navigate class="block">
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
                     <div class="flex items-center justify-between">
-                        <flux:heading size="sm">Pending Review</flux:heading>
+                        <flux:heading size="sm">{{ __('Pending Review') }}</flux:heading>
                         @if($this->pendingReview > 0)
                             <flux:badge color="orange">{{ $this->pendingReview }}</flux:badge>
                         @else
                             <flux:badge color="green">0</flux:badge>
                         @endif
                     </div>
-                    <flux:text size="sm" class="text-gray-500 mt-2">Records to resolve</flux:text>
+                    <flux:text size="sm" class="text-gray-500 mt-2">{{ __('Records to resolve') }}</flux:text>
                 </flux:card>
             </a>
         </div>
@@ -166,7 +166,7 @@ class extends Component
             <!-- Top Harvester -->
             <a href="{{ route('harvest.reports') }}" wire:navigate class="block">
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
-                    <flux:heading size="sm">Top Harvester</flux:heading>
+                    <flux:heading size="sm">{{ __('Top Harvester') }}</flux:heading>
                     @if($this->topHarvester)
                         <flux:text class="text-2xl font-bold mt-2">
                             {{ $this->topHarvester['name'] }}
@@ -176,7 +176,7 @@ class extends Component
                         </flux:text>
                     @else
                         <flux:text class="text-2xl font-bold mt-2 text-gray-400">—</flux:text>
-                        <flux:text size="sm" class="text-gray-500 mt-1">No data</flux:text>
+                        <flux:text size="sm" class="text-gray-500 mt-1">{{ __('No data') }}</flux:text>
                     @endif
                 </flux:card>
             </a>
@@ -184,7 +184,7 @@ class extends Component
             <!-- Best Single Bucket -->
             <a href="{{ route('harvest.reports') }}" wire:navigate class="block">
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
-                    <flux:heading size="sm">Best Single Bucket</flux:heading>
+                    <flux:heading size="sm">{{ __('Best Single Bucket') }}</flux:heading>
                     @if($this->bestBucket)
                         <flux:text class="text-2xl font-bold mt-2">
                             {{ number_format($this->bestBucket['weight'], 1) }} kg
@@ -195,7 +195,7 @@ class extends Component
                         </flux:text>
                     @else
                         <flux:text class="text-2xl font-bold mt-2 text-gray-400">—</flux:text>
-                        <flux:text size="sm" class="text-gray-500 mt-1">No data</flux:text>
+                        <flux:text size="sm" class="text-gray-500 mt-1">{{ __('No data') }}</flux:text>
                     @endif
                 </flux:card>
             </a>
@@ -203,7 +203,7 @@ class extends Component
             <!-- Active Products -->
             <a href="{{ route('harvest.prices') }}" wire:navigate class="block">
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
-                    <flux:heading size="sm">Active Products</flux:heading>
+                    <flux:heading size="sm">{{ __('Active Products') }}</flux:heading>
                     <flux:text class="text-2xl font-bold mt-2">
                         {{ $this->activeProducts->count() }}
                     </flux:text>
@@ -215,7 +215,7 @@ class extends Component
                             @endif
                         </flux:text>
                     @else
-                        <flux:text size="sm" class="text-gray-500 mt-1">None configured</flux:text>
+                        <flux:text size="sm" class="text-gray-500 mt-1">{{ __('None configured') }}</flux:text>
                     @endif
                     </flux:card>
                 </a>

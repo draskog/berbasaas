@@ -35,7 +35,7 @@ class extends Component
         ]);
 
         if ($this->tare_min !== null && $this->tare_max !== null && $this->tare_min > $this->tare_max) {
-            $this->addError('tare_min', 'Minimum tare must be less than or equal to maximum tare.');
+            $this->addError('tare_min', __('Minimum tare must be less than or equal to maximum tare.'));
 
             return;
         }

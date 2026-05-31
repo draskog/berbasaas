@@ -1,19 +1,19 @@
 <x-layouts::auth :title="__('Welcome')">
     @php
         $features = [
-            ['icon' => 'users', 'label' => 'Harvester Management', 'description' => 'Track and manage harvesters by season and assignment.'],
-            ['icon' => 'currency-dollar', 'label' => 'Price Management', 'description' => 'Set and update harvest prices for each period.'],
-            ['icon' => 'arrow-up-tray', 'label' => 'CSV Import', 'description' => 'Upload harvest data with automatic validation.'],
-            ['icon' => 'magnifying-glass-circle', 'label' => 'Record Review', 'description' => 'Inspect and correct invalid records before finalising.'],
-            ['icon' => 'chart-bar', 'label' => 'Reports & Charts', 'description' => 'Visualise harvest performance across seasons.'],
-            ['icon' => 'document-text', 'label' => 'Payslip Generation', 'description' => 'Generate payslips for harvesters from validated records.'],
+            ['icon' => 'users', 'label' => __('Harvester Management'), 'description' => __('Track and manage harvesters by season and assignment.')],
+            ['icon' => 'currency-dollar', 'label' => __('Price Management'), 'description' => __('Set and update harvest prices for each period.')],
+            ['icon' => 'arrow-up-tray', 'label' => __('CSV Import'), 'description' => __('Upload harvest data with automatic validation.')],
+            ['icon' => 'magnifying-glass-circle', 'label' => __('Record Review'), 'description' => __('Inspect and correct invalid records before finalising.')],
+            ['icon' => 'chart-bar', 'label' => __('Reports & Charts'), 'description' => __('Visualise harvest performance across seasons.')],
+            ['icon' => 'document-text', 'label' => __('Payslip Generation'), 'description' => __('Generate payslips for harvesters from validated records.')],
         ];
     @endphp
 
     <div class="text-center">
-        <flux:heading size="xl">Harvest Management</flux:heading>
+        <flux:heading size="xl">{{ __('Harvest Management') }}</flux:heading>
         <flux:text class="mt-2 text-zinc-500 dark:text-zinc-400 text-sm">
-            Streamline your harvest operations — from data import to payslip generation.
+            {{ __('Streamline your harvest operations — from data import to payslip generation.') }}
         </flux:text>
     </div>
 
@@ -34,15 +34,15 @@
     <div class="flex flex-col gap-2 pt-2">
         @auth
             <flux:button href="{{ route('dashboard') }}" variant="primary" class="w-full" wire:navigate>
-                Go to Dashboard
+                {{ __('Go to Dashboard') }}
             </flux:button>
         @else
             <flux:button href="{{ route('login') }}" variant="primary" class="w-full" wire:navigate>
-                Log In
+                {{ __('Log In') }}
             </flux:button>
             @if (Route::has('register'))
                 <flux:button href="{{ route('register') }}" variant="ghost" class="w-full" wire:navigate>
-                    Create Account
+                    {{ __('Create Account') }}
                 </flux:button>
             @endif
         @endauth
