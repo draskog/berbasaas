@@ -4,7 +4,7 @@
             class="relative w-full h-auto"
             x-cloak
             x-data="{
-                showRecoveryInput: @js($errors->has('recovery_code')),
+                showRecoveryInput: @js($errors->has('recovery_code'), JSON_THROW_ON_ERROR),
                 code: '',
                 recovery_code: '',
                 focusOtp() {
@@ -56,7 +56,7 @@
                                 label="OTP Code"
                                 label:sr-only
                                 class="mx-auto"
-                             />
+                            />
                         </div>
                     </div>
 
@@ -73,9 +73,9 @@
                         </div>
 
                         @error('recovery_code')
-                            <flux:text color="red">
-                                {{ $message }}
-                            </flux:text>
+                        <flux:text color="red">
+                            {{ $message }}
+                        </flux:text>
                         @enderror
                     </div>
 

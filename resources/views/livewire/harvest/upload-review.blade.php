@@ -6,6 +6,7 @@ use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
 use App\Rules\HarvesterExistsForYear;
 use Flux\Flux;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -17,8 +18,7 @@ use Livewire\WithPagination;
 new
 #[Layout('layouts.app')]
 #[Title('Review Upload')]
-class extends Component
-{
+class extends Component {
     use WithPagination;
 
     public HarvestUpload $upload;
@@ -45,17 +45,17 @@ class extends Component
     public string $bulkTare = '';
 
     #[Computed]
-    public function year(): int
+    public function year (): int
     {
         return $this->upload->date_from->year;
     }
 
     #[Computed]
-    public function invalidRecords()
+    public function invalidRecords ()
     {
         $query = HarvestRecordStaging::where('upload_id', $this->upload->id)
             ->where('status', 'invalid')
-            ->when($this->selectedReason !== 'all', fn ($q) => $q->where('validation_reason', 'like', "%{$this->selectedReason}%"))
+            ->when($this->selectedReason !== 'all', fn($q) => $q->where('validation_reason', 'like', "%$this->selectedReason%"))
             ->orderBy($this->sortBy, $this->sortDirection);
 
         if ($this->perPage === 0) {
@@ -66,7 +66,7 @@ class extends Component
     }
 
     #[Computed]
-    public function validNumbers()
+    public function validNumbers (): Collection
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->year)
@@ -76,13 +76,13 @@ class extends Component
     }
 
     #[Computed]
-    public function harvestersByNumber()
+    public function harvestersByNumber ()
     {
         return $this->validNumbers->keyBy('number');
     }
 
     #[Computed]
-    public function validTares(): array
+    public function validTares (): array
     {
         $fromRecords = HarvestRecord::where('upload_id', $this->upload->id)
             ->distinct()->pluck('tare');
@@ -92,25 +92,25 @@ class extends Component
 
         return $fromRecords->merge($fromStaging)
             ->unique()
-            ->filter(fn ($t) => $t > 0)
+            ->filter(fn($t) => $t > 0)
             ->sort()
             ->values()
             ->toArray();
     }
 
-    public function mount(): void
+    public function mount (): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
     }
 
-    public function updatedPerPage(): void
+    public function updatedPerPage (): void
     {
         $this->resetPage();
         $this->selectedIds = [];
         $this->selectAll = false;
     }
 
-    public function sort(string $column): void
+    public function sort (string $column): void
     {
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -123,26 +123,26 @@ class extends Component
         $this->selectAll = false;
     }
 
-    public function updatedSelectedReason(): void
+    public function updatedSelectedReason (): void
     {
         $this->resetPage();
         $this->selectedIds = [];
         $this->selectAll = false;
     }
 
-    public function updatedSelectAll(): void
+    public function updatedSelectAll (): void
     {
         $records = $this->perPage > 0 ? $this->invalidRecords->items() : $this->invalidRecords->all();
         $this->selectedIds = $this->selectAll
-            ? collect($records)->pluck('id')->map(fn ($id) => (string) $id)->toArray()
+            ? collect($records)->pluck('id')->map(fn($id) => (string) $id)->toArray()
             : [];
     }
 
-    public function resolve(int $recordId): void
+    public function resolve (int $recordId): void
     {
         $stagingRecord = HarvestRecordStaging::findOrFail($recordId);
 
-        if ($stagingRecord->company_id !== auth()->user()->company_id || $stagingRecord->upload_id !== $this->upload->id) {
+        if ($stagingRecord->upload_id !== $this->upload->id || $stagingRecord->company_id !== auth()->user()->company_id) {
             Flux::toast(text: 'Unauthorized access.', variant: 'danger');
 
             return;
@@ -192,7 +192,7 @@ class extends Component
         Flux::toast(text: 'Record updated and promoted.', variant: 'success');
     }
 
-    public function resolveSelected(): void
+    public function resolveSelected (): void
     {
         if (empty($this->selectedIds)) {
             return;
@@ -264,8 +264,8 @@ class extends Component
         $this->dispatch('$refresh');
 
         $message = $skipped > 0
-            ? "Resolved {$resolved} record(s), skipped {$skipped} (missing or invalid input)."
-            : "Resolved {$resolved} record(s).";
+            ? "Resolved $resolved record(s), skipped $skipped (missing or invalid input)."
+            : "Resolved $resolved record(s).";
 
         Flux::toast(text: $message, variant: $skipped > 0 ? 'warning' : 'success');
     }
@@ -273,7 +273,7 @@ class extends Component
 
 <flux:main>
     <flux:header heading="Review Upload: {{ $upload->original_filename }}">
-        <flux:spacer />
+        <flux:spacer/>
         <a href="{{ route('harvest.upload') }}" wire:navigate>
             <flux:button variant="ghost">Back</flux:button>
         </a>
@@ -299,36 +299,36 @@ class extends Component
 
             <div class="mb-6">
                 <flux:radio.group wire:model.live="selectedReason" label="Reason" variant="pills">
-                    <flux:radio value="all" label="All" />
-                    <flux:radio value="harvester_not_found" label="Harvester Not Found" />
-                    <flux:radio value="tare_out_of_range" label="Tare Out of Range" />
+                    <flux:radio value="all" label="All"/>
+                    <flux:radio value="harvester_not_found" label="Harvester Not Found"/>
+                    <flux:radio value="tare_out_of_range" label="Tare Out of Range"/>
                 </flux:radio.group>
             </div>
 
             @if(!empty($selectedIds))
-            <div class="flex flex-wrap items-end gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 mb-4">
-                <flux:text class="font-medium">{{ count($selectedIds) }} selected</flux:text>
-                <flux:field>
-                    <flux:label>Harvester # (for harvester errors)</flux:label>
-                    <flux:input wire:model="bulkHarvesterNumber" type="number" min="1" max="200" placeholder="#" size="sm" class="w-28" />
-                    <flux:error name="bulkHarvesterNumber" />
-                </flux:field>
-                <flux:field>
-                    <flux:label>Tare (for tare errors)</flux:label>
-                    <flux:input wire:model="bulkTare" type="number" step="0.001" min="0" placeholder="0.000" size="sm" class="w-32" />
-                    <flux:error name="bulkTare" />
-                </flux:field>
-                <flux:button variant="primary" size="sm" wire:click="resolveSelected" wire:loading.attr="disabled">
-                    <span wire:loading.remove>Resolve Selected</span>
-                    <span wire:loading>Resolving...</span>
-                </flux:button>
-            </div>
+                <div class="flex flex-wrap items-end gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 mb-4">
+                    <flux:text class="font-medium">{{ count($selectedIds) }} selected</flux:text>
+                    <flux:field>
+                        <flux:label>Harvester # (for harvester errors)</flux:label>
+                        <flux:input wire:model="bulkHarvesterNumber" type="number" min="1" max="200" placeholder="#" size="sm" class="w-28"/>
+                        <flux:error name="bulkHarvesterNumber"/>
+                    </flux:field>
+                    <flux:field>
+                        <flux:label>Tare (for tare errors)</flux:label>
+                        <flux:input wire:model="bulkTare" type="number" step="0.001" min="0" placeholder="0.000" size="sm" class="w-32"/>
+                        <flux:error name="bulkTare"/>
+                    </flux:field>
+                    <flux:button variant="primary" size="sm" wire:click="resolveSelected" wire:loading.attr="disabled">
+                        <span wire:loading.remove>Resolve Selected</span>
+                        <span wire:loading>Resolving...</span>
+                    </flux:button>
+                </div>
             @endif
 
             <flux:table :paginate="$this->perPage > 0 ? $this->invalidRecords : null">
                 <flux:table.columns>
                     <flux:table.column class="w-12">
-                        <flux:checkbox wire:model.live="selectAll" />
+                        <flux:checkbox wire:model.live="selectAll"/>
                     </flux:table.column>
                     <flux:table.column sortable :sorted="$sortBy === 'weighed_at'" :direction="$sortDirection" wire:click="sort('weighed_at')">Date / Time</flux:table.column>
                     <flux:table.column sortable :sorted="$sortBy === 'weight'" :direction="$sortDirection" wire:click="sort('weight')">Weight (kg)</flux:table.column>
@@ -345,7 +345,7 @@ class extends Component
                     @foreach($this->invalidRecords as $record)
                         <flux:table.row>
                             <flux:table.cell class="w-12">
-                                <flux:checkbox wire:model.live="selectedIds" value="{{ $record->id }}" />
+                                <flux:checkbox wire:model.live="selectedIds" value="{{ $record->id }}"/>
                             </flux:table.cell>
                             <flux:table.cell>
                                 {{ $record->weighed_at->format('d.m.Y H:i') }}
@@ -376,7 +376,7 @@ class extends Component
                                         </flux:tooltip.content>
                                     </flux:tooltip>
                                     @error('correctedTares.' . $record->id)
-                                        <flux:error>{{ $message }}</flux:error>
+                                    <flux:error>{{ $message }}</flux:error>
                                     @enderror
                                 @endif
                             </flux:table.cell>
@@ -410,7 +410,7 @@ class extends Component
                                         </flux:tooltip.content>
                                     </flux:tooltip>
                                     @error('corrections.' . $record->id)
-                                        <flux:error>{{ $message }}</flux:error>
+                                    <flux:error>{{ $message }}</flux:error>
                                     @enderror
                                 @endif
                             </flux:table.cell>

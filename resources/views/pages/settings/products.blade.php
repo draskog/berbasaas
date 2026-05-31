@@ -2,13 +2,13 @@
 
 use App\Models\Product;
 use Flux\Flux;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 new
-class extends Component
-{
+class extends Component {
     public string $sortBy = 'name';
 
     public string $sortDirection = 'asc';
@@ -35,14 +35,14 @@ class extends Component
     public ?int $deletingProductId = null;
 
     #[Computed]
-    public function products()
+    public function products (): Collection
     {
         return Product::where('company_id', auth()->user()->company_id)
             ->orderBy($this->sortBy, $this->sortDirection)
             ->get();
     }
 
-    public function sort(string $column): void
+    public function sort (string $column): void
     {
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -52,7 +52,7 @@ class extends Component
         }
     }
 
-    public function createProduct(): void
+    public function createProduct (): void
     {
         $this->validate([
             'newProductName' => ['required', 'string', 'max:255'],
@@ -79,7 +79,7 @@ class extends Component
         Flux::toast(text: __('Product created.'), variant: 'success');
     }
 
-    public function editProduct(int $id): void
+    public function editProduct (int $id): void
     {
         $product = Product::where('company_id', auth()->user()->company_id)->findOrFail($id);
         $this->editingProductId = $id;
@@ -88,7 +88,7 @@ class extends Component
         $this->showEditModal = true;
     }
 
-    public function updateProduct(): void
+    public function updateProduct (): void
     {
         $this->validate([
             'editProductName' => ['required', 'string', 'max:255'],
@@ -115,13 +115,13 @@ class extends Component
         Flux::toast(text: __('Product updated.'), variant: 'success');
     }
 
-    public function confirmDeleteProduct(int $id): void
+    public function confirmDeleteProduct (int $id): void
     {
         $this->deletingProductId = $id;
         $this->showDeleteModal = true;
     }
 
-    public function deleteProduct(): void
+    public function deleteProduct (): void
     {
         Product::where('company_id', auth()->user()->company_id)
             ->findOrFail($this->deletingProductId)
@@ -187,13 +187,13 @@ class extends Component
         <div class="mt-6 space-y-4">
             <flux:field>
                 <flux:label>{{ __('Name') }}</flux:label>
-                <flux:input wire:model="newProductName" />
-                <flux:error name="newProductName" />
+                <flux:input wire:model="newProductName"/>
+                <flux:error name="newProductName"/>
             </flux:field>
 
             <flux:field>
                 <flux:label>{{ __('Active') }}</flux:label>
-                <flux:switch wire:model="newProductActive" />
+                <flux:switch wire:model="newProductActive"/>
             </flux:field>
         </div>
 
@@ -209,13 +209,13 @@ class extends Component
         <div class="mt-6 space-y-4">
             <flux:field>
                 <flux:label>{{ __('Name') }}</flux:label>
-                <flux:input wire:model="editProductName" />
-                <flux:error name="editProductName" />
+                <flux:input wire:model="editProductName"/>
+                <flux:error name="editProductName"/>
             </flux:field>
 
             <flux:field>
                 <flux:label>{{ __('Active') }}</flux:label>
-                <flux:switch wire:model="editProductActive" />
+                <flux:switch wire:model="editProductActive"/>
             </flux:field>
         </div>
 

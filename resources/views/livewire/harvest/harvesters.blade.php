@@ -3,6 +3,7 @@
 use App\Models\Harvester;
 use App\Models\HarvesterAssignment;
 use Flux\Flux;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -71,7 +72,7 @@ class extends Component {
     public int $printColumns = 3;
 
     #[Computed]
-    public function availableYears ()
+    public function availableYears (): Collection
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->distinct()
@@ -82,7 +83,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function harvesters ()
+    public function harvesters (): Collection
     {
         return Harvester::where('company_id', auth()->user()->company_id)
             ->where('active', true)
@@ -121,7 +122,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function availablePrefixes ()
+    public function availablePrefixes (): Collection
     {
         $query = HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
             ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')

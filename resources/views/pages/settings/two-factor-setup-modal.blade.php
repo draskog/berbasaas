@@ -97,7 +97,7 @@ new class extends Component {
     }
 
     /**
-     * Reset two-factor verification state.
+     * Reset the two-factor verification state.
      */
     public function resetVerification (): void
     {

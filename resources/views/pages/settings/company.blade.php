@@ -41,7 +41,7 @@ class extends Component {
 
         Auth::user()->company->update($validated);
 
-        Flux::toast(variant: 'success', text: __('Company information updated.'));
+        Flux::toast(text: __('Company information updated.'), variant: 'success');
     }
 }; ?>
 

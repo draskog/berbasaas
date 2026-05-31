@@ -5,21 +5,16 @@ use App\Models\HarvestPrice;
 use App\Models\HarvestRecord;
 use Carbon\Carbon;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\Prop;
 use Livewire\Volt\Component;
 
 new class extends Component
 {
-    #[Prop]
     public int $harvesterNumber;
 
-    #[Prop]
     public int $year;
 
-    #[Prop]
     public ?string $dateFrom = null;
 
-    #[Prop]
     public ?string $dateTo = null;
 
     public function harvesterName(): ?string

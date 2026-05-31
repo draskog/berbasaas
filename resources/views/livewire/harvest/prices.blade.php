@@ -4,6 +4,7 @@ use App\Models\HarvestPrice;
 use App\Models\Product;
 use Flux\Flux;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
@@ -60,7 +61,7 @@ class extends Component {
     public string $sortDirection = 'desc';
 
     #[Computed]
-    public function products ()
+    public function products (): Collection
     {
         return Product::where('company_id', auth()->user()->company_id)
             ->where('active', true)
@@ -69,7 +70,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function filterProducts ()
+    public function filterProducts (): Collection
     {
         return Product::where('company_id', auth()->user()->company_id)
             ->whereHas('harvestPrices', fn($q) => $q->where('company_id', auth()->user()->company_id))
@@ -362,8 +363,8 @@ class extends Component {
                     :max="$this->maxPriceDate"
                     wire:model.live="editEffectiveDateRange"
                 />
-                <flux:error name="editEffectiveFrom" />
-                <flux:error name="editEffectiveTo" />
+                <flux:error name="editEffectiveFrom"/>
+                <flux:error name="editEffectiveTo"/>
             </flux:field>
         </div>
 
@@ -373,13 +374,13 @@ class extends Component {
         </div>
     </flux:modal>
 
-<flux:modal name="confirm-delete-price" :dismissible="false" wire:model="showDeleteModal">
-    <flux:heading>Delete Price</flux:heading>
-    <flux:text>Are you sure you want to delete this price? This cannot be undone.</flux:text>
+    <flux:modal name="confirm-delete-price" :dismissible="false" wire:model="showDeleteModal">
+        <flux:heading>Delete Price</flux:heading>
+        <flux:text>Are you sure you want to delete this price? This cannot be undone.</flux:text>
 
-    <div class="mt-6 flex gap-2 justify-end">
-        <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">Cancel</flux:button>
-        <flux:button variant="danger" wire:click="deletePrice">Delete</flux:button>
-    </div>
-</flux:modal>
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">Cancel</flux:button>
+            <flux:button variant="danger" wire:click="deletePrice">Delete</flux:button>
+        </div>
+    </flux:modal>
 </flux:main>
