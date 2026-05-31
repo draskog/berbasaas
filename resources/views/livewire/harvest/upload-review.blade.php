@@ -6,8 +6,10 @@ use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
 use App\Rules\HarvesterExistsForYear;
 use Flux\Flux;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Session;
 use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
@@ -31,6 +33,17 @@ class extends Component
 
     public string $sortDirection = 'asc';
 
+    #[Session]
+    public string $selectedReason = 'all';
+
+    public array $selectedIds = [];
+
+    public bool $selectAll = false;
+
+    public string $bulkHarvesterNumber = '';
+
+    public string $bulkTare = '';
+
     #[Computed]
     public function year(): int
     {
@@ -42,6 +55,7 @@ class extends Component
     {
         $query = HarvestRecordStaging::where('upload_id', $this->upload->id)
             ->where('status', 'invalid')
+            ->when($this->selectedReason !== 'all', fn ($q) => $q->where('validation_reason', 'like', "%{$this->selectedReason}%"))
             ->orderBy($this->sortBy, $this->sortDirection);
 
         if ($this->perPage === 0) {
@@ -92,6 +106,8 @@ class extends Component
     public function updatedPerPage(): void
     {
         $this->resetPage();
+        $this->selectedIds = [];
+        $this->selectAll = false;
     }
 
     public function sort(string $column): void
@@ -103,6 +119,23 @@ class extends Component
             $this->sortDirection = 'asc';
         }
         $this->resetPage();
+        $this->selectedIds = [];
+        $this->selectAll = false;
+    }
+
+    public function updatedSelectedReason(): void
+    {
+        $this->resetPage();
+        $this->selectedIds = [];
+        $this->selectAll = false;
+    }
+
+    public function updatedSelectAll(): void
+    {
+        $records = $this->perPage > 0 ? $this->invalidRecords->items() : $this->invalidRecords->all();
+        $this->selectedIds = $this->selectAll
+            ? collect($records)->pluck('id')->map(fn ($id) => (string) $id)->toArray()
+            : [];
     }
 
     public function resolve(int $recordId): void
@@ -158,6 +191,84 @@ class extends Component
 
         Flux::toast(text: 'Record updated and promoted.', variant: 'success');
     }
+
+    public function resolveSelected(): void
+    {
+        if (empty($this->selectedIds)) {
+            return;
+        }
+
+        $records = HarvestRecordStaging::whereIn('id', $this->selectedIds)
+            ->where('company_id', auth()->user()->company_id)
+            ->where('upload_id', $this->upload->id)
+            ->get();
+
+        $resolved = 0;
+        $skipped = 0;
+
+        foreach ($records as $stagingRecord) {
+            $reasons = (array) $stagingRecord->validation_reason;
+            $harvesterNumber = $stagingRecord->harvester_number;
+            $tare = $stagingRecord->tare;
+            $weight = $stagingRecord->weight;
+
+            if (in_array('harvester_not_found', $reasons, true)) {
+                $rule = new HarvesterExistsForYear(auth()->user()->company_id, $stagingRecord->weighed_at);
+                $validator = Validator::make(
+                    ['bulkHarvesterNumber' => $this->bulkHarvesterNumber],
+                    ['bulkHarvesterNumber' => ['required', 'integer', 'min:1', 'max:200', $rule]]
+                );
+                if ($validator->fails()) {
+                    $skipped++;
+
+                    continue;
+                }
+                $harvesterNumber = (int) $this->bulkHarvesterNumber;
+            }
+
+            if (in_array('tare_out_of_range', $reasons, true)) {
+                $validator = Validator::make(
+                    ['bulkTare' => $this->bulkTare],
+                    ['bulkTare' => ['required', 'numeric', 'min:0']]
+                );
+                if ($validator->fails()) {
+                    $skipped++;
+
+                    continue;
+                }
+                $tare = (float) $this->bulkTare;
+                $weight = $stagingRecord->gross - $tare;
+            }
+
+            HarvestRecord::create([
+                'company_id' => $stagingRecord->company_id,
+                'upload_id' => $stagingRecord->upload_id,
+                'product_id' => $stagingRecord->product_id,
+                'harvester_number' => $harvesterNumber,
+                'weight' => $weight,
+                'tare' => $tare,
+                'gross' => $stagingRecord->gross,
+                'weighed_at' => $stagingRecord->weighed_at,
+                'corrected' => true,
+            ]);
+
+            $stagingRecord->update(['status' => 'valid']);
+            $stagingRecord->delete();
+            $resolved++;
+        }
+
+        $this->selectedIds = [];
+        $this->selectAll = false;
+        $this->bulkHarvesterNumber = '';
+        $this->bulkTare = '';
+        $this->dispatch('$refresh');
+
+        $message = $skipped > 0
+            ? "Resolved {$resolved} record(s), skipped {$skipped} (missing or invalid input)."
+            : "Resolved {$resolved} record(s).";
+
+        Flux::toast(text: $message, variant: $skipped > 0 ? 'warning' : 'success');
+    }
 }; ?>
 
 <flux:main>
@@ -186,8 +297,39 @@ class extends Component
                 </flux:select>
             </div>
 
+            <div class="mb-6">
+                <flux:radio.group wire:model.live="selectedReason" label="Reason" variant="pills">
+                    <flux:radio value="all" label="All" />
+                    <flux:radio value="harvester_not_found" label="Harvester Not Found" />
+                    <flux:radio value="tare_out_of_range" label="Tare Out of Range" />
+                </flux:radio.group>
+            </div>
+
+            @if(!empty($selectedIds))
+            <div class="flex flex-wrap items-end gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 mb-4">
+                <flux:text class="font-medium">{{ count($selectedIds) }} selected</flux:text>
+                <flux:field>
+                    <flux:label>Harvester # (for harvester errors)</flux:label>
+                    <flux:input wire:model="bulkHarvesterNumber" type="number" min="1" max="200" placeholder="#" size="sm" class="w-28" />
+                    <flux:error name="bulkHarvesterNumber" />
+                </flux:field>
+                <flux:field>
+                    <flux:label>Tare (for tare errors)</flux:label>
+                    <flux:input wire:model="bulkTare" type="number" step="0.001" min="0" placeholder="0.000" size="sm" class="w-32" />
+                    <flux:error name="bulkTare" />
+                </flux:field>
+                <flux:button variant="primary" size="sm" wire:click="resolveSelected" wire:loading.attr="disabled">
+                    <span wire:loading.remove>Resolve Selected</span>
+                    <span wire:loading>Resolving...</span>
+                </flux:button>
+            </div>
+            @endif
+
             <flux:table :paginate="$this->perPage > 0 ? $this->invalidRecords : null">
                 <flux:table.columns>
+                    <flux:table.column class="w-12">
+                        <flux:checkbox wire:model.live="selectAll" />
+                    </flux:table.column>
                     <flux:table.column sortable :sorted="$sortBy === 'weighed_at'" :direction="$sortDirection" wire:click="sort('weighed_at')">Date / Time</flux:table.column>
                     <flux:table.column sortable :sorted="$sortBy === 'weight'" :direction="$sortDirection" wire:click="sort('weight')">Weight (kg)</flux:table.column>
                     <flux:table.column>Tare (kg)</flux:table.column>
@@ -202,6 +344,9 @@ class extends Component
                 <flux:table.rows>
                     @foreach($this->invalidRecords as $record)
                         <flux:table.row>
+                            <flux:table.cell class="w-12">
+                                <flux:checkbox wire:model.live="selectedIds" value="{{ $record->id }}" />
+                            </flux:table.cell>
                             <flux:table.cell>
                                 {{ $record->weighed_at->format('d.m.Y H:i') }}
                             </flux:table.cell>
