@@ -212,6 +212,7 @@ class extends Component
         HarvestUpload::find($this->deletingUploadId)?->delete();
         $this->deletingUploadId = null;
         $this->showDeleteModal = false;
+        $this->dispatch('$refresh');
         Flux::toast(text: 'Upload deleted.', variant: 'warning');
     }
 
