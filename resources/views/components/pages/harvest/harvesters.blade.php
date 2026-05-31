@@ -59,6 +59,11 @@ class extends Component
 
     public string $newHarvesterPrefix = '';
 
+    public bool $showCreateHarvesterModal = false;
+
+    // Add Assignment modal
+    public bool $showCreateAssignmentModal = false;
+
     // Prefix filter
     public string $selectedPrefix = '';
 
@@ -208,7 +213,7 @@ class extends Component
         ]);
 
         $this->reset(['newNumber', 'newHarvesterId']);
-        $this->dispatch('close-modal', name: 'create-assignment');
+        $this->showCreateAssignmentModal = false;
         Flux::toast(text: 'Assignment added.', variant: 'success');
     }
 
@@ -241,7 +246,7 @@ class extends Component
         ]);
 
         $this->reset(['newHarvesterName', 'newHarvesterPrefix']);
-        $this->dispatch('close-modal', name: 'create-harvester');
+        $this->showCreateHarvesterModal = false;
         Flux::toast(text: 'Harvester added.', variant: 'success');
     }
 
@@ -306,25 +311,11 @@ class extends Component
 
 <flux:main>
     <flux:header heading="Harvesters" class="flex justify-end space-x-3 items-center">
-        <div class="print:hidden" x-data="{ showPrintSettings: false }">
-            <flux:button icon="printer" @click="showPrintSettings = !showPrintSettings">Print Labels</flux:button>
-
-            <div x-show="showPrintSettings" class="absolute mt-2 p-4 border rounded space-y-4 bg-white dark:bg-zinc-800 shadow-lg z-10">
-                <flux:field>
-                    <flux:radio.group wire:model.live="printColumns" label="Columns per row" variant="pills">
-                        <flux:radio label="2" value="2" />
-                        <flux:radio label="3" value="3" />
-                        <flux:radio label="4" value="4" />
-                    </flux:radio.group>
-                </flux:field>
-                <flux:button onclick="window.print()" icon="printer" variant="primary">Print</flux:button>
-            </div>
-        </div>
         <flux:modal.trigger name="create-harvester">
-            <flux:button icon="user-plus" class="mr-3">Add Harvester</flux:button>
+            <flux:button icon="user-plus" size="sm" variant="primary" class="mr-3">Add Harvester</flux:button>
         </flux:modal.trigger>
         <flux:modal.trigger name="create-assignment">
-            <flux:button icon="plus">Add Assignment</flux:button>
+            <flux:button icon="plus" size="sm" variant="primary">Add Assignment</flux:button>
         </flux:modal.trigger>
     </flux:header>
 
@@ -393,7 +384,7 @@ class extends Component
         </flux:table>
     </div>
 
-    <flux:modal name="create-harvester">
+    <flux:modal name="create-harvester" wire:model="showCreateHarvesterModal">
         <flux:heading>Add Harvester</flux:heading>
 
         <div class="mt-6 space-y-4">
@@ -411,14 +402,12 @@ class extends Component
         </div>
 
         <div class="mt-6 flex gap-2 justify-end">
-            <flux:modal.close>
-                <flux:button variant="ghost">Cancel</flux:button>
-            </flux:modal.close>
+            <flux:button variant="ghost" wire:click="$set('showCreateHarvesterModal', false)">Cancel</flux:button>
             <flux:button variant="primary" wire:click="createHarvester">Save</flux:button>
         </div>
     </flux:modal>
 
-    <flux:modal name="create-assignment">
+    <flux:modal name="create-assignment" wire:model="showCreateAssignmentModal">
         <flux:heading>Add Harvester Assignment</flux:heading>
         <flux:subheading>Assign a harvester for {{ $this->selectedYear }}</flux:subheading>
 
@@ -442,9 +431,7 @@ class extends Component
         </div>
 
         <div class="mt-6 flex gap-2 justify-end">
-            <flux:modal.close>
-                <flux:button variant="ghost">Cancel</flux:button>
-            </flux:modal.close>
+            <flux:button variant="ghost" wire:click="$set('showCreateAssignmentModal', false)">Cancel</flux:button>
             <flux:button variant="primary" wire:click="createAssignment">Save</flux:button>
         </div>
     </flux:modal>
