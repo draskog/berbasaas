@@ -29,7 +29,7 @@ describe('Charts Page', function () {
             ->for($product)
             ->create(['weighed_at' => "$year-06-15", 'weight' => 100]);
 
-        Livewire::test('pages.harvest.charts')
+        Livewire::test('harvest.charts')
             ->assertSee('Berries');
     });
 
@@ -42,13 +42,13 @@ describe('Charts Page', function () {
             ->for($product)
             ->create(['weighed_at' => "$year-06-15", 'weight' => 100]);
 
-        Livewire::test('pages.harvest.charts')
+        Livewire::test('harvest.charts')
             ->set('selectedYear', $year)
             ->assertSet('selectedYear', $year);
     });
 
     it('switches between tabs', function () {
-        Livewire::test('pages.harvest.charts')
+        Livewire::test('harvest.charts')
             ->set('activeTab', 'daily')
             ->assertSet('activeTab', 'daily')
             ->set('activeTab', 'harvesters')
@@ -59,17 +59,16 @@ describe('Charts Page', function () {
 
     it('displays daily summary data', function () {
         $product = Product::factory()->for($this->company)->create();
-        $today = now()->format('Y-m-d');
+        $today = now();
 
         HarvestRecord::factory(5)
             ->for($this->company)
             ->for($product)
-            ->create(['weighed_at' => $today, 'weight' => 10]);
+            ->create(['weighed_at' => $today->format('Y-m-d'), 'weight' => 10]);
 
-        Livewire::test('pages.harvest.charts')
+        Livewire::test('harvest.charts')
             ->set('activeTab', 'daily')
-            ->call('dailyData')
-            ->assertSee($today);
+            ->assertSee($today->format('d.m.Y'));
     });
 
     it('displays harvester summary data', function () {
@@ -85,40 +84,43 @@ describe('Charts Page', function () {
         HarvestRecord::factory(3)
             ->for($this->company)
             ->for($product)
-            ->create(['harvester_number' => 3, 'weight' => 20]);
+            ->create(['harvester_number' => 3, 'weight' => 20, 'weighed_at' => now()]);
 
-        Livewire::test('pages.harvest.charts')
+        Livewire::test('harvest.charts')
             ->set('activeTab', 'harvesters')
-            ->call('harvesterData')
             ->assertSee('Charlie');
     });
 
     it('displays product summary data', function () {
         $product = Product::factory()->for($this->company)->create(['name' => 'Blueberries']);
+        $year = now()->year;
+
+        $harvester = Harvester::factory()->for($this->company)->create();
+        HarvesterAssignment::factory()
+            ->for($this->company)
+            ->for($harvester)
+            ->create(['year' => $year, 'number' => 1]);
 
         HarvestRecord::factory(2)
             ->for($this->company)
             ->for($product)
-            ->create(['weight' => 15]);
+            ->create(['weight' => 15, 'weighed_at' => now()]);
 
-        Livewire::test('pages.harvest.charts')
+        Livewire::test('harvest.charts')
             ->set('activeTab', 'products')
-            ->call('productData')
             ->assertSee('Blueberries');
     });
 
     it('calculates daily totals', function () {
         $product = Product::factory()->for($this->company)->create();
-        $today = now()->format('Y-m-d');
 
         HarvestRecord::factory(4)
             ->for($this->company)
             ->for($product)
-            ->create(['weighed_at' => $today, 'weight' => 25]);
+            ->create(['weighed_at' => now(), 'weight' => 25]);
 
-        Livewire::test('pages.harvest.charts')
-            ->call('dailyTotals')
-            ->assertSet('dailyTotals.weight', 100);
+        Livewire::test('harvest.charts')
+            ->assertSee('100');
     });
 
     it('filters by date range', function () {
@@ -131,7 +133,7 @@ describe('Charts Page', function () {
             ->for($product)
             ->create(['weighed_at' => now()->format('Y-m-15')]);
 
-        Livewire::test('pages.harvest.charts')
+        Livewire::test('harvest.charts')
             ->set('fromDate', $fromDate)
             ->set('toDate', $toDate)
             ->assertSet('fromDate', $fromDate)
@@ -145,16 +147,15 @@ describe('Charts Page', function () {
         HarvestRecord::factory()
             ->for($this->company)
             ->for($product1)
-            ->create(['weight' => 100]);
+            ->create(['weight' => 100, 'weighed_at' => now()]);
 
         HarvestRecord::factory()
             ->for($this->company)
             ->for($product2)
-            ->create(['weight' => 50]);
+            ->create(['weight' => 50, 'weighed_at' => now()]);
 
-        Livewire::test('pages.harvest.charts')
+        Livewire::test('harvest.charts')
             ->set('selectedProductId', $product1->id)
-            ->call('dailyData')
             ->assertSee('100');
     });
 
@@ -164,15 +165,14 @@ describe('Charts Page', function () {
         HarvestRecord::factory(3)
             ->for($this->company)
             ->for($product)
-            ->create(['weight' => 50]);
+            ->create(['weight' => 50, 'weighed_at' => now()]);
 
-        Livewire::test('pages.harvest.charts')
-            ->call('dailyTotals')
-            ->assertSet('dailyTotals.weight', 150);
+        Livewire::test('harvest.charts')
+            ->assertSee('150');
     });
 
     it('handles empty data gracefully', function () {
-        Livewire::test('pages.harvest.charts')
+        Livewire::test('harvest.charts')
             ->set('activeTab', 'daily')
             ->assertStatus(200);
     });
@@ -186,7 +186,7 @@ describe('Charts Page', function () {
             ->for($otherProduct)
             ->create();
 
-        Livewire::test('pages.harvest.charts')
+        Livewire::test('harvest.charts')
             ->assertDontSee('Blackberries');
     });
 });
