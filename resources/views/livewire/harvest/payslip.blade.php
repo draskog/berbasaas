@@ -1,21 +1,20 @@
 <?php
 
-use App\Models\HarvesterAssignment;
-use App\Models\HarvestPrice;
 use App\Models\HarvestRecord;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Title;
 use Livewire\Attributes\Session;
+use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
 new
 #[Layout('layouts.app')]
 #[Title('Payslip')]
-class extends Component {
+class extends Component
+{
     #[Session]
     public int $selectedYear = 0;
 
@@ -27,14 +26,14 @@ class extends Component {
 
     public bool $showDateRangeModal = false;
 
-    public ?string $dateRangeValue = null;
+    public string|array|null $dateRangeValue = null;
 
     #[Computed]
-    public function availableYears ()
+    public function availableYears()
     {
         return HarvestRecord::where('company_id', auth()->user()->company_id)
             ->get()
-            ->map(fn($record) => $record->weighed_at->year)
+            ->map(fn ($record) => $record->weighed_at->year)
             ->unique()
             ->sort()
             ->reverse()
@@ -42,7 +41,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function harvesterNumbers (): Collection
+    public function harvesterNumbers(): Collection
     {
         $query = HarvestRecord::where('company_id', auth()->user()->company_id)
             ->whereYear('weighed_at', $this->selectedYear);
@@ -62,7 +61,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function datesWithData (): array
+    public function datesWithData(): array
     {
         return HarvestRecord::query()
             ->where('company_id', auth()->user()->company_id)
@@ -74,7 +73,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function unavailableDates (): array
+    public function unavailableDates(): array
     {
         $start = Carbon::create($this->selectedYear);
         $end = Carbon::create($this->selectedYear, 12, 31);
@@ -91,18 +90,18 @@ class extends Component {
     }
 
     #[Computed]
-    public function minDate (): string
+    public function minDate(): string
     {
         return Carbon::create($this->selectedYear)->format('Y-m-d');
     }
 
     #[Computed]
-    public function maxDate (): string
+    public function maxDate(): string
     {
         return Carbon::create($this->selectedYear, 12, 31)->format('Y-m-d');
     }
 
-    public function mount (): void
+    public function mount(): void
     {
         $years = $this->availableYears;
         if (! $this->selectedYear) {
@@ -119,7 +118,7 @@ class extends Component {
     }
 
     #[On('updated-selected-year')]
-    public function updatedSelectedYear (): void
+    public function updatedSelectedYear(): void
     {
         $this->updateDatesForSelectedYear();
         if ($this->dateFrom && $this->dateTo) {
@@ -127,9 +126,17 @@ class extends Component {
         }
     }
 
-    public function updatedDateRangeValue (?string $value): void
+    public function updatedDateRangeValue(string|array|null $value): void
     {
-        if ($value && str_contains($value, '/')) {
+        if (! $value) {
+            return;
+        }
+
+        if (is_array($value) && isset($value['start'], $value['end'])) {
+            $this->dateFrom = $value['start'];
+            $this->dateTo = $value['end'];
+            $this->showDateRangeModal = false;
+        } elseif (is_string($value) && str_contains($value, '/')) {
             [$from, $to] = explode('/', $value, 2);
             if ($from && $to) {
                 $this->dateFrom = $from;
@@ -139,7 +146,7 @@ class extends Component {
         }
     }
 
-    private function updateDatesForSelectedYear (): void
+    private function updateDatesForSelectedYear(): void
     {
         if ($this->dateFrom) {
             $fromCarbon = Carbon::parse($this->dateFrom);
