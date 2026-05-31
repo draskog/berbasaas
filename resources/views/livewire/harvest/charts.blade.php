@@ -10,33 +10,33 @@ use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Url;
+use Livewire\Attributes\Session;
 use Livewire\Volt\Component;
 
 new
 #[Layout('layouts.app')]
 #[Title('Charts')]
 class extends Component {
-    #[Url]
+    #[Session]
     public int $selectedYear = 0;
 
-    #[Url]
+    #[Session]
     public ?string $fromDate = null;
 
-    #[Url]
+    #[Session]
     public ?string $toDate = null;
 
-    #[Url]
+    #[Session]
     public int $selectedProductId = 0;
 
     public bool $showDateRangeModal = false;
 
     public ?string $dateRangeValue = null;
 
-    #[Url]
+    #[Session]
     public int $selectedHarvesterNumber = 0;
 
-    #[Url]
+    #[Session]
     public string $activeTab = 'daily';
 
     public string $chartDailySortBy = 'date';
@@ -77,9 +77,13 @@ class extends Component {
     #[Computed]
     public function harvesterNumbers (): Collection
     {
-        return HarvesterAssignment::where('company_id', auth()->user()->company_id)
-            ->where('year', $this->selectedYear)
-            ->distinct()
+        $query = HarvesterAssignment::where('company_id', auth()->user()->company_id);
+
+        if ($this->selectedYear > 0) {
+            $query->where('year', $this->selectedYear);
+        }
+
+        return $query->distinct()
             ->pluck('number')
             ->sort()
             ->values();
@@ -88,10 +92,14 @@ class extends Component {
     #[Computed]
     public function datesWithData (): array
     {
-        return HarvestRecord::query()
-            ->where('company_id', auth()->user()->company_id)
-            ->whereYear('weighed_at', $this->selectedYear)
-            ->selectRaw('DATE(weighed_at) as record_date')
+        $query = HarvestRecord::query()
+            ->where('company_id', auth()->user()->company_id);
+
+        if ($this->selectedYear > 0) {
+            $query->whereYear('weighed_at', $this->selectedYear);
+        }
+
+        return $query->selectRaw('DATE(weighed_at) as record_date')
             ->distinct()
             ->pluck('record_date')
             ->toArray();
@@ -561,10 +569,10 @@ class extends Component {
         <!-- Date Filters -->
         <div class="mb-6 flex flex-wrap items-end gap-4">
             <flux:button
-                wire:click="$set('showDateRangeModal', true)"
-                variant="ghost"
-                size="sm"
-                icon="calendar-days"
+                    wire:click="$set('showDateRangeModal', true)"
+                    variant="ghost"
+                    size="sm"
+                    icon="calendar-days"
             >
                 {{ $fromDate ? Carbon::parse($fromDate)->isoFormat('D MMM YYYY') : '—' }}
                 –
@@ -665,9 +673,9 @@ class extends Component {
             <flux:heading size="lg">Select Date Range</flux:heading>
 
             <flux:calendar
-                mode="range"
-                week-numbers
-                locale="{{ app()->getLocale() }}"
+                    mode="range"
+                    week-numbers
+                    locale="{{ app()->getLocale() }}"
                 :unavailable="$this->unavailableDates"
                 :min="$this->minDate"
                 :max="$this->maxDate"

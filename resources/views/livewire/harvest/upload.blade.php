@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Url;
 use Livewire\Attributes\Session;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
@@ -27,7 +26,7 @@ class extends Component {
 
     public int $perPage = 25;
 
-    public mixed $uploadedFile;
+    public mixed $uploadedFile = null;
 
     public array $uploads = [];
 
