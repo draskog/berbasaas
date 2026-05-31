@@ -8,6 +8,7 @@ Route::middleware(['auth'])->group(function () {
     Route::livewire('settings/profile', 'pages::settings.profile')->name('profile.edit');
     Route::livewire('settings/company', 'pages::settings.company')->name('company.edit');
     Route::livewire('settings/harvest', 'pages::settings.harvest')->name('harvest.edit');
+    Route::livewire('settings/products', 'pages::settings.products')->name('products.settings');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

@@ -92,7 +92,7 @@ describe('Charts Page', function () {
     });
 
     it('displays product summary data', function () {
-        $product = Product::factory()->for($this->company)->create(['name' => 'Blueberries']);
+        $product = Product::factory()->for($this->company)->create(['name' => 'Borovnica']);
         $year = now()->year;
 
         $harvester = Harvester::factory()->for($this->company)->create();
@@ -108,7 +108,7 @@ describe('Charts Page', function () {
 
         Livewire::test('harvest.charts')
             ->set('activeTab', 'products')
-            ->assertSee('Blueberries');
+            ->assertSee('Borovnica');
     });
 
     it('calculates daily totals', function () {

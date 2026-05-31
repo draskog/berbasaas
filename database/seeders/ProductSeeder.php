@@ -22,15 +22,22 @@ class ProductSeeder extends Seeder
 
         Product::create([
             'company_id' => $company->id,
-            'name' => 'Blueberries',
-            'slug' => 'blueberries',
+            'name' => 'Borovnica',
+            'slug' => 'borovnica',
             'active' => true,
         ]);
 
         Product::create([
             'company_id' => $company->id,
-            'name' => 'Strawberries',
-            'slug' => 'strawberries',
+            'name' => 'Jagoda',
+            'slug' => 'jagoda',
+            'active' => true,
+        ]);
+
+        Product::create([
+            'company_id' => $company->id,
+            'name' => 'Malina',
+            'slug' => 'malina',
             'active' => true,
         ]);
 
