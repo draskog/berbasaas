@@ -159,6 +159,17 @@ class extends Component
     }
 
     #[Computed]
+    public function fallbackTare()
+    {
+        $suggested = $this->suggestedTaresByRecordId;
+        if (! empty($suggested)) {
+            return reset($suggested);
+        }
+
+        return null;
+    }
+
+    #[Computed]
     public function importSettings(): ?HarvestImportSettings
     {
         return HarvestImportSettings::where('company_id', auth()->user()->company_id)->first();
@@ -460,7 +471,28 @@ class extends Component
                             @if($stats['has_tare'])
                                 <flux:field>
                                     <flux:label>{{ __('Tare') }}</flux:label>
-                                    <flux:input wire:model="bulkTare" type="number" step="0.001" min="0" placeholder="0,000" size="sm" class="w-32"/>
+                                    <flux:tooltip>
+                                        <flux:input wire:model="bulkTare" type="number" step="0.001" min="0" placeholder="0,000" size="sm" class="w-32"/>
+                                        <flux:tooltip.content>
+                                            @php
+                                                $suggestedTare = $this->fallbackTare;
+                                            @endphp
+                                            @if($suggestedTare !== null)
+                                                <div class="font-semibold text-green-400 cursor-pointer hover:opacity-80 px-1 py-0.5 rounded"
+                                                     wire:click="$set('bulkTare', {{ $suggestedTare }})">
+                                                    ★ {{ number_format($suggestedTare, 3, ',', '.') }}
+                                                </div>
+                                            @endif
+                                            @foreach($this->validTares as $validTare)
+                                                @if($suggestedTare === null || (float)$validTare !== (float)$suggestedTare)
+                                                    <div class="cursor-pointer hover:opacity-80 px-1 py-0.5 rounded"
+                                                         wire:click="$set('bulkTare', {{ $validTare }})">
+                                                        {{ number_format($validTare, 3, ',', '.') }}
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        </flux:tooltip.content>
+                                    </flux:tooltip>
                                     <flux:error name="bulkTare"/>
                                 </flux:field>
                             @endif
@@ -490,7 +522,7 @@ class extends Component
 
                 <flux:table.rows>
                     @foreach($this->invalidRecords as $record)
-                        <flux:table.row>
+                        <flux:table.row key="record-{{ $record->id }}">
                             <flux:table.cell class="w-12">
                                 <flux:checkbox wire:model.live="selectedIds" value="{{ $record->id }}"/>
                             </flux:table.cell>
@@ -519,7 +551,7 @@ class extends Component
                                         <flux:tooltip.content>
                                             @php
                                                 $suggestedTare = $this->suggestedTaresByRecordId[$record->id]
-                                                    ?? (count($this->validTares) > 0 ? $this->validTares[count($this->validTares) - 1] : null);
+                                                    ?? $this->fallbackTare;
                                             @endphp
                                             @if($suggestedTare !== null)
                                                 <div class="font-semibold text-green-400 cursor-pointer hover:opacity-80 px-1 py-0.5 rounded"
