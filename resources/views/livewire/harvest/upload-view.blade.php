@@ -199,8 +199,8 @@ class extends Component
                         <div>
                             <flux:radio.group wire:model.live="stagingReason" label="{{ __('Reason') }}" variant="pills">
                                 <flux:radio value="all" label="{{ __('All') }}"/>
-                                <flux:radio value="harvester_not_found" label="{{ __('Harvester Not Found') }}"/>
-                                <flux:radio value="tare_out_of_range" label="{{ __('Tare Out of Range') }}"/>
+                                <flux:radio value="harvester_not_found" label="{{ __('Harvester not found') }}"/>
+                                <flux:radio value="tare_out_of_range" label="{{ __('Tare out of range') }}"/>
                             </flux:radio.group>
                         </div>
                         <div class="flex justify-between items-center">

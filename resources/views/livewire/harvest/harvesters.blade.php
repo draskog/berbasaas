@@ -41,6 +41,8 @@ class extends Component {
 
     public string $sortDirection = 'desc';
 
+    public string $search = '';
+
     // Edit Harvester modal
     public ?int $editingHarvesterId = null;
 
@@ -115,6 +117,11 @@ class extends Component {
             $query->where('harvesters.prefix', $this->selectedPrefix);
         }
 
+        $query->when($this->search !== '', fn($q) => $q->where(fn($q) => $q
+            ->where('harvesters.name', 'like', "%{$this->search}%")
+            ->orWhere(\DB::raw('CAST(harvester_assignments.number AS CHAR)'), 'like', "%{$this->search}%")
+        ));
+
         $sortColumn = match ($this->sortBy) {
             'prefix' => 'harvesters.prefix',
             'name' => 'harvesters.name',
@@ -171,6 +178,11 @@ class extends Component {
     }
 
     public function updatedPerPage (): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSearch (): void
     {
         $this->resetPage();
     }
@@ -340,6 +352,7 @@ class extends Component {
                 text: __('Harvester list for year :year already exists.', ['year' => $year]),
                 variant: 'danger'
             );
+
             return;
         }
 
@@ -347,7 +360,7 @@ class extends Component {
             $path = $this->importedFile->getRealPath();
             $file = fopen($path, 'r');
 
-            if (!$file) {
+            if (! $file) {
                 throw new \Exception(__('Could not open file.'));
             }
 
@@ -364,7 +377,7 @@ class extends Component {
 
                 $number = (int) $data[0];
                 $name = $data[1] ?? '';
-                $prefix = !empty($data[2]) ? $data[2] : null;
+                $prefix = ! empty($data[2]) ? $data[2] : null;
 
                 if (empty($name)) {
                     fclose($file);
@@ -372,6 +385,7 @@ class extends Component {
                         text: __('Invalid data at line :line. Name is required.', ['line' => $line + 1]),
                         variant: 'danger'
                     );
+
                     return;
                 }
 
@@ -443,8 +457,8 @@ class extends Component {
     </flux:header>
 
     <div class="p-6">
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-4">
+        <div class="space-y-4">
+            <div>
                 <flux:radio.group wire:model.live="selectedYear" :label="__('Year')" variant="pills">
                     <flux:radio :label="__('All')" value="0"/>
                     @foreach($this->availableYears as $year)
@@ -452,24 +466,30 @@ class extends Component {
                     @endforeach
                 </flux:radio.group>
             </div>
-            <flux:select wire:model.live="perPage" size="sm" class="w-28">
-                <flux:select.option value="25">25</flux:select.option>
-                <flux:select.option value="50">50</flux:select.option>
-                <flux:select.option value="100">100</flux:select.option>
-                <flux:select.option value="0">{{ __('All') }}</flux:select.option>
-            </flux:select>
-        </div>
-
-        @if($this->availablePrefixes->isNotEmpty())
-            <div class="mb-6">
-                <flux:radio.group wire:model.live="selectedPrefix" :label="__('Prefix')" variant="pills">
-                    <flux:radio :label="__('All')" value=""/>
-                    @foreach($this->availablePrefixes as $prefix)
-                        <flux:radio :label="$prefix" :value="$prefix"/>
-                    @endforeach
-                </flux:radio.group>
+            @if($this->availablePrefixes->isNotEmpty())
+                <div>
+                    <flux:radio.group wire:model.live="selectedPrefix" :label="__('Prefix')" variant="pills">
+                        <flux:radio :label="__('All')" value=""/>
+                        @foreach($this->availablePrefixes as $prefix)
+                            <flux:radio :label="$prefix" :value="$prefix"/>
+                        @endforeach
+                    </flux:radio.group>
+                </div>
+            @endif
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-4">
+                    <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search"
+                                placeholder="{{ __('Search by harvester number or name...') }}"
+                                icon="magnifying-glass" class="w-72!"/>
+                </div>
+                <flux:select wire:model.live="perPage" size="sm" class="w-28">
+                    <flux:select.option value="25">25</flux:select.option>
+                    <flux:select.option value="50">50</flux:select.option>
+                    <flux:select.option value="100">100</flux:select.option>
+                    <flux:select.option value="0">{{ __('All') }}</flux:select.option>
+                </flux:select>
             </div>
-        @endif
+        </div>
 
         <flux:table :paginate="$this->perPage > 0 ? $this->allAssignments : null">
             <flux:table.columns>
