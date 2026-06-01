@@ -305,8 +305,7 @@ class extends Component {
         <div class="mt-6 space-y-4">
             <flux:field>
                 <flux:label>{{ __('Product') }}</flux:label>
-                <flux:select wire:model="newProductId">
-                    <flux:select.option value="">{{ __('Select product...') }}</flux:select.option>
+                <flux:select variant="listbox" searchable wire:model="newProductId" placeholder="{{ __('Select product...') }}">
                     @foreach ($this->products as $product)
                         <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
                     @endforeach

@@ -538,12 +538,11 @@ class extends Component {
 
             <flux:field>
                 <flux:label>{{ __('Harvester') }}</flux:label>
-                <flux:select wire:model="newHarvesterId">
-                    <flux:select.option value="">{{ __('Select a harvester...') }}</flux:select.option>
+                <flux:select variant="listbox" searchable wire:model="newHarvesterId" placeholder="{{ __('Select a harvester...') }}">
                     @foreach($this->harvesters as $harvester)
-                        <flux:select.option value="{{ $harvester->id }}">{{ $harvester->name }} @if($harvester->prefix)
-                                ({{ $harvester->prefix }})
-                            @endif</flux:select.option>
+                        <flux:select.option value="{{ $harvester->id }}">
+                            {{ $harvester->name }}{{ $harvester->prefix ? ' (' . $harvester->prefix . ')' : '' }}
+                        </flux:select.option>
                     @endforeach
                 </flux:select>
                 <flux:error name="newHarvesterId"/>
