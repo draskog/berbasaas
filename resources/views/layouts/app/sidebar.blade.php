@@ -14,7 +14,7 @@
         <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
             {{ __('Dashboard') }}
         </flux:sidebar.item>
-        <flux:sidebar.item icon="arrow-up-tray" :href="route('harvest.upload')" :current="request()->routeIs('harvest.upload')" wire:navigate>
+        <flux:sidebar.item icon="arrow-up-tray" :href="route('harvest.upload')" :current="request()->routeIs('harvest.upload', 'harvest.upload.*')" wire:navigate>
             {{ __('Harvest Records') }}
         </flux:sidebar.item>
         <flux:sidebar.item icon="printer" :href="route('harvest.payslip')" :current="request()->routeIs('harvest.payslip')" wire:navigate>
