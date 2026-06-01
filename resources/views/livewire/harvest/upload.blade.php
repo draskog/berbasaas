@@ -1,7 +1,5 @@
 <?php
 
-use App\Models\Harvester;
-use App\Models\HarvesterAssignment;
 use App\Models\HarvestImportSettings;
 use App\Models\HarvestRecord;
 use App\Models\HarvestRecordStaging;
@@ -12,8 +10,8 @@ use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
 use Livewire\Attributes\Session;
+use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -21,7 +19,8 @@ use Livewire\WithPagination;
 new
 #[Layout('layouts.app')]
 #[Title('Harvest Records')]
-class extends Component {
+class extends Component
+{
     use WithFileUploads, WithPagination;
 
     public int $selectedProductId = 0;
@@ -48,18 +47,20 @@ class extends Component {
 
     public string $search = '';
 
-
     #[Session]
     public int $selectedYear = 0;
+
     #[Session]
     public string $selectedProduct = 'all';
+
     #[Session]
     public string $selectedStatus = 'all';
+
     #[Session]
     public string $selectedResolved = 'all';
 
     #[Computed]
-    public function products (): Collection
+    public function products(): Collection
     {
         return Product::where('company_id', auth()->user()->company_id)
             ->where('active', true)
@@ -68,20 +69,20 @@ class extends Component {
     }
 
     #[Computed]
-    public function selectedProducts (): Collection
+    public function selectedProducts(): Collection
     {
         return Product::where('company_id', auth()->user()->company_id)
-            ->whereHas('harvestUploads', fn($q) => $q->where('company_id', auth()->user()->company_id))
+            ->whereHas('harvestUploads', fn ($q) => $q->where('company_id', auth()->user()->company_id))
             ->orderBy('name')
             ->get();
     }
 
     #[Computed]
-    public function availableYears (): array
+    public function availableYears(): array
     {
         return HarvestUpload::where('company_id', auth()->user()->company_id)
             ->pluck('date_from')
-            ->map(fn($date) => $date->year)
+            ->map(fn ($date) => $date->year)
             ->unique()
             ->sortDesc()
             ->values()
@@ -89,11 +90,11 @@ class extends Component {
     }
 
     #[Computed]
-    public function recentUploads ()
+    public function recentUploads()
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
             ->withCount('harvestRecords as valid_count')
-            ->withCount(['stagingRecords as invalid_count' => fn($q) => $q->where('status', 'invalid')]);
+            ->withCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
 
         if ($this->selectedYear > 0) {
             $query->whereYear('date_from', $this->selectedYear);
@@ -103,20 +104,20 @@ class extends Component {
             $query->where('product_id', $this->selectedProduct);
         }
 
-        if ($this->selectedStatus === 'ispravno') {
+        if ($this->selectedStatus === 'valid') {
             $query->havingRaw('valid_count > 0')
                 ->havingRaw('invalid_count = 0');
-        } elseif ($this->selectedStatus === 'neispravno') {
+        } elseif ($this->selectedStatus === 'invalid') {
             $query->havingRaw('valid_count = 0')
                 ->havingRaw('invalid_count > 0');
-        } elseif ($this->selectedStatus === 'delimicno') {
+        } elseif ($this->selectedStatus === 'partially_valid') {
             $query->havingRaw('valid_count > 0')
                 ->havingRaw('invalid_count > 0');
-        } elseif ($this->selectedStatus === 'duplikat') {
+        } elseif ($this->selectedStatus === 'duplicate') {
             $query->havingRaw('valid_count = 0')
                 ->havingRaw('invalid_count = 0')
                 ->where('record_count', '>', 0);
-        } elseif ($this->selectedStatus === 'reseno') {
+        } elseif ($this->selectedStatus === 'resolved') {
             $query->whereNotNull('resolved_at');
         }
 
@@ -143,7 +144,7 @@ class extends Component {
         return $query->paginate($this->perPage);
     }
 
-    public function mount (): void
+    public function mount(): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
         $currentYear = now()->year;
@@ -153,37 +154,37 @@ class extends Component {
         }
     }
 
-    public function updatedPerPage (): void
+    public function updatedPerPage(): void
     {
         $this->resetPage();
     }
 
-    public function updatedselectedProduct (): void
+    public function updatedselectedProduct(): void
     {
         $this->resetPage();
     }
 
-    public function updatedselectedStatus (): void
+    public function updatedselectedStatus(): void
     {
         $this->resetPage();
     }
 
-    public function updatedselectedResolved (): void
+    public function updatedselectedResolved(): void
     {
         $this->resetPage();
     }
 
-    public function updatedselectedYear (): void
+    public function updatedselectedYear(): void
     {
         $this->resetPage();
     }
 
-    public function updatedSearch (): void
+    public function updatedSearch(): void
     {
         $this->resetPage();
     }
 
-    public function sort (string $column): void
+    public function sort(string $column): void
     {
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -194,7 +195,7 @@ class extends Component {
         $this->resetPage();
     }
 
-    public function uploadFile (): void
+    public function uploadFile(): void
     {
         $this->validate([
             'selectedProductId' => 'required|exists:products,id',
@@ -217,7 +218,7 @@ class extends Component {
 
         // Reload to get counts
         $upload->loadCount('harvestRecords as valid_count');
-        $upload->loadCount(['stagingRecords as invalid_count' => fn($q) => $q->where('status', 'invalid')]);
+        $upload->loadCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
 
         $validCount = $upload->valid_count;
         $invalidCount = $upload->invalid_count;
@@ -250,19 +251,19 @@ class extends Component {
         Flux::toast(text: $message, variant: $variant);
     }
 
-    public function confirmResolveUpload (int $id): void
+    public function confirmResolveUpload(int $id): void
     {
         $this->resolvingUploadId = $id;
         $this->showResolveModal = true;
     }
 
-    public function confirmDeleteUpload (int $id): void
+    public function confirmDeleteUpload(int $id): void
     {
         $this->deletingUploadId = $id;
         $this->showDeleteModal = true;
     }
 
-    public function deleteUpload (): void
+    public function deleteUpload(): void
     {
         HarvestUpload::find($this->deletingUploadId)?->delete();
         $this->deletingUploadId = null;
@@ -271,7 +272,7 @@ class extends Component {
         Flux::toast(text: __('Upload deleted.'), variant: 'warning');
     }
 
-    public function autoResolve (int $uploadId): void
+    public function autoResolve(int $uploadId): void
     {
         $upload = HarvestUpload::findOrFail($uploadId);
 
@@ -305,10 +306,10 @@ class extends Component {
             }
 
             if ($suggestedTare === null) {
-                $allTareErrors = $tareErrors->filter(fn($r) => $r->sequence_number !== null);
+                $allTareErrors = $tareErrors->filter(fn ($r) => $r->sequence_number !== null);
                 if ($allTareErrors->isNotEmpty()) {
                     $nextSeqs = $allTareErrors->pluck('sequence_number')
-                        ->map(fn($n) => $n + 1)
+                        ->map(fn ($n) => $n + 1)
                         ->unique();
 
                     $suggestedTare = HarvestRecordStaging::where('upload_id', $uploadId)
@@ -375,7 +376,7 @@ class extends Component {
         Flux::toast(text: $message, variant: $resolved > 0 ? 'success' : 'warning');
     }
 
-    private function promoteRecord (HarvestRecordStaging $record, ?int $originalHarvesterNumber = null): void
+    private function promoteRecord(HarvestRecordStaging $record, ?int $originalHarvesterNumber = null): void
     {
         $data = [
             'company_id' => $record->company_id,
@@ -404,12 +405,10 @@ class extends Component {
             $upload->update(['resolved_at' => now()]);
         }
     }
-
 }; ?>
 
 <flux:main>
-    <flux:header heading="{{ __('Recent Upload Harvest Records') }}">
-        {{ __('Recent Upload Harvest Records') }}
+    <flux:header :heading="__('Recent Upload Harvest Records')">
         <flux:spacer/>
         <flux:button variant="primary" size="sm" icon="arrow-up-tray" wire:click="$set('showUploadModal', true)">
             {{ __('Upload CSV File') }}
@@ -419,40 +418,40 @@ class extends Component {
     <div class="p-6">
         <div class="space-y-4">
             <div>
-                <flux:radio.group wire:model.live="selectedYear" label="{{ __('Year') }}" variant="pills">
-                    <flux:radio value="0" label="{{ __('All') }}"/>
+                <flux:radio.group wire:model.live="selectedYear" :label="__('Year')" variant="pills">
+                    <flux:radio value="0" :label="__('All')"/>
                     @foreach($this->availableYears as $year)
                         <flux:radio value="{{ $year }}" label="{{ $year }}"/>
                     @endforeach
                 </flux:radio.group>
             </div>
             <div>
-                <flux:radio.group wire:model.live="selectedProduct" label="{{ __('Product') }}" variant="pills">
-                    <flux:radio value="all" label="{{ __('All') }}"/>
+                <flux:radio.group wire:model.live="selectedProduct" :label="__('Product')" variant="pills">
+                    <flux:radio value="all" :label="__('All')"/>
                     @foreach($this->selectedProducts as $product)
                         <flux:radio value="{{ $product->id }}" label="{{ $product->name }}"/>
                     @endforeach
                 </flux:radio.group>
             </div>
             <div>
-                <flux:radio.group wire:model.live="selectedStatus" label="{{ __('Status') }}" variant="pills">
-                    <flux:radio value="all" label="{{ __('All') }}"/>
-                    <flux:radio value="ispravno" label="{{ __('Valid') }}"/>
-                    <flux:radio value="neispravno" label="{{ __('Invalid') }}"/>
-                    <flux:radio value="delimicno" label="{{ __('Partially Valid') }}"/>
-                    <flux:radio value="duplikat" label="{{ __('Duplicate') }}"/>
-                    <flux:radio value="reseno" label="{{ __('Resolved') }}"/>
+                <flux:radio.group wire:model.live="selectedStatus" :label="__('Status')" variant="pills">
+                    <flux:radio value="all" :label="__('All')"/>
+                    <flux:radio value="valid" :label="__('Valid')"/>
+                    <flux:radio value="invalid" :label="__('Invalid')"/>
+                    <flux:radio value="partially_valid" :label="__('Partially Valid')"/>
+                    <flux:radio value="duplicate" :label="__('Duplicate')"/>
+                    <flux:radio value="resolved" :label="__('Resolved')"/>
                 </flux:radio.group>
             </div>
             <div>
-                <flux:radio.group wire:model.live="selectedResolved" label="{{ __('Resolution Status') }}" variant="pills">
-                    <flux:radio value="all" label="{{ __('All') }}"/>
-                    <flux:radio value="resolved" label="{{ __('Resolved') }}"/>
-                    <flux:radio value="unresolved" label="{{ __('Unresolved') }}"/>
+                <flux:radio.group wire:model.live="selectedResolved" :label="__('Resolution Status')" variant="pills">
+                    <flux:radio value="all" :label="__('All')"/>
+                    <flux:radio value="resolved" :label="__('Resolved')"/>
+                    <flux:radio value="unresolved" :label="__('Unresolved')"/>
                 </flux:radio.group>
             </div>
             <div class="flex justify-between items-center">
-                <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search by filename...') }}" icon="magnifying-glass" class="w-72!"/>
+                <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search" :placeholder="__('Search by filename...')" icon="magnifying-glass" class="w-72!"/>
                 <flux:select wire:model.live="perPage" size="sm" class="w-28">
                     <flux:select.option value="25">25</flux:select.option>
                     <flux:select.option value="50">50</flux:select.option>
@@ -587,7 +586,7 @@ class extends Component {
         <div class="mt-6 space-y-4">
             <flux:field>
                 <flux:label>{{ __('Product') }}</flux:label>
-                <flux:select variant="listbox" searchable wire:model="selectedProductId" placeholder="{{ __('Select a product...') }}">
+                <flux:select variant="listbox" searchable wire:model="selectedProductId" :placeholder="__('Select a product...')">
                     @foreach($this->products as $product)
                         <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
                     @endforeach
