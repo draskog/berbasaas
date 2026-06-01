@@ -20,24 +20,54 @@ class HarvesterAssignmentSeeder extends Seeder
             return;
         }
 
-        for ($number = 1; $number <= 150; $number++) {
+        $csvPath = resource_path('samples/full/Spisak_beraca_Ime_Prezime_Konacno.csv');
+
+        if (! file_exists($csvPath)) {
+            return;
+        }
+
+        $harvesters = [];
+        if (($handle = fopen($csvPath, 'rb')) !== false) {
+            fgetcsv($handle, 1000, ';');
+
+            while (($data = fgetcsv($handle, 1000, ';')) !== false) {
+                if (count($data) >= 2 && ! empty($data[1])) {
+                    $number = (int) $data[0];
+                    $name = trim($data[1]);
+                    $prefix = isset($data[2]) ? trim($data[2]) : null;
+
+                    $harvesters[$number] = [
+                        'name' => $name,
+                        'prefix' => $prefix ?: null,
+                    ];
+                }
+            }
+            fclose($handle);
+        }
+
+        foreach ($harvesters as $number => $harvesterData) {
             $harvester = Harvester::firstOrCreate(
                 [
                     'company_id' => $company->id,
-                    'name' => 'Harvester '.$number,
+                    'name' => $harvesterData['name'],
                 ],
                 [
                     'active' => true,
-                    'prefix' => fake()->boolean(5) ? fake()->firstName() : null,
+                    'prefix' => $harvesterData['prefix'],
                 ]
             );
+
             for ($year = 2023; $year <= 2026; $year++) {
-                HarvesterAssignment::create([
-                    'company_id' => $company->id,
-                    'harvester_id' => $harvester->id,
-                    'year' => $year,
-                    'number' => $number,
-                ]);
+                HarvesterAssignment::updateOrCreate(
+                    [
+                        'company_id' => $company->id,
+                        'year' => $year,
+                        'number' => $number,
+                    ],
+                    [
+                        'harvester_id' => $harvester->id,
+                    ]
+                );
             }
         }
     }
