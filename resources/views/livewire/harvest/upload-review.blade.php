@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\HarvesterAssignment;
+use App\Models\HarvestImportSettings;
 use App\Models\HarvestRecord;
 use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
@@ -18,7 +19,8 @@ use Livewire\WithPagination;
 new
 #[Layout('layouts.app')]
 #[Title('Review Upload')]
-class extends Component {
+class extends Component
+{
     use WithPagination;
 
     public HarvestUpload $upload;
@@ -45,17 +47,17 @@ class extends Component {
     public string $bulkTare = '';
 
     #[Computed]
-    public function year (): int
+    public function year(): int
     {
         return $this->upload->date_from->year;
     }
 
     #[Computed]
-    public function invalidRecords ()
+    public function invalidRecords()
     {
         $query = HarvestRecordStaging::where('upload_id', $this->upload->id)
             ->where('status', 'invalid')
-            ->when($this->selectedReason !== 'all', fn($q) => $q->where('validation_reason', 'like', "%$this->selectedReason%"))
+            ->when($this->selectedReason !== 'all', fn ($q) => $q->where('validation_reason', 'like', "%$this->selectedReason%"))
             ->orderBy($this->sortBy, $this->sortDirection);
 
         if ($this->perPage === 0) {
@@ -66,7 +68,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function validNumbers (): Collection
+    public function validNumbers(): Collection
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->year)
@@ -76,13 +78,13 @@ class extends Component {
     }
 
     #[Computed]
-    public function harvestersByNumber ()
+    public function harvestersByNumber()
     {
         return $this->validNumbers->keyBy('number');
     }
 
     #[Computed]
-    public function validTares (): array
+    public function validTares(): array
     {
         $fromRecords = HarvestRecord::where('upload_id', $this->upload->id)
             ->distinct()->pluck('tare');
@@ -92,14 +94,14 @@ class extends Component {
 
         return $fromRecords->merge($fromStaging)
             ->unique()
-            ->filter(fn($t) => $t > 0)
+            ->filter(fn ($t) => $t > 0)
             ->sort()
             ->values()
             ->toArray();
     }
 
     #[Computed]
-    public function selectedReasonStats (): array
+    public function selectedReasonStats(): array
     {
         if (empty($this->selectedIds)) {
             return ['has_harvester' => false, 'has_tare' => false];
@@ -109,16 +111,16 @@ class extends Component {
             ->pluck('validation_reason');
 
         return [
-            'has_harvester' => $reasons->some(fn($r) => in_array('harvester_not_found', (array) $r, true)),
-            'has_tare'      => $reasons->some(fn($r) => in_array('tare_out_of_range', (array) $r, true)),
+            'has_harvester' => $reasons->some(fn ($r) => in_array('harvester_not_found', (array) $r, true)),
+            'has_tare' => $reasons->some(fn ($r) => in_array('tare_out_of_range', (array) $r, true)),
         ];
     }
 
     #[Computed]
-    public function suggestedTaresByRecordId (): array
+    public function suggestedTaresByRecordId(): array
     {
         $records = collect($this->perPage > 0 ? $this->invalidRecords->items() : $this->invalidRecords->all());
-        $tareErrors = $records->filter(fn($r) => in_array('tare_out_of_range', (array) $r->validation_reason, true));
+        $tareErrors = $records->filter(fn ($r) => in_array('tare_out_of_range', (array) $r->validation_reason, true));
 
         if ($tareErrors->isEmpty()) {
             return [];
@@ -126,7 +128,7 @@ class extends Component {
 
         $nextSeqs = $tareErrors->whereNotNull('sequence_number')
             ->pluck('sequence_number')
-            ->map(fn($n) => $n + 1)
+            ->map(fn ($n) => $n + 1)
             ->unique();
 
         if ($nextSeqs->isEmpty()) {
@@ -156,19 +158,33 @@ class extends Component {
         return $result;
     }
 
-    public function mount (): void
+    #[Computed]
+    public function importSettings(): ?HarvestImportSettings
+    {
+        return HarvestImportSettings::where('company_id', auth()->user()->company_id)->first();
+    }
+
+    #[Computed]
+    public function hasAnyInvalidRecords(): bool
+    {
+        return HarvestRecordStaging::where('upload_id', $this->upload->id)
+            ->where('status', 'invalid')
+            ->exists();
+    }
+
+    public function mount(): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
     }
 
-    public function updatedPerPage (): void
+    public function updatedPerPage(): void
     {
         $this->resetPage();
         $this->selectedIds = [];
         $this->selectAll = false;
     }
 
-    public function sort (string $column): void
+    public function sort(string $column): void
     {
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -181,38 +197,38 @@ class extends Component {
         $this->selectAll = false;
     }
 
-    public function updatedSelectedReason (): void
+    public function updatedSelectedReason(): void
     {
         $this->resetPage();
         $this->selectedIds = [];
         $this->selectAll = false;
     }
 
-    public function applyTare (int $recordId, float $tare): void
+    public function applyTare(int $recordId, float $tare): void
     {
         $this->correctedTares[$recordId] = $tare;
     }
 
-    public function applyHarvesterNumber (int $recordId, int $number): void
+    public function applyHarvesterNumber(int $recordId, int $number): void
     {
         $this->corrections[$recordId] = (string) $number;
     }
 
-    public function updatedSelectAll (): void
+    public function updatedSelectAll(): void
     {
         if ($this->selectAll) {
             $this->selectedIds = HarvestRecordStaging::where('upload_id', $this->upload->id)
                 ->where('status', 'invalid')
-                ->when($this->selectedReason !== 'all', fn($q) => $q->where('validation_reason', 'like', "%$this->selectedReason%"))
+                ->when($this->selectedReason !== 'all', fn ($q) => $q->where('validation_reason', 'like', "%$this->selectedReason%"))
                 ->pluck('id')
-                ->map(fn($id) => (string) $id)
+                ->map(fn ($id) => (string) $id)
                 ->toArray();
         } else {
             $this->selectedIds = [];
         }
     }
 
-    public function resolve (int $recordId): void
+    public function resolve(int $recordId): void
     {
         $stagingRecord = HarvestRecordStaging::findOrFail($recordId);
 
@@ -249,8 +265,16 @@ class extends Component {
                 }
             }
 
+            $rules = ['required', 'numeric', 'min:0'];
+            $settings = $this->importSettings;
+            if ($settings?->tare_min !== null) {
+                $rules[] = 'min:'.$settings->tare_min;
+            }
+            if ($settings?->tare_max !== null) {
+                $rules[] = 'max:'.$settings->tare_max;
+            }
             $this->validate(
-                ["correctedTares.$recordId" => ['required', 'numeric', 'min:0']],
+                ["correctedTares.$recordId" => $rules],
                 ["correctedTares.$recordId.required" => __('Tare value is required.')]
             );
             $tare = (float) ($this->correctedTares[$recordId] ?? $stagingRecord->tare);
@@ -266,6 +290,7 @@ class extends Component {
             'tare' => $tare,
             'gross' => $stagingRecord->gross,
             'weighed_at' => $stagingRecord->weighed_at,
+            'sequence_number' => $stagingRecord->sequence_number,
             'corrected' => true,
         ]);
 
@@ -278,7 +303,7 @@ class extends Component {
         Flux::toast(text: __('Record updated and promoted.'), variant: 'success');
     }
 
-    public function resolveSelected (): void
+    public function resolveSelected(): void
     {
         if (empty($this->selectedIds)) {
             return;
@@ -322,9 +347,17 @@ class extends Component {
                             ->where('sequence_number', $stagingRecord->sequence_number + 1)
                             ->where('tare', '>', 0)->value('tare');
                 }
+                $rules = ['required', 'numeric', 'min:0'];
+                $settings = $this->importSettings;
+                if ($settings?->tare_min !== null) {
+                    $rules[] = 'min:'.$settings->tare_min;
+                }
+                if ($settings?->tare_max !== null) {
+                    $rules[] = 'max:'.$settings->tare_max;
+                }
                 $validator = Validator::make(
                     ['bulkTare' => $useTare],
-                    ['bulkTare' => ['required', 'numeric', 'min:0']]
+                    ['bulkTare' => $rules]
                 );
                 if ($validator->fails()) {
                     $skipped++;
@@ -344,6 +377,7 @@ class extends Component {
                 'tare' => $tare,
                 'gross' => $stagingRecord->gross,
                 'weighed_at' => $stagingRecord->weighed_at,
+                'sequence_number' => $stagingRecord->sequence_number,
                 'corrected' => true,
             ]);
 
@@ -375,22 +409,24 @@ class extends Component {
     </flux:header>
 
     <div class="p-6">
-        @if($this->invalidRecords->isEmpty())
+        @if(!$this->hasAnyInvalidRecords)
             <flux:callout type="success" icon="check-circle" title="{{ __('All Clear') }}">
-                {{ __('All harvester numbers are valid for :year.', ['year' => $this->year]) }}
+                {{ __('All records have been corrected.') }}
             </flux:callout>
         @else
-            <div class="flex items-center justify-between mb-6">
-                <flux:text variant="subtle">
-                    {{ __(':count record(s) need correction', ['count' => $this->perPage > 0 ? $this->invalidRecords->total() : $this->invalidRecords->count()]) }}
-                </flux:text>
-                <flux:select wire:model.live="perPage" size="sm" class="w-28">
-                    <flux:select.option value="25">25</flux:select.option>
-                    <flux:select.option value="50">50</flux:select.option>
-                    <flux:select.option value="100">100</flux:select.option>
-                    <flux:select.option value="0">{{ __('All') }}</flux:select.option>
-                </flux:select>
-            </div>
+            @if(!$this->invalidRecords->isEmpty())
+                <div class="flex items-center justify-between mb-6">
+                    <flux:text variant="subtle">
+                        {{ __(':count record(s) need correction', ['count' => $this->perPage > 0 ? $this->invalidRecords->total() : $this->invalidRecords->count()]) }}
+                    </flux:text>
+                    <flux:select wire:model.live="perPage" size="sm" class="w-28">
+                        <flux:select.option value="25">25</flux:select.option>
+                        <flux:select.option value="50">50</flux:select.option>
+                        <flux:select.option value="100">100</flux:select.option>
+                        <flux:select.option value="0">{{ __('All') }}</flux:select.option>
+                    </flux:select>
+                </div>
+            @endif
 
             <div class="mb-6">
                 <flux:radio.group wire:model.live="selectedReason" label="{{ __('Reason') }}" variant="pills">
@@ -400,38 +436,43 @@ class extends Component {
                 </flux:radio.group>
             </div>
 
-            @if(!empty($selectedIds))
-                @php $stats = $this->selectedReasonStats; $isMixed = $stats['has_harvester'] && $stats['has_tare']; @endphp
-                @if($isMixed)
-                    <flux:callout type="warning" icon="exclamation-triangle" class="mb-4">
-                        {{ __('Selected records have different error types (harvester and tare). Please filter by reason first.') }}
-                    </flux:callout>
-                @else
-                    <div class="flex flex-wrap items-end gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 mb-4">
-                        <flux:text class="font-medium">{{ __(':count selected', ['count' => count($selectedIds)]) }}</flux:text>
-                        @if($stats['has_harvester'])
-                            <flux:field>
-                                <flux:label>{{ __('Harvester #') }}</flux:label>
-                                <flux:input wire:model="bulkHarvesterNumber" type="number" min="1" max="200" placeholder="#" size="sm" class="w-28"/>
-                                <flux:error name="bulkHarvesterNumber"/>
-                            </flux:field>
-                        @endif
-                        @if($stats['has_tare'])
-                            <flux:field>
-                                <flux:label>{{ __('Tare') }}</flux:label>
-                                <flux:input wire:model="bulkTare" type="number" step="0.001" min="0" placeholder="0.000" size="sm" class="w-32"/>
-                                <flux:error name="bulkTare"/>
-                            </flux:field>
-                        @endif
-                        <flux:button variant="primary" size="sm" wire:click="resolveSelected" wire:loading.attr="disabled">
-                            <span wire:loading.remove>{{ __('Resolve Selected') }}</span>
-                            <span wire:loading>{{ __('Resolving...') }}</span>
-                        </flux:button>
-                    </div>
+            @if($this->invalidRecords->isEmpty())
+                <flux:callout type="info" icon="check-circle">
+                    {{ __('No records match this filter. Switch the filter above to see remaining errors.') }}
+                </flux:callout>
+            @else
+                @if(!empty($selectedIds))
+                    @php $stats = $this->selectedReasonStats; $isMixed = $stats['has_harvester'] && $stats['has_tare']; @endphp
+                    @if($isMixed)
+                        <flux:callout type="warning" icon="exclamation-triangle" class="mb-4">
+                            {{ __('Selected records have different error types (harvester and tare). Please filter by reason first.') }}
+                        </flux:callout>
+                    @else
+                        <div class="flex flex-wrap items-end gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 mb-4">
+                            <flux:text class="font-medium">{{ __(':count selected', ['count' => count($selectedIds)]) }}</flux:text>
+                            @if($stats['has_harvester'])
+                                <flux:field>
+                                    <flux:label>{{ __('Harvester #') }}</flux:label>
+                                    <flux:input wire:model="bulkHarvesterNumber" type="number" min="1" max="200" placeholder="#" size="sm" class="w-28"/>
+                                    <flux:error name="bulkHarvesterNumber"/>
+                                </flux:field>
+                            @endif
+                            @if($stats['has_tare'])
+                                <flux:field>
+                                    <flux:label>{{ __('Tare') }}</flux:label>
+                                    <flux:input wire:model="bulkTare" type="number" step="0.001" min="0" placeholder="0.000" size="sm" class="w-32"/>
+                                    <flux:error name="bulkTare"/>
+                                </flux:field>
+                            @endif
+                            <flux:button variant="primary" size="sm" wire:click="resolveSelected" wire:loading.attr="disabled">
+                                <span wire:loading.remove>{{ __('Resolve Selected') }}</span>
+                                <span wire:loading>{{ __('Resolving...') }}</span>
+                            </flux:button>
+                        </div>
+                    @endif
                 @endif
-            @endif
 
-            <flux:table :paginate="$this->perPage > 0 ? $this->invalidRecords : null">
+                <flux:table :paginate="$this->perPage > 0 ? $this->invalidRecords : null">
                 <flux:table.columns>
                     <flux:table.column class="w-12">
                         <flux:checkbox wire:model.live="selectAll"/>
@@ -476,18 +517,23 @@ class extends Component {
                                             class="w-28"
                                         />
                                         <flux:tooltip.content>
-                                            @if(isset($this->suggestedTaresByRecordId[$record->id]))
-                                                @php $suggestedTare = $this->suggestedTaresByRecordId[$record->id]; @endphp
+                                            @php
+                                                $suggestedTare = $this->suggestedTaresByRecordId[$record->id]
+                                                    ?? (count($this->validTares) > 0 ? $this->validTares[0] : null);
+                                            @endphp
+                                            @if($suggestedTare !== null)
                                                 <div class="font-semibold text-green-400 cursor-pointer hover:opacity-80 px-1 py-0.5 rounded"
                                                      wire:click="applyTare({{ $record->id }}, {{ $suggestedTare }})">
                                                     ★ {{ number_format($suggestedTare, 3, ',', '.') }}
                                                 </div>
                                             @endif
                                             @foreach($this->validTares as $validTare)
-                                                <div class="cursor-pointer hover:opacity-80 px-1 py-0.5 rounded"
-                                                     wire:click="applyTare({{ $record->id }}, {{ $validTare }})">
-                                                    {{ number_format($validTare, 3, ',', '.') }}
-                                                </div>
+                                                @if($suggestedTare === null || (float)$validTare !== (float)$suggestedTare)
+                                                    <div class="cursor-pointer hover:opacity-80 px-1 py-0.5 rounded"
+                                                         wire:click="applyTare({{ $record->id }}, {{ $validTare }})">
+                                                        {{ number_format($validTare, 3, ',', '.') }}
+                                                    </div>
+                                                @endif
                                             @endforeach
                                         </flux:tooltip.content>
                                     </flux:tooltip>
@@ -564,7 +610,8 @@ class extends Component {
                         </flux:table.row>
                     @endforeach
                 </flux:table.rows>
-            </flux:table>
+                </flux:table>
+            @endif
         @endif
     </div>
 </flux:main>
