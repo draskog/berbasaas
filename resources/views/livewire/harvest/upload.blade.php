@@ -89,7 +89,6 @@ class extends Component {
     public function recentUploads ()
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
-            ->addSelect('harvest_uploads.resolved_at')
             ->withCount('harvestRecords as valid_count')
             ->withCount(['stagingRecords as invalid_count' => fn($q) => $q->where('status', 'invalid')]);
 
