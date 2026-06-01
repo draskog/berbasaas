@@ -618,5 +618,13 @@
     "Pending": "Na čekanju",
     "Search by filename...": "Pretraga po imenu datoteke...",
     "Search by harvester number...": "Pretraga po broju berca...",
-    "Search by harvester number or name...": "Pretraga po broju ili imenu berca..."
+    "Search by harvester number or name...": "Pretraga po broju ili imenu berca...",
+    "Date / Time": "Datum / Vreme",
+    "No staging records found": "Nisu pronađeni privremeni zapisi",
+    "No harvest records found": "Nisu pronađeni zapisi berbe",
+    "Time": "Vreme",
+    "Period": "Period",
+    "Totals": "Ukupno",
+    "Price/kg": "Cena/kg",
+    "No records found for the selected period.": "Nisu pronađeni zapisi za izabrani period."
 }

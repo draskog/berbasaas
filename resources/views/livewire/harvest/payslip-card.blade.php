@@ -17,14 +17,18 @@ new class extends Component
 
     public ?string $dateTo = null;
 
-    public function harvesterName(): ?string
+    public function harvesterInfo(): array
     {
-        return HarvesterAssignment::where('company_id', auth()->user()->company_id)
+        $assignment = HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->year)
             ->where('number', $this->harvesterNumber)
-            ->first()
-            ?->harvester
-            ?->name;
+            ->with('harvester')
+            ->first();
+
+        return [
+            'name' => $assignment?->harvester?->name ?? __('Unknown'),
+            'prefix' => $assignment?->harvester?->prefix,
+        ];
     }
 
     private function priceForRecord(HarvestRecord $record): ?float
@@ -41,7 +45,8 @@ new class extends Component
     {
         $query = HarvestRecord::where('company_id', auth()->user()->company_id)
             ->where('harvester_number', $this->harvesterNumber)
-            ->whereYear('weighed_at', $this->year);
+            ->whereYear('weighed_at', $this->year)
+            ->with('product');
 
         if ($this->dateFrom) {
             $query->whereDate('weighed_at', '>=', $this->dateFrom);
@@ -60,6 +65,7 @@ new class extends Component
 
             $data[] = [
                 'datetime' => $record->weighed_at,
+                'product' => $record->product?->name ?? '—',
                 'weight' => round($record->weight, 3),
                 'price_per_kg' => $price,
                 'earnings' => $earnings,
@@ -135,11 +141,15 @@ new class extends Component
     }
 }; ?>
 
-<flux:card class="p-4 print:border-0 print:bg-white">
+<flux:card class="p-4 print:border-0 print:bg-white print:shadow-none shadow-sm">
     <!-- Header: Harvester left, Company right -->
-    <div class="border-b border-gray-200 pb-6 dark:border-zinc-700 flex justify-between items-start">
+    <div class="border-b-2 border-blue-200 pb-4 dark:border-blue-900 flex justify-between items-start print:border-b print:border-gray-200 print:pb-2 mb-4 print:mb-2">
         <div>
-            <flux:heading size="lg">#{{ $this->harvesterNumber }} {{ $this->harvesterName() ?? __('Unknown') }}</flux:heading>
+            <flux:heading size="lg">#{{ $this->harvesterNumber }}
+                @if ($this->harvesterInfo()['prefix'])
+                    <span class="font-normal italic text-gray-500 dark:text-zinc-400">{{ $this->harvesterInfo()['prefix'] }}</span>
+                @endif
+                {{ $this->harvesterInfo()['name'] }}</flux:heading>
         </div>
         <div class="text-right">
             <flux:text size="sm" class="text-gray-500 dark:text-zinc-400">{{ auth()->user()->company->name }}</flux:text>
@@ -157,6 +167,7 @@ new class extends Component
                 <flux:table>
                     <flux:table.columns>
                         <flux:table.column>{{ __('Date/Time') }}</flux:table.column>
+                        <flux:table.column>{{ __('Product') }}</flux:table.column>
                         <flux:table.column>{{ __('Weight (kg)') }}</flux:table.column>
                         <flux:table.column>{{ __('Price/kg') }}</flux:table.column>
                         <flux:table.column>{{ __('Earnings') }}</flux:table.column>
@@ -166,6 +177,7 @@ new class extends Component
                         @foreach ($chunk as $row)
                             <flux:table.row>
                                 <flux:table.cell>{{ Carbon::parse($row['datetime'])->format('d.m.Y H:i') }}</flux:table.cell>
+                                <flux:table.cell>{{ $row['product'] }}</flux:table.cell>
                                 <flux:table.cell>{{ number_format($row['weight'], 3, ',', '.') }}</flux:table.cell>
                                 <flux:table.cell>
                                     @if ($row['price_per_kg'])
@@ -189,8 +201,8 @@ new class extends Component
         </div>
 
         <!-- Totals bar -->
-        <div class="border-t border-gray-200 pt-6 dark:border-zinc-700">
-            <div class="flex flex-wrap gap-6 text-sm font-semibold">
+        <div class="border-t-2 border-green-200 pt-4 dark:border-green-900 mt-4 print:border-t print:border-gray-200 print:pt-2 print:mt-2">
+            <div class="flex flex-wrap gap-6 text-sm font-semibold print:gap-4">
                 <div>
                     <flux:text size="sm" class="text-center text-gray-500 dark:text-zinc-400">{{ __('Buckets') }}</flux:text>
                     <flux:text size="md" class="text-center">{{ $this->payslipTotals['buckets'] }}</flux:text>

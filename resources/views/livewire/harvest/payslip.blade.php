@@ -187,7 +187,14 @@ class extends Component
     <flux:header heading="{{ __('Harvesters Payslips') }}">
         {{ __('Harvesters Payslips') }}
         <flux:spacer/>
-        <flux:button icon="printer" variant="primary" size="sm" onclick="window.print()">{{ __('Print') }}</flux:button>
+        <flux:button
+            tag="a"
+            icon="printer"
+            variant="primary"
+            size="sm"
+            :href="route('harvest.print-payslips', ['year' => $selectedYear, 'date_from' => $dateFrom, 'date_to' => $dateTo])"
+            target="_blank"
+        >{{ __('Print') }}</flux:button>
     </flux:header>
 
     <div class="p-6">

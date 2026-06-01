@@ -1,0 +1,312 @@
+/* Change the look */
+:root {
+    --color-background: whitesmoke;
+    --color-pageSheet: #cfcfcf;
+    --color-pageBox: violet;
+    --color-paper: white;
+    --color-marginBox: transparent;
+    --pagedjs-crop-color: black;
+    --pagedjs-crop-shadow: white;
+    --pagedjs-crop-stroke: 1px;
+}
+
+@page {
+    size: A4 landscape;
+    margin: 10mm 15mm;
+    bleed: 6mm;
+    padding-bottom: 4mm;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11px;
+    line-height: 1.4;
+    color: #1f2937;
+}
+
+#content {
+    display: block;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    z-index: 9999;
+}
+
+.payslip-section {
+    display: block;
+    page-break-after: always;
+}
+
+.payslip-section:last-child {
+    page-break-after: avoid;
+}
+
+.payslip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #d1d5db;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.header-left {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.harvester-number {
+    font-weight: 700;
+}
+
+.harvester-prefix {
+    font-style: italic;
+    color: #4b5563;
+}
+
+.harvester-name {
+    font-weight: 600;
+}
+
+.header-right {
+    text-align: right;
+    font-weight: 600;
+}
+
+.payslip-period {
+    font-size: 10;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+
+.payslip-header-spacing {
+    margin-bottom: 10mm;
+}
+
+.payslip-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10;
+    margin-bottom: 4px;
+}
+
+.payslip-table thead {
+    display: table-header-group;
+    background-color: #f3f4f6;
+    font-weight: 600;
+    border-bottom: 1px solid #d1d5db;
+}
+
+.payslip-table th {
+    padding: 4px 6px;
+    text-align: left;
+    border: 1px solid #e5e7eb;
+    page-break-inside: avoid;
+}
+
+.payslip-table th.text-right {
+    text-align: right;
+}
+
+.payslip-table td {
+    padding: 3px 6px;
+    border: 1px solid #e5e7eb;
+    page-break-inside: avoid;
+}
+
+.payslip-table tbody tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+}
+
+.payslip-table .text-right {
+    text-align: right;
+}
+
+.payslip-table .totals-row {
+    background-color: #f9fafb;
+    font-weight: 600;
+    border-top: 2px solid #d1d5db;
+}
+
+.payslip-table .totals-row td {
+    padding: 4px 6px;
+    border: 1px solid #d1d5db;
+}
+
+.payslip-table .totals-label {
+    text-align: right;
+    font-weight: 600;
+}
+
+.no-data {
+    padding: 20;
+    text-align: center;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.break-after-page {
+    page-break-after: always;
+}
+
+
+/* To define how the book look on the screen: */
+@media screen, pagedjs-ignore {
+    body {
+        background-color: var(--color-background);
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+    }
+
+    #content {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10mm;
+    }
+
+    .thingToShowOnScreen {
+        display: block
+    }
+
+    .pagedjs_pages {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10mm;
+    }
+
+    .pagedjs_page {
+        background-color: var(--color-paper);
+        box-shadow: 0 0 0 1px var(--color-pageSheet);
+        margin: 0;
+        flex-shrink: 0;
+        flex-grow: 0;
+        margin-top: 10mm;
+    }
+
+    .pagedjs_first_page {
+        margin-left: var(--pagedjs-width);
+    }
+
+    .pagedjs_page:last-of-type {
+        margin-bottom: 10mm;
+    }
+
+    .pagedjs_pagebox {
+        box-shadow: 0 0 0 1px var(--color-pageBox);
+    }
+
+    .pagedjs_left_page .pagedjs_bleed-right .pagedjs_marks-crop {
+        border-color: transparent;
+    }
+
+    /* show the margin-box */
+    .pagedjs_margin-top-left-corner-holder,
+    .pagedjs_margin-top,
+    .pagedjs_margin-top-left,
+    .pagedjs_margin-top-center,
+    .pagedjs_margin-top-right,
+    .pagedjs_margin-top-right-corner-holder,
+    .pagedjs_margin-bottom-left-corner-holder,
+    .pagedjs_margin-bottom,
+    .pagedjs_margin-bottom-left,
+    .pagedjs_margin-bottom-center,
+    .pagedjs_margin-bottom-right,
+    .pagedjs_margin-bottom-right-corner-holder,
+    .pagedjs_margin-right,
+    .pagedjs_margin-right-top,
+    .pagedjs_margin-right-middle,
+    .pagedjs_margin-right-bottom,
+    .pagedjs_margin-left,
+    .pagedjs_margin-left-top,
+    .pagedjs_margin-left-middle,
+    .pagedjs_margin-left-bottom {
+        box-shadow: 0 0 0 1px inset var(--color-marginBox);
+    }
+}
+
+
+/* Marks (to delete when merge in paged.js) */
+
+.pagedjs_marks-crop {
+    z-index: 999999999999;
+
+}
+
+.pagedjs_bleed-top .pagedjs_marks-crop,
+.pagedjs_bleed-bottom .pagedjs_marks-crop {
+    box-shadow: 1px 0 0 0 var(--pagedjs-crop-shadow);
+}
+
+.pagedjs_bleed-top .pagedjs_marks-crop:last-child,
+.pagedjs_bleed-bottom .pagedjs_marks-crop:last-child {
+    box-shadow: -1px 0 0 0 var(--pagedjs-crop-shadow);
+}
+
+.pagedjs_bleed-left .pagedjs_marks-crop,
+.pagedjs_bleed-right .pagedjs_marks-crop {
+    box-shadow: 0 1px 0 0 var(--pagedjs-crop-shadow);
+}
+
+.pagedjs_bleed-left .pagedjs_marks-crop:last-child,
+.pagedjs_bleed-right .pagedjs_marks-crop:last-child {
+    box-shadow: 0 -1px 0 0 var(--pagedjs-crop-shadow);
+}
+
+
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 10mm 15mm;
+        bleed: 6mm;
+        padding-bottom: 4mm;
+    }
+
+    html {
+        width: 100%;
+        height: 100%;
+    }
+
+    body {
+        width: 100%;
+        height: 100%;
+    }
+
+    .loading-overlay {
+        display: none;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .payslip-section {
+        margin: 0;
+        padding: 0;
+    }
+}
