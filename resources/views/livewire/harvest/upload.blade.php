@@ -196,18 +196,39 @@ class extends Component {
         $this->uploadedFile = null;
         $this->showUploadModal = false;
 
-        $message = __('Successfully imported :count records from :filename (:from to :to)', [
-            'count' => $upload->record_count,
-            'filename' => $upload->original_filename,
-            'from' => $upload->date_from->format('d.m.Y'),
-            'to' => $upload->date_to->format('d.m.Y'),
-        ]);
+        // Reload to get counts
+        $upload->loadCount('harvestRecords as valid_count');
+        $upload->loadCount(['stagingRecords as invalid_count' => fn($q) => $q->where('status', 'invalid')]);
 
-        if ($skippedCount > 0) {
-            $message .= ' ' . __('(:skipped duplicate record(s) skipped)', ['skipped' => $skippedCount]);
+        $validCount = $upload->valid_count;
+        $invalidCount = $upload->invalid_count;
+
+        if ($validCount === 0 && $skippedCount === $upload->record_count) {
+            $message = __('All :count records from :filename were duplicates and skipped', [
+                'count' => $upload->record_count,
+                'filename' => $upload->original_filename,
+            ]);
+            $variant = 'warning';
+        } else {
+            $message = __('Successfully imported :count records from :filename (:from to :to)', [
+                'count' => $validCount,
+                'filename' => $upload->original_filename,
+                'from' => $upload->date_from->format('d.m.Y'),
+                'to' => $upload->date_to->format('d.m.Y'),
+            ]);
+
+            if ($skippedCount > 0) {
+                $message .= ' ' . __('(:skipped duplicate record(s) skipped)', ['skipped' => $skippedCount]);
+            }
+
+            if ($invalidCount > 0) {
+                $message .= ' ' . __('(:invalid invalid record(s) require review)', ['invalid' => $invalidCount]);
+            }
+
+            $variant = 'success';
         }
 
-        Flux::toast(text: $message, variant: 'success');
+        Flux::toast(text: $message, variant: $variant);
     }
 
     public function confirmResolveUpload (int $id): void
