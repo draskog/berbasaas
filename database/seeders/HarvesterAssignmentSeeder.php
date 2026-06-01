@@ -57,7 +57,7 @@ class HarvesterAssignmentSeeder extends Seeder
                 ]
             );
 
-            for ($year = 2023; $year <= 2026; $year++) {
+            for ($year = 2025; $year <= 2025; $year++) {
                 HarvesterAssignment::updateOrCreate(
                     [
                         'company_id' => $company->id,
