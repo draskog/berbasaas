@@ -4,7 +4,6 @@ use App\Models\HarvesterAssignment;
 use App\Models\HarvestRecord;
 use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
-use Flux\Flux;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -15,7 +14,8 @@ use Livewire\WithPagination;
 new
 #[Layout('layouts.app')]
 #[Title('View Upload')]
-class extends Component {
+class extends Component
+{
     use WithPagination;
 
     public HarvestUpload $upload;
@@ -37,18 +37,28 @@ class extends Component {
     public string $harvestCorrected = 'all';
 
     #[Computed]
-    public function year (): int
+    public function year(): int
     {
         return $this->upload->date_from->year;
     }
 
     #[Computed]
-    public function stagingRecords ()
+    public function stagingRecordsCount(): int
+    {
+        return HarvestRecordStaging::where('upload_id', $this->upload->id)
+            ->when($this->stagingStatus !== 'all', fn ($q) => $q->where('status', $this->stagingStatus))
+            ->when($this->stagingReason !== 'all', fn ($q) => $q->where('validation_reason', 'like', "%$this->stagingReason%"))
+            ->when($this->search !== '', fn ($q) => $q->where('harvester_number', 'like', "%$this->search%"))
+            ->count();
+    }
+
+    #[Computed]
+    public function stagingRecords()
     {
         $query = HarvestRecordStaging::where('upload_id', $this->upload->id)
-            ->when($this->stagingStatus !== 'all', fn($q) => $q->where('status', $this->stagingStatus))
-            ->when($this->stagingReason !== 'all', fn($q) => $q->where('validation_reason', 'like', "%$this->stagingReason%"))
-            ->when($this->search !== '', fn($q) => $q->where('harvester_number', 'like', "%$this->search%"))
+            ->when($this->stagingStatus !== 'all', fn ($q) => $q->where('status', $this->stagingStatus))
+            ->when($this->stagingReason !== 'all', fn ($q) => $q->where('validation_reason', 'like', "%$this->stagingReason%"))
+            ->when($this->search !== '', fn ($q) => $q->where('harvester_number', 'like', "%$this->search%"))
             ->orderBy($this->sortBy, $this->sortDirection);
 
         if ($this->perPage === 0) {
@@ -59,13 +69,24 @@ class extends Component {
     }
 
     #[Computed]
-    public function harvestRecords ()
+    public function harvestRecordsCount(): int
+    {
+        return HarvestRecord::where('upload_id', $this->upload->id)
+            ->when($this->harvestCorrected === 'corrected', fn ($q) => $q->where('corrected', true))
+            ->when($this->harvestCorrected === 'not_corrected', fn ($q) => $q->where('corrected', false))
+            ->when($this->search !== '', fn ($q) => $q->where('harvester_number', 'like', "%$this->search%")
+                ->orWhereHas('upload.product', fn ($sq) => $sq))
+            ->count();
+    }
+
+    #[Computed]
+    public function harvestRecords()
     {
         $query = HarvestRecord::where('upload_id', $this->upload->id)
-            ->when($this->harvestCorrected === 'corrected', fn($q) => $q->where('corrected', true))
-            ->when($this->harvestCorrected === 'not_corrected', fn($q) => $q->where('corrected', false))
-            ->when($this->search !== '', fn($q) => $q->where('harvester_number', 'like', "%$this->search%")
-                ->orWhereHas('upload.product', fn($sq) => $sq))
+            ->when($this->harvestCorrected === 'corrected', fn ($q) => $q->where('corrected', true))
+            ->when($this->harvestCorrected === 'not_corrected', fn ($q) => $q->where('corrected', false))
+            ->when($this->search !== '', fn ($q) => $q->where('harvester_number', 'like', "%$this->search%")
+                ->orWhereHas('upload.product', fn ($sq) => $sq))
             ->orderBy($this->sortBy, $this->sortDirection);
 
         if ($this->perPage === 0) {
@@ -76,7 +97,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function harvestersByNumber (): Collection
+    public function harvestersByNumber(): Collection
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->year)
@@ -86,38 +107,43 @@ class extends Component {
             ->keyBy('number');
     }
 
-    public function mount (): void
+    public function mount(): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
+        $this->validateActiveTab();
     }
 
-    public function updatedPerPage (): void
+    public function updatedPerPage(): void
     {
         $this->resetPage();
     }
 
-    public function updatedSearch (): void
+    public function updatedSearch(): void
     {
         $this->resetPage('staging_page');
         $this->resetPage('harvest_page');
+        $this->validateActiveTab();
     }
 
-    public function updatedStagingStatus (): void
+    public function updatedStagingStatus(): void
     {
         $this->resetPage('staging_page');
+        $this->validateActiveTab();
     }
 
-    public function updatedStagingReason (): void
+    public function updatedStagingReason(): void
     {
         $this->resetPage('staging_page');
+        $this->validateActiveTab();
     }
 
-    public function updatedHarvestCorrected (): void
+    public function updatedHarvestCorrected(): void
     {
         $this->resetPage('harvest_page');
+        $this->validateActiveTab();
     }
 
-    public function sort (string $column): void
+    public function sort(string $column): void
     {
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -127,6 +153,16 @@ class extends Component {
         }
         $this->resetPage('staging_page');
         $this->resetPage('harvest_page');
+        $this->validateActiveTab();
+    }
+
+    private function validateActiveTab(): void
+    {
+        if ($this->activeTab === 'staging' && $this->stagingRecordsCount === 0) {
+            $this->activeTab = $this->harvestRecordsCount > 0 ? 'harvest' : '';
+        } elseif ($this->activeTab === 'harvest' && $this->harvestRecordsCount === 0) {
+            $this->activeTab = $this->stagingRecordsCount > 0 ? 'staging' : '';
+        }
     }
 }; ?>
 
@@ -141,8 +177,12 @@ class extends Component {
     <div class="p-6">
         <flux:tab.group>
             <flux:tabs wire:model.live="activeTab">
-                <flux:tab name="staging" icon="inbox-stack">{{ __('Staging Records') }}</flux:tab>
-                <flux:tab name="harvest" icon="check-circle">{{ __('Harvest Records') }}</flux:tab>
+                @if ($this->stagingRecordsCount > 0)
+                    <flux:tab name="staging" icon="inbox-stack">{{ __('Staging Records') }}</flux:tab>
+                @endif
+                @if ($this->harvestRecordsCount > 0)
+                    <flux:tab name="harvest" icon="check-circle">{{ __('Harvest Records') }}</flux:tab>
+                @endif
             </flux:tabs>
 
             <flux:tab.panel name="staging">
