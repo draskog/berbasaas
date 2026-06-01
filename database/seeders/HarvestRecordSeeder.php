@@ -35,13 +35,14 @@ class HarvestRecordSeeder extends Seeder
         );
 
         $service = new HarvestImportService;
-        $upload = $service->parse(
+        $result = $service->parse(
             $file,
             $user->company_id,
             $defaultProduct->id,
             $user->id
         );
 
+        $upload = $result['upload'];
         $validCount = $upload->harvestRecords()->count();
         $invalidCount = $upload->stagingRecords()->count();
 
