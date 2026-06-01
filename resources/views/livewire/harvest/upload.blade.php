@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Harvester;
 use App\Models\HarvesterAssignment;
 use App\Models\HarvestImportSettings;
 use App\Models\HarvestRecord;
@@ -281,37 +282,7 @@ class extends Component {
             return;
         }
 
-        $year = $upload->date_from->year;
         $resolved = 0;
-
-        // Handle harvester_not_found errors
-        $harvesterErrors = HarvestRecordStaging::where('upload_id', $uploadId)
-            ->where('status', 'invalid')
-            ->where('validation_reason', 'like', '%harvester_not_found%')
-            ->get();
-
-        $validAssignments = HarvesterAssignment::where('company_id', $upload->company_id)
-            ->where('year', $year)
-            ->get()
-            ->keyBy('number');
-
-        foreach ($harvesterErrors as $record) {
-            if ($validAssignments->has($record->harvester_number)) {
-                $this->promoteRecord($record);
-                $resolved++;
-            } else {
-                $closest = $validAssignments->keys()
-                    ->sortBy(fn($num) => abs($num - $record->harvester_number))
-                    ->first();
-
-                if ($closest !== null && abs($closest - $record->harvester_number) <= 5) {
-                    $originalNumber = $record->harvester_number;
-                    $record->update(['harvester_number' => $closest]);
-                    $this->promoteRecord($record, $originalNumber);
-                    $resolved++;
-                }
-            }
-        }
 
         // Handle tare_out_of_range errors with suggestions
         $tareErrors = HarvestRecordStaging::where('upload_id', $uploadId)
@@ -433,6 +404,7 @@ class extends Component {
             $upload->update(['resolved_at' => now()]);
         }
     }
+
 }; ?>
 
 <flux:main>
@@ -578,10 +550,9 @@ class extends Component {
             <flux:callout type="info" icon="information-circle" class="mt-6 mb-6">
                 <div class="font-semibold mb-2">{{ __('Auto-Resolve Logic') }}</div>
                 <ul class="text-sm space-y-1">
-                    <li>{{ __('Harvester not found: matches the original number to a valid assignment (exact or nearest within ±5)') }}</li>
                     <li>{{ __('Tare out of range: uses the tare value from the next sequential record (★ suggestion)') }}</li>
                 </ul>
-                <div class="text-sm mt-2">{{ __('Records that cannot be matched are skipped and remain for manual review.') }}</div>
+                <div class="text-sm mt-2">{{ __('Records that cannot be resolved are skipped and remain for manual review.') }}</div>
             </flux:callout>
 
             <div class="mt-6 flex flex-col gap-3">
@@ -640,4 +611,5 @@ class extends Component {
             </flux:button>
         </div>
     </flux:modal>
+
 </flux:main>

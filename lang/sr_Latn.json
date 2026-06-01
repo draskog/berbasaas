@@ -630,5 +630,13 @@
     "Total weight harvested": "Ukupna težina ubrano",
     "Total earnings": "Ukupna zarada",
     "Total buckets": "Ukupno gajbica",
-    "Total weight": "Ukupna težina"
+    "Total weight": "Ukupna težina",
+    "Download Harvesters": "Preuzmi berače",
+    "Import Harvesters": "Učitaj berače",
+    "Import Harvesters List": "Učitaj listu berača",
+    "Harvester list for year :year already exists.": "Lista berača za godinu :year već postoji.",
+    "The year for which you are importing the harvester list": "Godina za koju učitavate listu berača",
+    "Successfully imported :count harvesters for year :year.": "Uspešno učitano :count berača za godinu :year.",
+    "Error importing harvesters: :message": "Greška pri učitavanju berača: :message",
+    "No harvester list available for download.": "Nema dostupne liste berača za preuzimanje."
 }

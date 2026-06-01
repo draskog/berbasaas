@@ -9,13 +9,14 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Session;
 use Livewire\Volt\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 new
 #[Layout('layouts.app')]
 #[Title('Harvesters')]
 class extends Component {
-    use WithPagination;
+    use WithFileUploads, WithPagination;
 
     #[Session]
     public int $selectedYear = 0;
@@ -70,6 +71,13 @@ class extends Component {
 
     // Print config
     public int $printColumns = 3;
+
+    // Import/Download harvesters
+    public bool $showImportHarvestersModal = false;
+
+    public ?int $importYear = null;
+
+    public mixed $importedFile = null;
 
     #[Computed]
     public function availableYears (): Collection
@@ -306,6 +314,111 @@ class extends Component {
         $this->reset('selectedPrefix');
         $this->resetPage();
     }
+
+    public function downloadHarvesters (): void
+    {
+        $url = route('harvest.harvesters.download');
+        $this->redirect($url);
+    }
+
+    public function importHarvesters (): void
+    {
+        $this->validate([
+            'importYear' => 'required|integer|min:2000|max:2099',
+            'importedFile' => 'required|file|mimes:csv|max:10240',
+        ]);
+
+        $year = $this->importYear;
+        $companyId = auth()->user()->company_id;
+
+        $exists = HarvesterAssignment::where('company_id', $companyId)
+            ->where('year', $year)
+            ->exists();
+
+        if ($exists) {
+            Flux::toast(
+                text: __('Harvester list for year :year already exists.', ['year' => $year]),
+                variant: 'danger'
+            );
+            return;
+        }
+
+        try {
+            $path = $this->importedFile->getRealPath();
+            $file = fopen($path, 'r');
+
+            if (!$file) {
+                throw new \Exception(__('Could not open file.'));
+            }
+
+            fgets($file);
+
+            $createdCount = 0;
+            $line = 0;
+
+            while (($data = fgetcsv($file, 0, ';')) !== false) {
+                $line++;
+                if (empty($data[0])) {
+                    continue;
+                }
+
+                $number = (int) $data[0];
+                $name = $data[1] ?? '';
+                $prefix = !empty($data[2]) ? $data[2] : null;
+
+                if (empty($name)) {
+                    fclose($file);
+                    Flux::toast(
+                        text: __('Invalid data at line :line. Name is required.', ['line' => $line + 1]),
+                        variant: 'danger'
+                    );
+                    return;
+                }
+
+                $harvester = Harvester::firstOrCreate(
+                    [
+                        'company_id' => $companyId,
+                        'name' => $name,
+                        'prefix' => $prefix,
+                    ],
+                    [
+                        'active' => true,
+                    ]
+                );
+
+                HarvesterAssignment::updateOrCreate(
+                    [
+                        'company_id' => $companyId,
+                        'year' => $year,
+                        'number' => $number,
+                    ],
+                    [
+                        'harvester_id' => $harvester->id,
+                    ]
+                );
+
+                $createdCount++;
+            }
+
+            fclose($file);
+
+            $this->importedFile = null;
+            $this->importYear = null;
+            $this->showImportHarvestersModal = false;
+
+            Flux::toast(
+                text: __('Successfully imported :count harvesters for year :year.', [
+                    'count' => $createdCount,
+                    'year' => $year,
+                ]),
+                variant: 'success'
+            );
+
+            $this->dispatch('$refresh');
+        } catch (\Exception $e) {
+            Flux::toast(text: __('Error importing harvesters: :message', ['message' => $e->getMessage()]), variant: 'danger');
+        }
+    }
 }; ?>
 
 
@@ -313,7 +426,13 @@ class extends Component {
     <flux:header heading="{{ __('Harvesters') }}">
         {{ __('Harvesters') }}
         <flux:spacer/>
-        <div class="space-x-3 items-center">
+        <div class="flex gap-2 items-center">
+            <flux:button variant="ghost" size="sm" icon="arrow-down-tray" wire:click="downloadHarvesters">
+                {{ __('Download Harvesters') }}
+            </flux:button>
+            <flux:button variant="ghost" size="sm" icon="arrow-up-tray" wire:click="$set('showImportHarvestersModal', true)">
+                {{ __('Import Harvesters') }}
+            </flux:button>
             <flux:modal.trigger name="create-assignment">
                 <flux:button icon="plus" size="sm" variant="primary" class="mr-3">{{ __('Add Assignment') }}</flux:button>
             </flux:modal.trigger>
@@ -489,6 +608,36 @@ class extends Component {
         <div class="mt-6 flex gap-2 justify-end">
             <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">{{ __('Cancel') }}</flux:button>
             <flux:button variant="danger" wire:click="deleteAssignment">{{ __('Delete') }}</flux:button>
+        </div>
+    </flux:modal>
+
+    <flux:modal name="import-harvesters" wire:model="showImportHarvestersModal">
+        <flux:heading>{{ __('Import Harvesters List') }}</flux:heading>
+
+        <div class="mt-6 space-y-4">
+            <flux:field>
+                <flux:label>{{ __('Harvest Year') }}</flux:label>
+                <flux:input type="number" wire:model="importYear" placeholder="{{ now()->year }}"/>
+                <flux:error name="importYear"/>
+                <div class="text-xs text-zinc-500 mt-1">{{ __('The year for which you are importing the harvester list') }}</div>
+            </flux:field>
+
+            <flux:field>
+                <flux:label>{{ __('CSV File') }}</flux:label>
+                <flux:input type="file" wire:model="importedFile" accept=".csv"/>
+                <flux:error name="importedFile"/>
+                <div class="text-xs text-zinc-500 mt-1">
+                    {{ __('Format: Redni broj;Ime i prezime berača;Prefiks') }}
+                </div>
+            </flux:field>
+        </div>
+
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:button variant="ghost" wire:click="$set('showImportHarvestersModal', false)">{{ __('Cancel') }}</flux:button>
+            <flux:button variant="primary" wire:click="importHarvesters" wire:loading.attr="disabled">
+                <span wire:loading.remove>{{ __('Import') }}</span>
+                <span wire:loading>{{ __('Importing...') }}</span>
+            </flux:button>
         </div>
     </flux:modal>
 
