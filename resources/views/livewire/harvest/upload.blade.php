@@ -100,14 +100,21 @@ class extends Component {
             $query->where('product_id', $this->selectedProduct);
         }
 
-        if ($this->selectedStatus === 'valid') {
-            $query->whereDoesntHave('stagingRecords', function ($q) {
-                $q->where('status', 'invalid');
-            });
-        } elseif ($this->selectedStatus === 'invalid') {
-            $query->whereHas('stagingRecords', function ($q) {
-                $q->where('status', 'invalid');
-            });
+        if ($this->selectedStatus === 'ispravno') {
+            $query->where('valid_count', '>', 0)
+                ->where('invalid_count', 0);
+        } elseif ($this->selectedStatus === 'neispravno') {
+            $query->where('valid_count', 0)
+                ->where('invalid_count', '>', 0);
+        } elseif ($this->selectedStatus === 'delimicno') {
+            $query->where('valid_count', '>', 0)
+                ->where('invalid_count', '>', 0);
+        } elseif ($this->selectedStatus === 'duplikat') {
+            $query->where('valid_count', 0)
+                ->where('invalid_count', 0)
+                ->where('record_count', '>', 0);
+        } elseif ($this->selectedStatus === 'reseno') {
+            $query->whereNotNull('resolved_at');
         }
 
         if ($this->selectedResolved === 'resolved') {
@@ -376,8 +383,11 @@ class extends Component {
             <div>
                 <flux:radio.group wire:model.live="selectedStatus" label="{{ __('Status') }}" variant="pills">
                     <flux:radio value="all" label="{{ __('All') }}"/>
-                    <flux:radio value="valid" label="{{ __('Valid') }}"/>
-                    <flux:radio value="invalid" label="{{ __('Invalid') }}"/>
+                    <flux:radio value="ispravno" label="{{ __('Valid') }}"/>
+                    <flux:radio value="neispravno" label="{{ __('Invalid') }}"/>
+                    <flux:radio value="delimicno" label="{{ __('Partially Valid') }}"/>
+                    <flux:radio value="duplikat" label="{{ __('Duplicate') }}"/>
+                    <flux:radio value="reseno" label="{{ __('Resolved') }}"/>
                 </flux:radio.group>
             </div>
 
@@ -415,13 +425,7 @@ class extends Component {
                     <flux:table.row>
                         <flux:table.cell>{{ $upload->original_filename }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->product->name }}</flux:table.cell>
-                        <flux:table.cell>
-                            @if($upload->invalid_count === 0)
-                                <flux:badge color="green">{{ $upload->record_count }}</flux:badge>
-                            @else
-                                {{ $upload->record_count }}
-                            @endif
-                        </flux:table.cell>
+                        <flux:table.cell>{{ $upload->record_count }}</flux:table.cell>
                         <flux:table.cell>
                             {{ $upload->valid_count }}
                         </flux:table.cell>
