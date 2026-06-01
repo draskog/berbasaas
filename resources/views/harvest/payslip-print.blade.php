@@ -85,7 +85,7 @@
                             <div class="payslip-totals-value">{{ $harvester['totals']['buckets'] }}</div>
                         </div>
                         <div class="payslip-totals-item">
-                            <div class="payslip-totals-label">{{ __('Total weight') }}:</div>
+                            <div class="payslip-totals-label">{{ __('Total weight harvested') }}:</div>
                             <div class="payslip-totals-value">{{ number_format($harvester['totals']['weight'], 2, '.', '') }}</div>
                         </div>
                     </div>
