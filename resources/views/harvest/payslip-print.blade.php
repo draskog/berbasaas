@@ -31,6 +31,30 @@
                     {{ __('Period') }}: {{ \Carbon\Carbon::parse($dateFrom)->format('d.m.Y') }} – {{ \Carbon\Carbon::parse($dateTo)->format('d.m.Y') }}
                 </div>
 
+                <!-- Summary block -->
+                <div class="payslip-summary">
+                    <div style="display: flex; gap: 12mm; margin-bottom: 2mm; font-size: 11px;">
+                        <div>
+                            <div style="color: #6b7280; font-size: 10px; margin-bottom: 1px;">{{ __('Ukupna težina ubrano') }}</div>
+                            <div style="font-weight: 600;">{{ number_format($harvester['totals']['weight'], 2, '.', '') }} kg</div>
+                        </div>
+                        <div>
+                            <div style="color: #6b7280; font-size: 10px; margin-bottom: 1px;">{{ __('Cena po kg') }}</div>
+                            <div style="font-weight: 600;">
+                                @if ($harvester['totals']['price_per_kg'])
+                                    {{ number_format($harvester['totals']['price_per_kg'], 0, '.', '') }}
+                                @else
+                                    —
+                                @endif
+                            </div>
+                        </div>
+                        <div>
+                            <div style="color: #6b7280; font-size: 10px; margin-bottom: 1px;">{{ __('Ukupna zarada') }}</div>
+                            <div style="font-weight: 600;">{{ number_format($harvester['totals']['earnings'], 0, '.', '') }}</div>
+                        </div>
+                    </div>
+                </div>
+
                 @if (count($harvester['records']) > 0)
                     @php
                         $recordCount = count($harvester['records']);
@@ -41,39 +65,22 @@
                         <table class="payslip-table">
                             <thead>
                                 <tr>
-                                    <th>{{ __('Date') }}</th>
-                                    <th>{{ __('Time') }}</th>
-                                    <th>{{ __('Product') }}</th>
-                                    <th class="text-right">{{ __('Weight (kg)') }}</th>
-                                    <th class="text-right">{{ __('Price/kg') }}</th>
-                                    <th class="text-right">{{ __('Earnings') }}</th>
+                                    <th>{{ __('Datum') }}</th>
+                                    <th class="text-right">{{ __('Tezina (kg)') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($harvester['records'] as $record)
                                     <tr>
                                         <td>{{ explode(' ', $record['datetime'])[0] }}</td>
-                                        <td>{{ explode(' ', $record['datetime'])[1] }}</td>
-                                        <td>{{ $record['product'] }}</td>
                                         <td class="text-right">{{ number_format($record['weight'], 3, '.', '') }}</td>
-                                        <td class="text-right">
-                                            @if ($record['price_per_kg'])
-                                                {{ number_format($record['price_per_kg'], 4, '.', '') }}
-                                            @else
-                                                —
-                                            @endif
-                                        </td>
-                                        <td class="text-right">{{ number_format($record['earnings'], 2, '.', '') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
                             <tfoot>
                                 <tr class="totals-row">
-                                    <td colspan="2"></td>
-                                    <td class="totals-label">{{ __('Totals') }}:</td>
-                                    <td class="text-right">{{ $harvester['totals']['buckets'] }}</td>
+                                    <td class="totals-label">{{ __('Total Weight') }}:</td>
                                     <td class="text-right">{{ number_format($harvester['totals']['weight'], 3, '.', '') }}</td>
-                                    <td class="text-right">{{ number_format($harvester['totals']['earnings'], 2, '.', '') }}</td>
                                 </tr>
                             </tfoot>
                         </table>

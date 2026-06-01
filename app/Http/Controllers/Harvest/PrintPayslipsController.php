@@ -58,11 +58,16 @@ class PrintPayslipsController extends Controller
             $payslipRows = [];
             $totalWeight = 0;
             $totalEarnings = 0;
+            $firstPrice = null;
 
             foreach ($records as $record) {
                 $price = $prices->get((string) $record->product_id)?->price_per_kg;
                 $earnings = $record->weight * ($price ?? 0);
                 $earnings = round($earnings, 2);
+
+                if ($firstPrice === null && $price !== null) {
+                    $firstPrice = $price;
+                }
 
                 $payslipRows[] = [
                     'datetime' => $record->weighed_at->format('d.m.Y H:i'),
@@ -85,6 +90,7 @@ class PrintPayslipsController extends Controller
                     'buckets' => count($payslipRows),
                     'weight' => round($totalWeight, 3),
                     'earnings' => round($totalEarnings, 2),
+                    'price_per_kg' => $firstPrice,
                 ],
             ];
         }

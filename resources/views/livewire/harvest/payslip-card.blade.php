@@ -80,13 +80,14 @@ new class extends Component
     {
         $data = $this->payslipData;
         if (empty($data)) {
-            return ['buckets' => 0, 'weight' => 0, 'earnings' => 0];
+            return ['buckets' => 0, 'weight' => 0, 'earnings' => 0, 'price_per_kg' => null];
         }
 
         return [
             'buckets' => count($data),
             'weight' => round(collect($data)->sum('weight'), 3),
             'earnings' => round(collect($data)->sum('earnings') ?? 0, 2),
+            'price_per_kg' => collect($data)->first(fn ($r) => $r['price_per_kg'] !== null)?['price_per_kg'],
         ];
     }
 
@@ -161,61 +162,49 @@ new class extends Component
             <flux:text>{{ __('No data for this harvester in the selected date range.') }}</flux:text>
         </div>
     @else
-        <!-- Multi-column table layout -->
-        <div class="mb-8 grid gap-8 {{ $this->gridClass }}">
+        <!-- Summary row -->
+        <div class="border-b-2 border-green-200 pb-4 dark:border-green-900 mb-6 print:border-b print:border-gray-200 print:pb-2 print:mb-4">
+            <div class="flex flex-wrap gap-8 text-sm font-semibold print:gap-6">
+                <div>
+                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Ukupna težina ubrano') }}</flux:text>
+                    <flux:text size="md">{{ number_format($this->payslipTotals['weight'], 2, ',', '.') }} kg</flux:text>
+                </div>
+                <div>
+                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Cena po kg') }}</flux:text>
+                    <flux:text size="md">
+                        @if ($this->payslipTotals['price_per_kg'])
+                            {{ number_format($this->payslipTotals['price_per_kg'], 0, ',', '.') }}
+                        @else
+                            —
+                        @endif
+                    </flux:text>
+                </div>
+                <div>
+                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Ukupna zarada') }}</flux:text>
+                    <flux:text size="md">{{ number_format($this->payslipTotals['earnings'], 0, ',', '.') }}</flux:text>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multi-column detail table -->
+        <div class="mb-4 grid gap-8 {{ $this->gridClass }}">
             @foreach ($this->chunkedData as $chunk)
                 <flux:table>
                     <flux:table.columns>
-                        <flux:table.column>{{ __('Date/Time') }}</flux:table.column>
-                        <flux:table.column>{{ __('Product') }}</flux:table.column>
-                        <flux:table.column>{{ __('Weight (kg)') }}</flux:table.column>
-                        <flux:table.column>{{ __('Price/kg') }}</flux:table.column>
-                        <flux:table.column>{{ __('Earnings') }}</flux:table.column>
+                        <flux:table.column>{{ __('Datum') }}</flux:table.column>
+                        <flux:table.column>{{ __('Tezina (kg)') }}</flux:table.column>
                     </flux:table.columns>
 
                     <flux:table.rows>
                         @foreach ($chunk as $row)
                             <flux:table.row>
-                                <flux:table.cell>{{ Carbon::parse($row['datetime'])->format('d.m.Y H:i') }}</flux:table.cell>
-                                <flux:table.cell>{{ $row['product'] }}</flux:table.cell>
+                                <flux:table.cell>{{ Carbon::parse($row['datetime'])->format('d.m.Y') }}</flux:table.cell>
                                 <flux:table.cell>{{ number_format($row['weight'], 3, ',', '.') }}</flux:table.cell>
-                                <flux:table.cell>
-                                    @if ($row['price_per_kg'])
-                                        {{ number_format($row['price_per_kg'], 2, ',', '.') }}
-                                    @else
-                                        —
-                                    @endif
-                                </flux:table.cell>
-                                <flux:table.cell>
-                                    @if ($row['earnings'] !== null)
-                                        {{ number_format($row['earnings'], 2, ',', '.') }}
-                                    @else
-                                        —
-                                    @endif
-                                </flux:table.cell>
                             </flux:table.row>
                         @endforeach
                     </flux:table.rows>
                 </flux:table>
             @endforeach
-        </div>
-
-        <!-- Totals bar -->
-        <div class="border-t-2 border-green-200 pt-4 dark:border-green-900 mt-4 print:border-t print:border-gray-200 print:pt-2 print:mt-2">
-            <div class="flex flex-wrap gap-6 text-sm font-semibold print:gap-4">
-                <div>
-                    <flux:text size="sm" class="text-center text-gray-500 dark:text-zinc-400">{{ __('Buckets') }}</flux:text>
-                    <flux:text size="md" class="text-center">{{ $this->payslipTotals['buckets'] }}</flux:text>
-                </div>
-                <div>
-                    <flux:text size="sm" class="text-center text-gray-500 dark:text-zinc-400">{{ __('Total Weight') }}</flux:text>
-                    <flux:text size="md" class="text-center">{{ number_format($this->payslipTotals['weight'], 3, ',', '.') }} kg</flux:text>
-                </div>
-                <div>
-                    <flux:text size="sm" class="text-center text-gray-500 dark:text-zinc-400">{{ __('Total Earnings') }}</flux:text>
-                    <flux:text size="md" class="text-center">{{ number_format($this->payslipTotals['earnings'], 2, ',', '.') }}</flux:text>
-                </div>
-            </div>
         </div>
     @endif
 </flux:card>
