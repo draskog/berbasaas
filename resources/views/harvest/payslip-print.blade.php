@@ -27,31 +27,29 @@
                     </div>
                 </div>
 
-                <div class="payslip-period payslip-header-spacing">
+                <div class="payslip-period">
                     {{ __('Period') }}: {{ \Carbon\Carbon::parse($dateFrom)->format('d.m.Y') }} – {{ \Carbon\Carbon::parse($dateTo)->format('d.m.Y') }}
                 </div>
 
                 <!-- Summary block -->
                 <div class="payslip-summary">
-                    <div style="display: flex; gap: 12mm; margin-bottom: 2mm; font-size: 11px;">
-                        <div>
-                            <div style="color: #6b7280; font-size: 10px; margin-bottom: 1px;">{{ __('Ukupna težina ubrano') }}</div>
-                            <div style="font-weight: 600;">{{ number_format($harvester['totals']['weight'], 2, '.', '') }} kg</div>
+                    <div>
+                        <div class="payslip-summary-label">{{ __('Ukupna težina ubrano') }}</div>
+                        <div class="payslip-summary-value">{{ number_format($harvester['totals']['weight'], 2, '.', '') }} kg</div>
+                    </div>
+                    <div>
+                        <div class="payslip-summary-label">{{ __('Cena po kg') }}</div>
+                        <div class="payslip-summary-value">
+                            @if ($harvester['totals']['price_per_kg'])
+                                {{ number_format($harvester['totals']['price_per_kg'], 0, '.', '') }}
+                            @else
+                                —
+                            @endif
                         </div>
-                        <div>
-                            <div style="color: #6b7280; font-size: 10px; margin-bottom: 1px;">{{ __('Cena po kg') }}</div>
-                            <div style="font-weight: 600;">
-                                @if ($harvester['totals']['price_per_kg'])
-                                    {{ number_format($harvester['totals']['price_per_kg'], 0, '.', '') }}
-                                @else
-                                    —
-                                @endif
-                            </div>
-                        </div>
-                        <div>
-                            <div style="color: #6b7280; font-size: 10px; margin-bottom: 1px;">{{ __('Ukupna zarada') }}</div>
-                            <div style="font-weight: 600;">{{ number_format($harvester['totals']['earnings'], 0, '.', '') }}</div>
-                        </div>
+                    </div>
+                    <div>
+                        <div class="payslip-summary-label">{{ __('Ukupna zarada') }}</div>
+                        <div class="payslip-summary-value earnings">{{ number_format($harvester['totals']['earnings'], 0, '.', '') }}</div>
                     </div>
                 </div>
 
