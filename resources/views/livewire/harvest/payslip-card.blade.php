@@ -207,11 +207,11 @@ new class extends Component
             <div class="flex flex-wrap gap-8 text-sm font-semibold print:gap-6">
                 <div>
                     <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Total weight harvested') }}</flux:text>
-                    <flux:text size="md">{{ number_format($this->payslipTotals['weight'], 2, ',', '.') }} kg</flux:text>
+                    <flux:text size="md" class="text-right">{{ number_format($this->payslipTotals['weight'], 2, ',', '.') }} kg</flux:text>
                 </div>
                 <div>
                     <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Price per kg') }}</flux:text>
-                    <flux:text size="md">
+                    <flux:text size="md" class="text-right">
                         @if ($this->payslipTotals['price_per_kg'])
                             {{ number_format($this->payslipTotals['price_per_kg'], 0, ',', '.') }}
                         @else
@@ -221,7 +221,7 @@ new class extends Component
                 </div>
                 <div>
                     <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Total earnings') }}</flux:text>
-                    <flux:text size="md">{{ number_format($this->payslipTotals['earnings'], 0, ',', '.') }}</flux:text>
+                    <flux:text size="lg" class="font-bold text-right">{{ number_format($this->payslipTotals['earnings'], 0, ',', '.') }}</flux:text>
                 </div>
             </div>
         </div>
@@ -252,11 +252,11 @@ new class extends Component
             <div class="flex flex-wrap gap-6 text-sm font-semibold print:gap-8">
                 <div>
                     <flux:text size="xs" class="text-gray-500 dark:text-zinc-400">{{ __('Total buckets') }}</flux:text>
-                    <flux:text size="md">{{ $this->payslipTotals['buckets'] }}</flux:text>
+                    <flux:text size="md" class="text-right">{{ $this->payslipTotals['buckets'] }}</flux:text>
                 </div>
                 <div>
                     <flux:text size="xs" class="text-gray-500 dark:text-zinc-400">{{ __('Total weight harvested') }}</flux:text>
-                    <flux:text size="md">{{ number_format($this->payslipTotals['weight'], 2, ',', '.') }} kg</flux:text>
+                    <flux:text size="md" class="text-right">{{ number_format($this->payslipTotals['weight'], 2, ',', '.') }} kg</flux:text>
                 </div>
             </div>
         </div>
