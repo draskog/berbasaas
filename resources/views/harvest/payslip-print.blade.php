@@ -35,6 +35,10 @@
             <!-- Summary block -->
             <div class="payslip-summary">
                 <div>
+                    <div class="payslip-summary-label">{{ __('Total buckets') }}</div>
+                    <div class="payslip-summary-value">{{ $harvester['totals']['buckets'] }}</div>
+                </div>
+                <div>
                     <div class="payslip-summary-label">{{ __('Total weight harvested') }}</div>
                     <div class="payslip-summary-value">{{ number_format($harvester['totals']['weight'], 2, '.', '') }} kg</div>
                 </div>

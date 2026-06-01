@@ -167,7 +167,7 @@ new class extends Component {
     public function placeholder (): string
     {
         return <<<'HTML'
-            <flux:card class="p-4 print:border-0 print:bg-white print:shadow-none shadow-sm">
+            <flux:card class="p-4 shadow-sm">
                 <div class="flex flex-col items-center justify-center py-16">
                     <div class="mb-4">
                         <svg class="w-10 h-10 text-blue-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -182,9 +182,9 @@ new class extends Component {
     }
 }; ?>
 
-<flux:card class="p-4 print:border-0 print:bg-white print:shadow-none shadow-sm">
+<flux:card class="p-4 shadow-sm">
     <!-- Header: Harvester left, Company right -->
-    <div class="border-b-2 border-blue-200 pb-4 dark:border-blue-900 flex justify-between items-start print:border-b print:border-gray-200 print:pb-2 mb-4 print:mb-2">
+    <div class="border-b-2 border-green-400 pb-4 dark:border-green-800 flex justify-between items-start mb-4">
         <div>
             <flux:heading size="lg">{{ __('Harvester #') }} {{ $this->harvesterNumber }} -
                 @if ($this->harvesterInfo()['prefix'])
@@ -203,8 +203,12 @@ new class extends Component {
         </div>
     @else
         <!-- Summary row -->
-        <div class="border-b-2 border-green-200 pb-4 dark:border-green-900 mb-6 print:border-b print:border-gray-200 print:pb-2 print:mb-4">
-            <div class="flex flex-wrap gap-8 text-sm font-semibold print:gap-6">
+        <div class="pb-4 mb-6">
+            <div class="flex flex-wrap gap-8 text-sm font-semibold">
+                <div>
+                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Total buckets') }}</flux:text>
+                    <flux:text size="md" class="text-right">{{ $this->payslipTotals['buckets'] }}</flux:text>
+                </div>
                 <div>
                     <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Total weight harvested') }}</flux:text>
                     <flux:text size="md" class="text-right">{{ number_format($this->payslipTotals['weight'], 2, ',', '.') }} kg</flux:text>
@@ -248,8 +252,8 @@ new class extends Component {
         </div>
 
         <!-- Totals summary -->
-        <div class="border-t-2 border-gray-200 pt-4 print:border-t print:border-gray-200 print:pt-6">
-            <div class="flex flex-wrap gap-6 text-sm font-semibold print:gap-8">
+        <div class="border-t-2 border-gray-200 pt-4">
+            <div class="flex flex-wrap gap-6 text-sm font-semibold">
                 <div>
                     <flux:text size="xs" class="text-gray-500 dark:text-zinc-400">{{ __('Total buckets') }}</flux:text>
                     <flux:text size="md" class="text-right">{{ $this->payslipTotals['buckets'] }}</flux:text>
