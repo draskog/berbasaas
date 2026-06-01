@@ -81,7 +81,7 @@
                     <!-- Totals summary with spacing -->
                     <div class="payslip-totals-summary">
                         <div class="payslip-totals-item">
-                            <div class="payslip-totals-label">{{ __('Ukupno gabica') }}:</div>
+                            <div class="payslip-totals-label">{{ __('Ukupno gajbica') }}:</div>
                             <div class="payslip-totals-value">{{ $harvester['totals']['buckets'] }}</div>
                         </div>
                         <div class="payslip-totals-item">
