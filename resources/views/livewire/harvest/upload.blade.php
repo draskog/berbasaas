@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\HarvesterAssignment;
+use App\Models\HarvestImportSettings;
 use App\Models\HarvestRecord;
 use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
@@ -43,6 +44,8 @@ class extends Component {
     public string $sortBy = 'created_at';
 
     public string $sortDirection = 'desc';
+
+    public string $search = '';
 
 
 
@@ -127,6 +130,10 @@ class extends Component {
             });
         }
 
+        if ($this->search !== '') {
+            $query->where('original_filename', 'like', "%{$this->search}%");
+        }
+
         $query->orderBy($this->sortBy, $this->sortDirection);
 
         if ($this->perPage === 0) {
@@ -167,6 +174,11 @@ class extends Component {
     }
 
     public function updatedselectedYear (): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSearch (): void
     {
         $this->resetPage();
     }
@@ -271,35 +283,106 @@ class extends Component {
         }
 
         $year = $upload->date_from->year;
+        $resolved = 0;
 
-        // Get all invalid staging records for this upload with 'harvester_not_found' reason
-        $invalidRecords = HarvestRecordStaging::where('upload_id', $uploadId)
+        // Handle harvester_not_found errors
+        $harvesterErrors = HarvestRecordStaging::where('upload_id', $uploadId)
             ->where('status', 'invalid')
-            ->where('validation_reason', 'harvester_not_found')
+            ->where('validation_reason', 'like', '%harvester_not_found%')
             ->get();
 
-        // Get all valid harvester assignments for the company in the upload's year
         $validAssignments = HarvesterAssignment::where('company_id', $upload->company_id)
             ->where('year', $year)
             ->get()
             ->keyBy('number');
 
-        $resolved = 0;
-
-        foreach ($invalidRecords as $record) {
-            // Simple pattern: try exact match first
+        foreach ($harvesterErrors as $record) {
             if ($validAssignments->has($record->harvester_number)) {
                 $this->promoteRecord($record);
                 $resolved++;
             } else {
-                // Try to find closest harvester number
                 $closest = $validAssignments->keys()
                     ->sortBy(fn($num) => abs($num - $record->harvester_number))
                     ->first();
 
                 if ($closest !== null && abs($closest - $record->harvester_number) <= 5) {
+                    $originalNumber = $record->harvester_number;
                     $record->update(['harvester_number' => $closest]);
-                    $this->promoteRecord($record);
+                    $this->promoteRecord($record, $originalNumber);
+                    $resolved++;
+                }
+            }
+        }
+
+        // Handle tare_out_of_range errors with suggestions
+        $tareErrors = HarvestRecordStaging::where('upload_id', $uploadId)
+            ->where('status', 'invalid')
+            ->where('validation_reason', 'like', '%tare_out_of_range%')
+            ->get();
+
+        $importSettings = HarvestImportSettings::where('company_id', $upload->company_id)->first();
+
+        foreach ($tareErrors as $record) {
+            $suggestedTare = null;
+
+            if ($record->sequence_number !== null) {
+                $suggestedTare = HarvestRecordStaging::where('upload_id', $uploadId)
+                    ->where('sequence_number', $record->sequence_number + 1)
+                    ->where('tare', '>', 0)->value('tare')
+                    ?? HarvestRecord::where('upload_id', $uploadId)
+                        ->where('sequence_number', $record->sequence_number + 1)
+                        ->where('tare', '>', 0)->value('tare');
+            }
+
+            if ($suggestedTare === null) {
+                $allTareErrors = $tareErrors->filter(fn($r) => $r->sequence_number !== null);
+                if ($allTareErrors->isNotEmpty()) {
+                    $nextSeqs = $allTareErrors->pluck('sequence_number')
+                        ->map(fn($n) => $n + 1)
+                        ->unique();
+
+                    $suggestedTare = HarvestRecordStaging::where('upload_id', $uploadId)
+                        ->whereIn('sequence_number', $nextSeqs)
+                        ->where('tare', '>', 0)
+                        ->orderBy('sequence_number')
+                        ->value('tare')
+                        ?? HarvestRecord::where('upload_id', $uploadId)
+                            ->whereIn('sequence_number', $nextSeqs)
+                            ->where('tare', '>', 0)
+                            ->orderBy('sequence_number')
+                            ->value('tare');
+                }
+            }
+
+            if ($suggestedTare !== null) {
+                $tare = (float) $suggestedTare;
+                $validTare = true;
+
+                if ($importSettings?->tare_min !== null && $tare < $importSettings->tare_min) {
+                    $validTare = false;
+                }
+                if ($importSettings?->tare_max !== null && $tare > $importSettings->tare_max) {
+                    $validTare = false;
+                }
+
+                if ($validTare) {
+                    $weight = $record->gross - $tare;
+                    HarvestRecord::create([
+                        'company_id' => $record->company_id,
+                        'upload_id' => $record->upload_id,
+                        'product_id' => $record->product_id,
+                        'harvester_number' => $record->harvester_number,
+                        'weight' => $weight,
+                        'tare' => $tare,
+                        'gross' => $record->gross,
+                        'weighed_at' => $record->weighed_at,
+                        'sequence_number' => $record->sequence_number,
+                        'corrected' => true,
+                        'original_tare' => $record->tare,
+                    ]);
+
+                    $record->update(['status' => 'valid']);
+                    $record->delete();
                     $resolved++;
                 }
             }
@@ -322,9 +405,9 @@ class extends Component {
         Flux::toast(text: $message, variant: $resolved > 0 ? 'success' : 'warning');
     }
 
-    private function promoteRecord (HarvestRecordStaging $record): void
+    private function promoteRecord (HarvestRecordStaging $record, ?int $originalHarvesterNumber = null): void
     {
-        HarvestRecord::create([
+        $data = [
             'company_id' => $record->company_id,
             'upload_id' => $record->upload_id,
             'product_id' => $record->product_id,
@@ -334,7 +417,13 @@ class extends Component {
             'gross' => $record->gross,
             'weighed_at' => $record->weighed_at,
             'sequence_number' => $record->sequence_number,
-        ]);
+        ];
+
+        if ($originalHarvesterNumber !== null) {
+            $data['original_harvester_number'] = $originalHarvesterNumber;
+        }
+
+        HarvestRecord::create($data);
 
         $record->update(['status' => 'valid']);
         $record->delete();
@@ -357,8 +446,8 @@ class extends Component {
     </flux:header>
 
     <div class="p-6">
-        <div class="flex items-center justify-end mb-6">
-
+        <div class="flex items-center justify-between mb-6 gap-4">
+            <flux:input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search by filename...') }}" icon="magnifying-glass" class="flex-1"/>
         </div>
 
         <div class="space-y-4 mb-6">
@@ -459,6 +548,9 @@ class extends Component {
                         <flux:table.cell>{{ $upload->created_at->format('d.m.Y H:i') }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->uploadedBy->name }}</flux:table.cell>
                         <flux:table.cell align="end" class="space-x-2">
+                            <a href="{{ route('harvest.upload.view', $upload) }}" wire:navigate>
+                                <flux:button size="sm" variant="ghost">{{ __('View') }}</flux:button>
+                            </a>
                             @if($upload->invalid_count > 0)
                                 <flux:button size="sm" variant="primary" wire:click="confirmResolveUpload({{ $upload->id }})">
                                     {{ __('Resolve') }}
@@ -487,6 +579,15 @@ class extends Component {
             <flux:text class="mt-4">
                 {{ __('Choose how to handle the invalid records in this upload.') }}
             </flux:text>
+
+            <flux:callout type="info" icon="information-circle" class="mt-6 mb-6">
+                <div class="font-semibold mb-2">{{ __('Auto-Resolve Logic') }}</div>
+                <ul class="text-sm space-y-1">
+                    <li>{{ __('Harvester not found: matches the original number to a valid assignment (exact or nearest within ±5)') }}</li>
+                    <li>{{ __('Tare out of range: uses the tare value from the next sequential record (★ suggestion)') }}</li>
+                </ul>
+                <div class="text-sm mt-2">{{ __('Records that cannot be matched are skipped and remain for manual review.') }}</div>
+            </flux:callout>
 
             <div class="mt-6 flex flex-col gap-3">
                 <flux:button

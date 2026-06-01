@@ -12,6 +12,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('harvest/prices', 'harvest.prices')->name('harvest.prices');
     Volt::route('harvest/upload', 'harvest.upload')->name('harvest.upload');
     Volt::route('harvest/upload/{upload}', 'harvest.upload-review')->name('harvest.upload.review');
+    Volt::route('harvest/upload/{upload}/view', 'harvest.upload-view')->name('harvest.upload.view');
     Volt::route('harvest/reports', 'harvest.reports')->name('harvest.reports');
     Volt::route('harvest/charts', 'harvest.charts')->name('harvest.charts');
     Volt::route('harvest/payslip', 'harvest.payslip')->name('harvest.payslip');

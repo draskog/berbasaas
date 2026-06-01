@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['company_id', 'upload_id', 'product_id', 'harvester_number', 'weight', 'tare', 'gross', 'weighed_at', 'sequence_number', 'corrected'])]
+#[Fillable(['company_id', 'upload_id', 'product_id', 'harvester_number', 'weight', 'tare', 'gross', 'weighed_at', 'sequence_number', 'corrected', 'original_harvester_number', 'original_tare'])]
 class HarvestRecord extends Model
 {
     use HasFactory;
