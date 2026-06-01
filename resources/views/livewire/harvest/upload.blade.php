@@ -445,7 +445,7 @@ class extends Component {
     </flux:header>
 
     <div class="p-6">
-        <div class="space-y-4 mb-6">
+        <div class="space-y-4">
             <div>
                 <flux:radio.group wire:model.live="selectedYear" label="{{ __('Year') }}" variant="pills">
                     <flux:radio value="0" label="{{ __('All') }}"/>
@@ -454,7 +454,6 @@ class extends Component {
                     @endforeach
                 </flux:radio.group>
             </div>
-
             <div>
                 <flux:radio.group wire:model.live="selectedProduct" label="{{ __('Product') }}" variant="pills">
                     <flux:radio value="all" label="{{ __('All') }}"/>
@@ -463,7 +462,6 @@ class extends Component {
                     @endforeach
                 </flux:radio.group>
             </div>
-
             <div>
                 <flux:radio.group wire:model.live="selectedStatus" label="{{ __('Status') }}" variant="pills">
                     <flux:radio value="all" label="{{ __('All') }}"/>

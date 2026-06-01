@@ -15,8 +15,7 @@ use Livewire\WithPagination;
 new
 #[Layout('layouts.app')]
 #[Title('View Upload')]
-class extends Component
-{
+class extends Component {
     use WithPagination;
 
     public HarvestUpload $upload;
@@ -38,18 +37,18 @@ class extends Component
     public string $harvestCorrected = 'all';
 
     #[Computed]
-    public function year(): int
+    public function year (): int
     {
         return $this->upload->date_from->year;
     }
 
     #[Computed]
-    public function stagingRecords()
+    public function stagingRecords ()
     {
         $query = HarvestRecordStaging::where('upload_id', $this->upload->id)
-            ->when($this->stagingStatus !== 'all', fn ($q) => $q->where('status', $this->stagingStatus))
-            ->when($this->stagingReason !== 'all', fn ($q) => $q->where('validation_reason', 'like', "%$this->stagingReason%"))
-            ->when($this->search !== '', fn ($q) => $q->where('harvester_number', 'like', "%$this->search%"))
+            ->when($this->stagingStatus !== 'all', fn($q) => $q->where('status', $this->stagingStatus))
+            ->when($this->stagingReason !== 'all', fn($q) => $q->where('validation_reason', 'like', "%$this->stagingReason%"))
+            ->when($this->search !== '', fn($q) => $q->where('harvester_number', 'like', "%$this->search%"))
             ->orderBy($this->sortBy, $this->sortDirection);
 
         if ($this->perPage === 0) {
@@ -60,13 +59,13 @@ class extends Component
     }
 
     #[Computed]
-    public function harvestRecords()
+    public function harvestRecords ()
     {
         $query = HarvestRecord::where('upload_id', $this->upload->id)
-            ->when($this->harvestCorrected === 'corrected', fn ($q) => $q->where('corrected', true))
-            ->when($this->harvestCorrected === 'not_corrected', fn ($q) => $q->where('corrected', false))
-            ->when($this->search !== '', fn ($q) => $q->where('harvester_number', 'like', "%$this->search%")
-                ->orWhereHas('upload.product', fn ($sq) => $sq))
+            ->when($this->harvestCorrected === 'corrected', fn($q) => $q->where('corrected', true))
+            ->when($this->harvestCorrected === 'not_corrected', fn($q) => $q->where('corrected', false))
+            ->when($this->search !== '', fn($q) => $q->where('harvester_number', 'like', "%$this->search%")
+                ->orWhereHas('upload.product', fn($sq) => $sq))
             ->orderBy($this->sortBy, $this->sortDirection);
 
         if ($this->perPage === 0) {
@@ -77,7 +76,7 @@ class extends Component
     }
 
     #[Computed]
-    public function harvestersByNumber(): Collection
+    public function harvestersByNumber (): Collection
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->year)
@@ -87,38 +86,38 @@ class extends Component
             ->keyBy('number');
     }
 
-    public function mount(): void
+    public function mount (): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
     }
 
-    public function updatedPerPage(): void
+    public function updatedPerPage (): void
     {
         $this->resetPage();
     }
 
-    public function updatedSearch(): void
+    public function updatedSearch (): void
     {
         $this->resetPage('staging_page');
         $this->resetPage('harvest_page');
     }
 
-    public function updatedStagingStatus(): void
+    public function updatedStagingStatus (): void
     {
         $this->resetPage('staging_page');
     }
 
-    public function updatedStagingReason(): void
+    public function updatedStagingReason (): void
     {
         $this->resetPage('staging_page');
     }
 
-    public function updatedHarvestCorrected(): void
+    public function updatedHarvestCorrected (): void
     {
         $this->resetPage('harvest_page');
     }
 
-    public function sort(string $column): void
+    public function sort (string $column): void
     {
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -147,18 +146,8 @@ class extends Component
             </flux:tabs>
 
             <flux:tab.panel name="staging">
-                <div class="space-y-6 mt-6">
-                    <div class="flex items-center justify-between gap-4">
-                        <flux:input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search by harvester number...') }}" icon="magnifying-glass" class="flex-1"/>
-                        <flux:select wire:model.live="perPage" size="sm" class="w-28">
-                            <flux:select.option value="25">25</flux:select.option>
-                            <flux:select.option value="50">50</flux:select.option>
-                            <flux:select.option value="100">100</flux:select.option>
-                            <flux:select.option value="0">{{ __('All') }}</flux:select.option>
-                        </flux:select>
-                    </div>
-
-                    <div class="space-y-3">
+                <div class="space-y-6">
+                    <div class="space-y-4">
                         <div>
                             <flux:radio.group wire:model.live="stagingStatus" label="{{ __('Status') }}" variant="pills">
                                 <flux:radio value="all" label="{{ __('All') }}"/>
@@ -173,6 +162,15 @@ class extends Component
                                 <flux:radio value="harvester_not_found" label="{{ __('Harvester Not Found') }}"/>
                                 <flux:radio value="tare_out_of_range" label="{{ __('Tare Out of Range') }}"/>
                             </flux:radio.group>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search by harvester number...') }}" icon="magnifying-glass" class="w-72!"/>
+                            <flux:select wire:model.live="perPage" size="sm" class="w-28">
+                                <flux:select.option value="25">25</flux:select.option>
+                                <flux:select.option value="50">50</flux:select.option>
+                                <flux:select.option value="100">100</flux:select.option>
+                                <flux:select.option value="0">{{ __('All') }}</flux:select.option>
+                            </flux:select>
                         </div>
                     </div>
 
@@ -230,17 +228,7 @@ class extends Component
             </flux:tab.panel>
 
             <flux:tab.panel name="harvest">
-                <div class="space-y-6 mt-6">
-                    <div class="flex items-center justify-between gap-4">
-                        <flux:input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search by harvester number or name...') }}" icon="magnifying-glass" class="flex-1"/>
-                        <flux:select wire:model.live="perPage" size="sm" class="w-28">
-                            <flux:select.option value="25">25</flux:select.option>
-                            <flux:select.option value="50">50</flux:select.option>
-                            <flux:select.option value="100">100</flux:select.option>
-                            <flux:select.option value="0">{{ __('All') }}</flux:select.option>
-                        </flux:select>
-                    </div>
-
+                <div class="space-y-6">
                     <div>
                         <flux:radio.group wire:model.live="harvestCorrected" label="{{ __('Corrected') }}" variant="pills">
                             <flux:radio value="all" label="{{ __('All') }}"/>
@@ -248,7 +236,15 @@ class extends Component
                             <flux:radio value="not_corrected" label="{{ __('Not corrected') }}"/>
                         </flux:radio.group>
                     </div>
-
+                    <div class="flex items-center justify-between gap-4">
+                        <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search by harvester number or name...') }}" icon="magnifying-glass" class="w-72!"/>
+                        <flux:select wire:model.live="perPage" size="sm" class="w-28">
+                            <flux:select.option value="25">25</flux:select.option>
+                            <flux:select.option value="50">50</flux:select.option>
+                            <flux:select.option value="100">100</flux:select.option>
+                            <flux:select.option value="0">{{ __('All') }}</flux:select.option>
+                        </flux:select>
+                    </div>
                     <flux:table :paginate="$this->perPage > 0 ? $this->harvestRecords : null" pageName="harvest_page">
                         <flux:table.columns>
                             <flux:table.column sortable :sorted="$sortBy === 'weighed_at'" :direction="$sortDirection" wire:click="sort('weighed_at')">{{ __('Date / Time') }}</flux:table.column>
@@ -289,14 +285,18 @@ class extends Component
                                                     <flux:badge variant="success">{{ $record->harvester_number }}</flux:badge>
                                                 </div>
                                                 @if($assignment)
-                                                    <div class="text-xs text-gray-500">{{ $assignment->harvester?->name }}@if($assignment->harvester?->prefix) ({{ $assignment->harvester->prefix }})@endif</div>
+                                                    <div class="text-xs text-gray-500">{{ $assignment->harvester?->name }}@if($assignment->harvester?->prefix)
+                                                            ({{ $assignment->harvester->prefix }})
+                                                        @endif</div>
                                                 @endif
                                             </div>
                                         @else
                                             <div>
                                                 <flux:badge variant="info">{{ $record->harvester_number }}</flux:badge>
                                                 @if($assignment)
-                                                    <div class="text-xs text-gray-500 mt-1">{{ $assignment->harvester?->name }}@if($assignment->harvester?->prefix) ({{ $assignment->harvester->prefix }})@endif</div>
+                                                    <div class="text-xs text-gray-500 mt-1">{{ $assignment->harvester?->name }}@if($assignment->harvester?->prefix)
+                                                            ({{ $assignment->harvester->prefix }})
+                                                        @endif</div>
                                                 @endif
                                             </div>
                                         @endif
