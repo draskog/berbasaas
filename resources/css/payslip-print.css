@@ -11,10 +11,42 @@
 }
 
 @page {
-    size: A4 landscape;
-    margin: 10mm 15mm;
-    bleed: 6mm;
-    padding-bottom: 4mm;
+    size: A4 landscape !important;
+    margin: 5mm !important;
+    bleed: 2mm;
+}
+
+/* Browser print settings */
+@media print {
+    * {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: white !important;
+    }
+
+    #content {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Prevent page breaks from creating unnecessary space */
+    .payslip-section {
+        page-break-inside: avoid !important;
+    }
+
+    /* Hide before/after pseudo elements that might appear as headers/footers */
+    body::before,
+    body::after {
+        display: none !important;
+    }
 }
 
 * {
@@ -23,10 +55,12 @@
 }
 
 html, body {
+    margin: 0;
+    padding: 0;
     height: 100%;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    font-size: 11px;
-    line-height: 1.4;
+    font-size: 10px;
+    line-height: 1.2;
     color: #1f2937;
 }
 
@@ -62,11 +96,12 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 6px;
-    margin-bottom: 4px;
+    padding-bottom: 2px;
+    margin-bottom: 2px;
     border-bottom: 1px solid #d1d5db;
     font-weight: 600;
-    font-size: 12px;
+    font-size: 11px;
+    page-break-after: avoid;
 }
 
 .header-left {
@@ -94,20 +129,35 @@ html, body {
 }
 
 .payslip-period {
-    font-size: 10;
+    font-size: 9px;
     color: #6b7280;
-    margin-bottom: 8px;
+    margin-bottom: 3mm;
+    page-break-after: avoid;
 }
 
 .payslip-header-spacing {
-    margin-bottom: 10mm;
+    margin-bottom: 2mm;
+}
+
+.table-wrapper {
+    width: 100%;
+}
+
+.table-wrapper[data-columns="2"] {
+    column-count: 2;
+    column-gap: 4mm;
+}
+
+.table-wrapper[data-columns="3"] {
+    column-count: 3;
+    column-gap: 3mm;
 }
 
 .payslip-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 10;
-    margin-bottom: 4px;
+    font-size: 9px;
+    margin-bottom: 2px;
 }
 
 .payslip-table thead {
@@ -118,7 +168,7 @@ html, body {
 }
 
 .payslip-table th {
-    padding: 4px 6px;
+    padding: 2px 3px;
     text-align: left;
     border: 1px solid #e5e7eb;
     page-break-inside: avoid;
@@ -129,7 +179,7 @@ html, body {
 }
 
 .payslip-table td {
-    padding: 3px 6px;
+    padding: 1px 3px;
     border: 1px solid #e5e7eb;
     page-break-inside: avoid;
 }
@@ -146,11 +196,11 @@ html, body {
 .payslip-table .totals-row {
     background-color: #f9fafb;
     font-weight: 600;
-    border-top: 2px solid #d1d5db;
+    border-top: 1px solid #d1d5db;
 }
 
 .payslip-table .totals-row td {
-    padding: 4px 6px;
+    padding: 2px 4px;
     border: 1px solid #d1d5db;
 }
 
@@ -160,10 +210,10 @@ html, body {
 }
 
 .no-data {
-    padding: 20;
+    padding: 8px;
     text-align: center;
     color: #6b7280;
-    font-size: 12px;
+    font-size: 10px;
 }
 
 .break-after-page {
@@ -175,7 +225,7 @@ html, body {
 @media screen, pagedjs-ignore {
     body {
         background-color: var(--color-background);
-        padding: 20px;
+        padding: 10px;
         display: flex;
         justify-content: center;
     }
@@ -185,7 +235,7 @@ html, body {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 10mm;
+        gap: 1mm;
     }
 
     .thingToShowOnScreen {
@@ -196,7 +246,7 @@ html, body {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 10mm;
+        gap: 1mm;
     }
 
     .pagedjs_page {
@@ -205,7 +255,6 @@ html, body {
         margin: 0;
         flex-shrink: 0;
         flex-grow: 0;
-        margin-top: 10mm;
     }
 
     .pagedjs_first_page {
@@ -279,30 +328,8 @@ html, body {
 
 
 @media print {
-    @page {
-        size: A4 landscape;
-        margin: 10mm 15mm;
-        bleed: 6mm;
-        padding-bottom: 4mm;
-    }
-
-    html {
-        width: 100%;
-        height: 100%;
-    }
-
-    body {
-        width: 100%;
-        height: 100%;
-    }
-
     .loading-overlay {
         display: none;
-    }
-
-    body {
-        margin: 0;
-        padding: 0;
     }
 
     .payslip-section {

@@ -32,45 +32,52 @@
                 </div>
 
                 @if (count($harvester['records']) > 0)
-                    <table class="payslip-table">
-                        <thead>
-                            <tr>
-                                <th>{{ __('Date') }}</th>
-                                <th>{{ __('Time') }}</th>
-                                <th>{{ __('Product') }}</th>
-                                <th class="text-right">{{ __('Weight (kg)') }}</th>
-                                <th class="text-right">{{ __('Price/kg') }}</th>
-                                <th class="text-right">{{ __('Earnings') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($harvester['records'] as $record)
+                    @php
+                        $recordCount = count($harvester['records']);
+                        // Dynamic column count: 1 col for ≤20, 2 cols for 21-40, 3 cols for 40+
+                        $columnCount = $recordCount <= 20 ? 1 : ($recordCount <= 40 ? 2 : 3);
+                    @endphp
+                    <div class="table-wrapper" data-columns="{{ $columnCount }}">
+                        <table class="payslip-table">
+                            <thead>
                                 <tr>
-                                    <td>{{ explode(' ', $record['datetime'])[0] }}</td>
-                                    <td>{{ explode(' ', $record['datetime'])[1] }}</td>
-                                    <td>{{ $record['product'] }}</td>
-                                    <td class="text-right">{{ number_format($record['weight'], 3, '.', '') }}</td>
-                                    <td class="text-right">
-                                        @if ($record['price_per_kg'])
-                                            {{ number_format($record['price_per_kg'], 4, '.', '') }}
-                                        @else
-                                            —
-                                        @endif
-                                    </td>
-                                    <td class="text-right">{{ number_format($record['earnings'], 2, '.', '') }}</td>
+                                    <th>{{ __('Date') }}</th>
+                                    <th>{{ __('Time') }}</th>
+                                    <th>{{ __('Product') }}</th>
+                                    <th class="text-right">{{ __('Weight (kg)') }}</th>
+                                    <th class="text-right">{{ __('Price/kg') }}</th>
+                                    <th class="text-right">{{ __('Earnings') }}</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                        <tfoot>
-                            <tr class="totals-row">
-                                <td colspan="2"></td>
-                                <td class="totals-label">{{ __('Totals') }}:</td>
-                                <td class="text-right">{{ $harvester['totals']['buckets'] }}</td>
-                                <td class="text-right">{{ number_format($harvester['totals']['weight'], 3, '.', '') }}</td>
-                                <td class="text-right">{{ number_format($harvester['totals']['earnings'], 2, '.', '') }}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach ($harvester['records'] as $record)
+                                    <tr>
+                                        <td>{{ explode(' ', $record['datetime'])[0] }}</td>
+                                        <td>{{ explode(' ', $record['datetime'])[1] }}</td>
+                                        <td>{{ $record['product'] }}</td>
+                                        <td class="text-right">{{ number_format($record['weight'], 3, '.', '') }}</td>
+                                        <td class="text-right">
+                                            @if ($record['price_per_kg'])
+                                                {{ number_format($record['price_per_kg'], 4, '.', '') }}
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                        <td class="text-right">{{ number_format($record['earnings'], 2, '.', '') }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot>
+                                <tr class="totals-row">
+                                    <td colspan="2"></td>
+                                    <td class="totals-label">{{ __('Totals') }}:</td>
+                                    <td class="text-right">{{ $harvester['totals']['buckets'] }}</td>
+                                    <td class="text-right">{{ number_format($harvester['totals']['weight'], 3, '.', '') }}</td>
+                                    <td class="text-right">{{ number_format($harvester['totals']['earnings'], 2, '.', '') }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 @else
                     <div class="no-data">
                         {{ __('No records found for the selected period.') }}
@@ -81,6 +88,11 @@
     </div>
 
     <script>
+        window.PagedConfig = {
+            auto: true,
+            allowHyphenation: false,
+        };
+
         document.addEventListener('renderedPagedJs', function () {
             const overlay = document.getElementById('loadingOverlay');
             if (overlay) {
