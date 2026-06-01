@@ -58,16 +58,12 @@ class PrintPayslipsController extends Controller
             $payslipRows = [];
             $totalWeight = 0;
             $totalEarnings = 0;
-            $firstPrice = null;
+            $pricesByDate = [];
 
             foreach ($records as $record) {
                 $price = $prices->get((string) $record->product_id)?->price_per_kg;
                 $earnings = $record->weight * ($price ?? 0);
                 $earnings = round($earnings, 2);
-
-                if ($firstPrice === null && $price !== null) {
-                    $firstPrice = $price;
-                }
 
                 $payslipRows[] = [
                     'datetime' => $record->weighed_at->format('d.m.Y H:i'),
@@ -79,7 +75,17 @@ class PrintPayslipsController extends Controller
 
                 $totalWeight += $record->weight;
                 $totalEarnings += $earnings;
+
+                if ($price !== null) {
+                    $date = $record->weighed_at->format('Y-m-d');
+                    if (! isset($pricesByDate[$date])) {
+                        $pricesByDate[$date] = $price;
+                    }
+                }
             }
+
+            // Calculate average price weighted by date occurrences
+            $avgPrice = ! empty($pricesByDate) ? round(array_sum($pricesByDate) / count($pricesByDate), 4) : null;
 
             $harvesters[] = [
                 'number' => $number,
@@ -90,7 +96,7 @@ class PrintPayslipsController extends Controller
                     'buckets' => count($payslipRows),
                     'weight' => round($totalWeight, 3),
                     'earnings' => round($totalEarnings, 2),
-                    'price_per_kg' => $firstPrice,
+                    'price_per_kg' => $avgPrice,
                 ],
             ];
         }

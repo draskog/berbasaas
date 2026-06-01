@@ -83,13 +83,40 @@ new class extends Component
             return ['buckets' => 0, 'weight' => 0, 'earnings' => 0, 'price_per_kg' => null];
         }
 
-        $firstPriceRecord = collect($data)->first(fn ($r) => $r['price_per_kg'] !== null);
+        // Group by date and aggregate
+        $groupedByDate = collect($data)->groupBy(fn ($r) => Carbon::parse($r['datetime'])->format('Y-m-d'));
+
+        $totalWeight = 0;
+        $totalEarnings = 0;
+        $pricesByDate = [];
+
+        foreach ($groupedByDate as $date => $dateRecords) {
+            $dateWeight = 0;
+            $datePrice = null;
+
+            foreach ($dateRecords as $record) {
+                $dateWeight += $record['weight'];
+                if ($datePrice === null && $record['price_per_kg'] !== null) {
+                    $datePrice = $record['price_per_kg'];
+                }
+            }
+
+            if ($datePrice !== null) {
+                $totalEarnings += round($dateWeight * $datePrice, 2);
+                $pricesByDate[$date] = $datePrice;
+            }
+
+            $totalWeight += $dateWeight;
+        }
+
+        // Calculate average price weighted by date occurrences
+        $avgPrice = ! empty($pricesByDate) ? round(collect($pricesByDate)->avg(), 4) : null;
 
         return [
             'buckets' => count($data),
-            'weight' => round(collect($data)->sum('weight'), 3),
-            'earnings' => round(collect($data)->sum('earnings') ?? 0, 2),
-            'price_per_kg' => $firstPriceRecord ? $firstPriceRecord['price_per_kg'] : null,
+            'weight' => round($totalWeight, 3),
+            'earnings' => round($totalEarnings, 2),
+            'price_per_kg' => $avgPrice,
         ];
     }
 
