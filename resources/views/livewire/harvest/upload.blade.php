@@ -132,7 +132,7 @@ class extends Component
         }
 
         if ($this->search !== '') {
-            $query->where('original_filename', 'like', "%{$this->search}%");
+            $query->where('original_filename', 'like', "%$this->search%");
         }
 
         $query->orderBy($this->sortBy, $this->sortDirection);
@@ -308,17 +308,17 @@ class extends Component
             if ($suggestedTare === null) {
                 $allTareErrors = $tareErrors->filter(fn ($r) => $r->sequence_number !== null);
                 if ($allTareErrors->isNotEmpty()) {
-                    $nextSeqs = $allTareErrors->pluck('sequence_number')
+                    $nextSequence = $allTareErrors->pluck('sequence_number')
                         ->map(fn ($n) => $n + 1)
                         ->unique();
 
                     $suggestedTare = HarvestRecordStaging::where('upload_id', $uploadId)
-                        ->whereIn('sequence_number', $nextSeqs)
+                        ->whereIn('sequence_number', $nextSequence)
                         ->where('tare', '>', 0)
                         ->orderBy('sequence_number')
                         ->value('tare')
                         ?? HarvestRecord::where('upload_id', $uploadId)
-                            ->whereIn('sequence_number', $nextSeqs)
+                            ->whereIn('sequence_number', $nextSequence)
                             ->where('tare', '>', 0)
                             ->orderBy('sequence_number')
                             ->value('tare');

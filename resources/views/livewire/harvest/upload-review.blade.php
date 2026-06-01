@@ -132,32 +132,32 @@ class extends Component
             return [];
         }
 
-        $nextSeqs = $tareErrors->whereNotNull('sequence_number')
+        $nextSequence = $tareErrors->whereNotNull('sequence_number')
             ->pluck('sequence_number')
             ->map(fn ($n) => $n + 1)
             ->unique();
 
-        if ($nextSeqs->isEmpty()) {
+        if ($nextSequence->isEmpty()) {
             return [];
         }
 
         $fromStaging = HarvestRecordStaging::where('upload_id', $this->upload->id)
-            ->whereIn('sequence_number', $nextSeqs)
+            ->whereIn('sequence_number', $nextSequence)
             ->where('tare', '>', 0)
             ->pluck('tare', 'sequence_number');
 
         $fromRecords = HarvestRecord::where('upload_id', $this->upload->id)
-            ->whereIn('sequence_number', $nextSeqs)
+            ->whereIn('sequence_number', $nextSequence)
             ->where('tare', '>', 0)
             ->pluck('tare', 'sequence_number');
 
-        $nextTareBySeq = $fromStaging->union($fromRecords);
+        $nextTareBySequence = $fromStaging->union($fromRecords);
 
         $result = [];
         foreach ($tareErrors as $record) {
             $nextSeq = $record->sequence_number + 1;
-            if ($nextTareBySeq->has($nextSeq)) {
-                $result[$record->id] = $nextTareBySeq[$nextSeq];
+            if ($nextTareBySequence->has($nextSeq)) {
+                $result[$record->id] = $nextTareBySequence[$nextSeq];
             }
         }
 
