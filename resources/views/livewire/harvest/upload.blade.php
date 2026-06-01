@@ -101,17 +101,17 @@ class extends Component {
         }
 
         if ($this->selectedStatus === 'ispravno') {
-            $query->where('valid_count', '>', 0)
-                ->where('invalid_count', 0);
+            $query->havingRaw('valid_count > 0')
+                ->havingRaw('invalid_count = 0');
         } elseif ($this->selectedStatus === 'neispravno') {
-            $query->where('valid_count', 0)
-                ->where('invalid_count', '>', 0);
+            $query->havingRaw('valid_count = 0')
+                ->havingRaw('invalid_count > 0');
         } elseif ($this->selectedStatus === 'delimicno') {
-            $query->where('valid_count', '>', 0)
-                ->where('invalid_count', '>', 0);
+            $query->havingRaw('valid_count > 0')
+                ->havingRaw('invalid_count > 0');
         } elseif ($this->selectedStatus === 'duplikat') {
-            $query->where('valid_count', 0)
-                ->where('invalid_count', 0)
+            $query->havingRaw('valid_count = 0')
+                ->havingRaw('invalid_count = 0')
                 ->where('record_count', '>', 0);
         } elseif ($this->selectedStatus === 'reseno') {
             $query->whereNotNull('resolved_at');
@@ -426,16 +426,8 @@ class extends Component {
                         <flux:table.cell>{{ $upload->original_filename }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->product->name }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->record_count }}</flux:table.cell>
-                        <flux:table.cell>
-                            {{ $upload->valid_count }}
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            @if($upload->invalid_count > 0)
-                                <flux:badge color="orange">{{ $upload->invalid_count }}</flux:badge>
-                            @else
-                                {{ $upload->invalid_count }}
-                            @endif
-                        </flux:table.cell>
+                        <flux:table.cell>{{ $upload->valid_count }}</flux:table.cell>
+                        <flux:table.cell>{{ $upload->invalid_count }}</flux:table.cell>
                         <flux:table.cell>
                             @if($upload->valid_count === 0 && $upload->invalid_count === 0 && $upload->record_count > 0)
                                 <flux:badge color="zinc">{{ __('Duplicate') }}</flux:badge>
