@@ -626,5 +626,9 @@
     "Period": "Period",
     "Totals": "Ukupno",
     "Price/kg": "Cena/kg",
-    "No records found for the selected period.": "Nisu pronađeni zapisi za izabrani period."
+    "No records found for the selected period.": "Nisu pronađeni zapisi za izabrani period.",
+    "Total weight harvested": "Ukupna težina ubrano",
+    "Total earnings": "Ukupna zarada",
+    "Total buckets": "Ukupno gajbica",
+    "Total weight": "Ukupna težina"
 }
