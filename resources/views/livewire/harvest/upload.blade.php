@@ -183,24 +183,31 @@ class extends Component {
         ]);
 
         $service = new HarvestImportService;
-        $upload = $service->parse(
+        $result = $service->parse(
             $this->uploadedFile,
             auth()->user()->company_id,
             $this->selectedProductId,
             auth()->id()
         );
 
+        $upload = $result['upload'];
+        $skippedCount = $result['skippedCount'];
+
         $this->uploadedFile = null;
         $this->showUploadModal = false;
-        Flux::toast(
-            text: __('Successfully imported :count records from :filename (:from to :to)', [
-                'count' => $upload->record_count,
-                'filename' => $upload->original_filename,
-                'from' => $upload->date_from->format('d.m.Y'),
-                'to' => $upload->date_to->format('d.m.Y'),
-            ]),
-            variant: 'success'
-        );
+
+        $message = __('Successfully imported :count records from :filename (:from to :to)', [
+            'count' => $upload->record_count,
+            'filename' => $upload->original_filename,
+            'from' => $upload->date_from->format('d.m.Y'),
+            'to' => $upload->date_to->format('d.m.Y'),
+        ]);
+
+        if ($skippedCount > 0) {
+            $message .= ' ' . __('(:skipped duplicate record(s) skipped)', ['skipped' => $skippedCount]);
+        }
+
+        Flux::toast(text: $message, variant: 'success');
     }
 
     public function confirmResolveUpload (int $id): void

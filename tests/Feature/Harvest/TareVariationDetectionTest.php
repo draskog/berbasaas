@@ -39,7 +39,8 @@ EOL
     );
 
     $service = new HarvestImportService;
-    $upload = $service->parse($csv, $this->company->id, $this->product->id, $this->user->id);
+    $result = $service->parse($csv, $this->company->id, $this->product->id, $this->user->id);
+    $upload = $result['upload'];
 
     $stagingRecords = HarvestRecordStaging::where('upload_id', $upload->id)->get();
 
@@ -62,7 +63,8 @@ EOL
     );
 
     $service = new HarvestImportService;
-    $upload = $service->parse($csv, $this->company->id, $this->product->id, $this->user->id);
+    $result = $service->parse($csv, $this->company->id, $this->product->id, $this->user->id);
+    $upload = $result['upload'];
 
     $records = HarvestRecordStaging::where('upload_id', $upload->id)->get();
     $hasTareIssues = $records->some(fn ($r) => in_array('tare_out_of_range', (array) $r->validation_reason, true));
@@ -80,7 +82,8 @@ EOL
     );
 
     $service = new HarvestImportService;
-    $upload = $service->parse($csv, $this->company->id, $this->product->id, $this->user->id);
+    $result = $service->parse($csv, $this->company->id, $this->product->id, $this->user->id);
+    $upload = $result['upload'];
 
     $records = HarvestRecordStaging::where('upload_id', $upload->id)->get();
     $hasTareIssues = $records->some(fn ($r) => in_array('tare_out_of_range', (array) $r->validation_reason, true));

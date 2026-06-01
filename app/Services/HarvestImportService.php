@@ -12,7 +12,7 @@ use Illuminate\Http\UploadedFile;
 
 class HarvestImportService
 {
-    public function parse(UploadedFile $file, int $companyId, int $productId, int $userId): HarvestUpload
+    public function parse(UploadedFile $file, int $companyId, int $productId, int $userId): array
     {
         $path = $file->getRealPath();
         $handle = fopen($path, 'rb');
@@ -26,6 +26,7 @@ class HarvestImportService
 
         // Map column names to indices
         $columns = array_flip($header);
+        $noCol = $columns['No'] ?? null;
         $productCol = $columns['Product'] ?? null;
         $weightCol = $columns['weight'] ?? null;
         $tareCol = $columns['tare'] ?? null;
@@ -43,6 +44,7 @@ class HarvestImportService
                 continue;
             }
 
+            $sequenceNumber = $noCol !== null ? (int) $row[$noCol] : null;
             $harvesterNumber = (int) $row[$productCol];
             $weight = (float) $row[$weightCol];
             $tare = (float) $row[$tareCol];
@@ -76,6 +78,7 @@ class HarvestImportService
                 'tare' => $tare,
                 'gross' => $gross,
                 'weighed_at' => $datetime,
+                'sequence_number' => $sequenceNumber,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
@@ -104,6 +107,11 @@ class HarvestImportService
         if (! $settings) {
             $tareVariation = $this->detectTareVariation($records);
         }
+
+        // Filter out duplicates and track count
+        $originalCount = count($records);
+        $records = $this->filterDuplicates($records, $companyId);
+        $skippedCount = $originalCount - count($records);
 
         // Process records: validate and stage
         $validRecords = [];
@@ -166,7 +174,74 @@ class HarvestImportService
             HarvestRecordStaging::insert($chunk);
         }
 
-        return $upload;
+        return [
+            'upload' => $upload,
+            'skippedCount' => $skippedCount,
+        ];
+    }
+
+    private function filterDuplicates(array $records, int $companyId): array
+    {
+        $filtered = [];
+        $seenKeys = [];
+
+        // Collect all unique keys from existing records in database
+        $existingKeys = $this->getExistingRecordKeys($companyId);
+
+        foreach ($records as $record) {
+            $key = $this->generateRecordKey($record);
+
+            // Skip if already seen in this import or exists in database
+            if (isset($seenKeys[$key]) || isset($existingKeys[$key])) {
+                continue;
+            }
+
+            $seenKeys[$key] = true;
+            $filtered[] = $record;
+        }
+
+        return $filtered;
+    }
+
+    private function getExistingRecordKeys(int $companyId): array
+    {
+        $keys = [];
+
+        // Get keys from harvest_records
+        HarvestRecord::where('company_id', $companyId)
+            ->select('product_id', 'harvester_number', 'weighed_at')
+            ->each(function ($record) use (&$keys) {
+                $key = $this->generateRecordKeyFromModel($record);
+                $keys[$key] = true;
+            });
+
+        // Get keys from harvest_record_staging
+        HarvestRecordStaging::where('company_id', $companyId)
+            ->select('product_id', 'harvester_number', 'weighed_at')
+            ->each(function ($record) use (&$keys) {
+                $key = $this->generateRecordKeyFromModel($record);
+                $keys[$key] = true;
+            });
+
+        return $keys;
+    }
+
+    private function generateRecordKey(array $record): string
+    {
+        $weighedAt = $record['weighed_at'] instanceof Carbon
+            ? $record['weighed_at']->format('Y-m-d H:i:s')
+            : $record['weighed_at'];
+
+        return "{$record['product_id']}|{$record['harvester_number']}|{$weighedAt}|{$record['sequence_number']}";
+    }
+
+    private function generateRecordKeyFromModel($record): string
+    {
+        $weighedAt = $record->weighed_at instanceof Carbon
+            ? $record->weighed_at->format('Y-m-d H:i:s')
+            : $record->weighed_at;
+
+        return "{$record->product_id}|{$record->harvester_number}|{$weighedAt}|{$record->sequence_number}";
     }
 
     private function detectTareVariation(array $records): bool

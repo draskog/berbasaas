@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['company_id', 'upload_id', 'product_id', 'harvester_number', 'weight', 'tare', 'gross', 'weighed_at', 'status'])]
+#[Fillable(['company_id', 'upload_id', 'product_id', 'harvester_number', 'weight', 'tare', 'gross', 'weighed_at', 'sequence_number', 'status'])]
 class HarvestRecordStaging extends Model
 {
     protected $table = 'harvest_record_staging';

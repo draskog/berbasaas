@@ -18,11 +18,11 @@ class CompanyFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->company(),
-            'address' => $this->faker->address(),
-            'tax_number' => $this->faker->numerify('###########'),
-            'phone' => $this->faker->phoneNumber(),
-            'email' => $this->faker->companyEmail(),
+            'name' => 'Company ' . fake()->numberBetween(1000, 9999),
+            'address' => fake()->address(),
+            'tax_number' => fake()->numerify('###########'),
+            'phone' => fake()->phoneNumber(),
+            'email' => fake()->safeEmail(),
         ];
     }
 }
