@@ -9,35 +9,11 @@ use App\Models\Product;
 use App\Models\User;
 use App\Services\HarvestImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 
 uses(RefreshDatabase::class);
 
-function createCsvFile(array $rows, ?array $header = null): UploadedFile
-{
-    if ($header === null) {
-        $header = ['No', 'Product', 'weight', 'tare', 'Gross', 'date', 'time'];
-    }
-
-    $content = implode(',', $header) . "\n";
-    foreach ($rows as $row) {
-        $content .= implode(',', $row) . "\n";
-    }
-
-    $path = tempnam(sys_get_temp_dir(), 'csv');
-    file_put_contents($path, $content);
-
-    return new UploadedFile(
-        $path,
-        'test.csv',
-        'text/csv',
-        null,
-        true
-    );
-}
-
 beforeEach(function () {
-    $this->service = new HarvestImportService();
+    $this->service = new HarvestImportService;
     $this->company = Company::factory()->create();
     $this->product = Product::factory()->create(['company_id' => $this->company->id]);
     $this->user = User::factory()->create(['company_id' => $this->company->id]);

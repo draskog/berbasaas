@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\DuskTestCase;
 use Tests\TestCase;
 
@@ -12,3 +13,26 @@ uses(
 uses(TestCase::class)->in('Feature');
 
 uses(RefreshDatabase::class)->in('Feature');
+
+function createCsvFile(array $rows, ?array $header = null): UploadedFile
+{
+    if ($header === null) {
+        $header = ['No', 'Product', 'weight', 'tare', 'Gross', 'date', 'time'];
+    }
+
+    $content = implode(',', $header)."\n";
+    foreach ($rows as $row) {
+        $content .= implode(',', $row)."\n";
+    }
+
+    $path = tempnam(sys_get_temp_dir(), 'csv');
+    file_put_contents($path, $content);
+
+    return new UploadedFile(
+        $path,
+        'test.csv',
+        'text/csv',
+        null,
+        true
+    );
+}

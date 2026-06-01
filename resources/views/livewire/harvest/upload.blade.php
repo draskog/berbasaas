@@ -89,6 +89,7 @@ class extends Component {
     public function recentUploads ()
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
+            ->addSelect('harvest_uploads.resolved_at')
             ->withCount('harvestRecords as valid_count')
             ->withCount(['stagingRecords as invalid_count' => fn($q) => $q->where('status', 'invalid')]);
 
@@ -300,6 +301,12 @@ class extends Component {
 
         $this->showResolveModal = false;
         $this->resolvingUploadId = null;
+
+        // Mark as resolved if all invalid records are gone
+        if ($upload->stagingRecords()->where('status', 'invalid')->doesntExist()) {
+            $upload->update(['resolved_at' => now()]);
+        }
+
         $this->dispatch('$refresh');
 
         $message = $resolved === 0
@@ -320,10 +327,17 @@ class extends Component {
             'tare' => $record->tare,
             'gross' => $record->gross,
             'weighed_at' => $record->weighed_at,
+            'sequence_number' => $record->sequence_number,
         ]);
 
         $record->update(['status' => 'valid']);
         $record->delete();
+
+        // Mark upload as resolved if all invalid records are now gone
+        $upload = HarvestUpload::find($record->upload_id);
+        if ($upload && $upload->stagingRecords()->where('status', 'invalid')->doesntExist()) {
+            $upload->update(['resolved_at' => now()]);
+        }
     }
 }; ?>
 
@@ -390,7 +404,9 @@ class extends Component {
                 <flux:table.column>{{ __('Total') }}</flux:table.column>
                 <flux:table.column>{{ __('Valid') }}</flux:table.column>
                 <flux:table.column>{{ __('Invalid') }}</flux:table.column>
+                <flux:table.column>{{ __('Status') }}</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">{{ __('Date Range') }}</flux:table.column>
+                <flux:table.column>{{ __('Imported At') }}</flux:table.column>
                 <flux:table.column>{{ __('Uploaded By') }}</flux:table.column>
                 <flux:table.column align="center">{{ __('Actions') }}</flux:table.column>
             </flux:table.columns>
@@ -418,12 +434,26 @@ class extends Component {
                             @endif
                         </flux:table.cell>
                         <flux:table.cell>
+                            @if($upload->valid_count === 0 && $upload->invalid_count === 0 && $upload->record_count > 0)
+                                <flux:badge color="zinc">{{ __('Duplicate') }}</flux:badge>
+                            @elseif($upload->resolved_at !== null)
+                                <flux:badge color="blue">{{ __('Resolved') }}</flux:badge>
+                            @elseif($upload->valid_count > 0 && $upload->invalid_count === 0)
+                                <flux:badge color="green">{{ __('Valid') }}</flux:badge>
+                            @elseif($upload->valid_count === 0 && $upload->invalid_count > 0)
+                                <flux:badge color="red">{{ __('Invalid') }}</flux:badge>
+                            @else
+                                <flux:badge color="orange">{{ __('Partially Valid') }}</flux:badge>
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell>
                             @if($upload->date_from->isSameDay($upload->date_to))
                                 {{ $upload->date_from->format('d.m.Y') }}
                             @else
                                 {{ $upload->date_from->format('d.m.Y') }} - {{ $upload->date_to->format('d.m.Y') }}
                             @endif
                         </flux:table.cell>
+                        <flux:table.cell>{{ $upload->created_at->format('d.m.Y H:i') }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->uploadedBy->name }}</flux:table.cell>
                         <flux:table.cell align="end" class="space-x-2">
                             @if($upload->invalid_count > 0)

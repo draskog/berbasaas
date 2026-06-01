@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['company_id', 'product_id', 'uploaded_by', 'original_filename', 'record_count', 'date_from', 'date_to'])]
+#[Fillable(['company_id', 'product_id', 'uploaded_by', 'original_filename', 'record_count', 'date_from', 'date_to', 'resolved_at'])]
 class HarvestUpload extends Model
 {
     use HasFactory;
@@ -16,6 +16,7 @@ class HarvestUpload extends Model
     protected $casts = [
         'date_from' => 'date',
         'date_to' => 'date',
+        'resolved_at' => 'datetime',
     ];
 
     public function company(): BelongsTo
