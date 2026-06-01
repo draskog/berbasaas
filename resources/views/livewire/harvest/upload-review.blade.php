@@ -460,7 +460,7 @@ class extends Component
                             @if($stats['has_tare'])
                                 <flux:field>
                                     <flux:label>{{ __('Tare') }}</flux:label>
-                                    <flux:input wire:model="bulkTare" type="number" step="0.001" min="0" placeholder="0.000" size="sm" class="w-32"/>
+                                    <flux:input wire:model="bulkTare" type="number" step="0.001" min="0" placeholder="0,000" size="sm" class="w-32"/>
                                     <flux:error name="bulkTare"/>
                                 </flux:field>
                             @endif
@@ -512,14 +512,14 @@ class extends Component
                                             type="number"
                                             step="0.001"
                                             min="0"
-                                            placeholder="0.000"
+                                            placeholder="0,000"
                                             size="sm"
                                             class="w-28"
                                         />
                                         <flux:tooltip.content>
                                             @php
                                                 $suggestedTare = $this->suggestedTaresByRecordId[$record->id]
-                                                    ?? (count($this->validTares) > 0 ? $this->validTares[0] : null);
+                                                    ?? (count($this->validTares) > 0 ? $this->validTares[count($this->validTares) - 1] : null);
                                             @endphp
                                             @if($suggestedTare !== null)
                                                 <div class="font-semibold text-green-400 cursor-pointer hover:opacity-80 px-1 py-0.5 rounded"
