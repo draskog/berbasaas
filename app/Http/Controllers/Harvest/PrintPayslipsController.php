@@ -58,7 +58,7 @@ class PrintPayslipsController extends Controller
             $payslipRows = [];
             $totalWeight = 0;
             $totalEarnings = 0;
-            $pricesByDate = [];
+            $weightByDate = []; // Track weight and price by date
 
             foreach ($records as $record) {
                 $price = $prices->get((string) $record->product_id)?->price_per_kg;
@@ -76,16 +76,30 @@ class PrintPayslipsController extends Controller
                 $totalWeight += $record->weight;
                 $totalEarnings += $earnings;
 
-                if ($price !== null) {
-                    $date = $record->weighed_at->format('Y-m-d');
-                    if (! isset($pricesByDate[$date])) {
-                        $pricesByDate[$date] = $price;
-                    }
+                // Group by date for weighted price calculation
+                $date = $record->weighed_at->format('Y-m-d');
+                if (! isset($weightByDate[$date])) {
+                    $weightByDate[$date] = ['weight' => 0, 'price' => null];
+                }
+                $weightByDate[$date]['weight'] += $record->weight;
+                if ($weightByDate[$date]['price'] === null && $price !== null) {
+                    $weightByDate[$date]['price'] = $price;
                 }
             }
 
-            // Calculate average price weighted by date occurrences
-            $avgPrice = ! empty($pricesByDate) ? round(array_sum($pricesByDate) / count($pricesByDate), 4) : null;
+            // Calculate weighted average price: sum(weight * price) / total weight
+            $avgPrice = null;
+            if ($totalWeight > 0) {
+                $weightedPriceSum = 0;
+                foreach ($weightByDate as $dateData) {
+                    if ($dateData['price'] !== null) {
+                        $weightedPriceSum += $dateData['weight'] * $dateData['price'];
+                    }
+                }
+                if ($weightedPriceSum > 0) {
+                    $avgPrice = round($weightedPriceSum / $totalWeight, 4);
+                }
+            }
 
             $harvesters[] = [
                 'number' => $number,

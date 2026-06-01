@@ -88,7 +88,7 @@ new class extends Component
 
         $totalWeight = 0;
         $totalEarnings = 0;
-        $pricesByDate = [];
+        $weightByPrice = []; // Track total weight for each price
 
         foreach ($groupedByDate as $date => $dateRecords) {
             $dateWeight = 0;
@@ -103,14 +103,25 @@ new class extends Component
 
             if ($datePrice !== null) {
                 $totalEarnings += round($dateWeight * $datePrice, 2);
-                $pricesByDate[$date] = $datePrice;
+                // Track cumulative weight for each price
+                if (! isset($weightByPrice[$datePrice])) {
+                    $weightByPrice[$datePrice] = 0;
+                }
+                $weightByPrice[$datePrice] += $dateWeight;
             }
 
             $totalWeight += $dateWeight;
         }
 
-        // Calculate average price weighted by date occurrences
-        $avgPrice = ! empty($pricesByDate) ? round(collect($pricesByDate)->avg(), 4) : null;
+        // Calculate weighted average price: sum(weight * price) / total weight
+        $avgPrice = null;
+        if ($totalWeight > 0 && ! empty($weightByPrice)) {
+            $weightedPriceSum = 0;
+            foreach ($weightByPrice as $price => $weight) {
+                $weightedPriceSum += $price * $weight;
+            }
+            $avgPrice = round($weightedPriceSum / $totalWeight, 4);
+        }
 
         return [
             'buckets' => count($data),
