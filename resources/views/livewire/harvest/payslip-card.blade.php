@@ -193,7 +193,7 @@ new class extends Component {
                 {{ $this->harvesterInfo()['name'] }}</flux:heading>
         </div>
         <div class="text-right">
-            <flux:text size="sm" class="text-gray-500 dark:text-zinc-400">{{ auth()->user()->company->name }}</flux:text>
+            <flux:text size="lg" class="text-gray-500 dark:text-zinc-400">{{ auth()->user()->company->name }}</flux:text>
         </div>
     </div>
 
@@ -202,38 +202,43 @@ new class extends Component {
             <flux:text>{{ __('No data for this harvester in the selected date range.') }}</flux:text>
         </div>
     @else
-        <!-- Summary row -->
-        <div class="pb-4 mb-6">
-            <div class="flex flex-wrap gap-8 text-sm font-semibold">
-                <div>
-                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Total buckets') }}</flux:text>
-                    <flux:text size="md" class="text-right">{{ $this->payslipTotals['buckets'] }}</flux:text>
-                </div>
-                <div>
-                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Total weight harvested') }}</flux:text>
-                    <flux:text size="md" class="text-right">{{ number_format($this->payslipTotals['weight'], 2, ',', '.') }} kg</flux:text>
-                </div>
-                <div>
-                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Price per kg') }}</flux:text>
-                    <flux:text size="md" class="text-right">
-                        @if ($this->payslipTotals['price_per_kg'])
-                            {{ number_format($this->payslipTotals['price_per_kg'], 0, ',', '.') }}
-                        @else
-                            —
-                        @endif
-                    </flux:text>
-                </div>
-                <div>
-                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Total earnings') }}</flux:text>
-                    <flux:text size="lg" class="font-bold text-right">{{ number_format($this->payslipTotals['earnings'], 0, ',', '.') }}</flux:text>
-                </div>
-            </div>
+        <!-- Summary cards -->
+        <div class="grid gap-3 grid-cols-4 mb-6">
+            <flux:card class="h-full p-3 hover:border-blue-300 transition-colors">
+                <flux:heading size="xs">{{ __('Total buckets') }}</flux:heading>
+                <flux:text class="text-lg font-bold mt-1">
+                    {{ $this->payslipTotals['buckets'] }}
+                </flux:text>
+            </flux:card>
+            <flux:card class="h-full p-3 hover:border-blue-300 transition-colors">
+                <flux:heading size="xs">{{ __('Total weight') }}</flux:heading>
+                <flux:text class="text-lg font-bold mt-1">
+                    {{ number_format($this->payslipTotals['weight'], 2, ',', '.') }}
+                </flux:text>
+                <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mt-0.5">{{ __('kg') }}</flux:text>
+            </flux:card>
+            <flux:card class="h-full p-3 hover:border-blue-300 transition-colors">
+                <flux:heading size="xs">{{ __('Price per kg') }}</flux:heading>
+                <flux:text class="text-lg font-bold mt-1">
+                    @if ($this->payslipTotals['price_per_kg'])
+                        {{ number_format($this->payslipTotals['price_per_kg'], 0, ',', '.') }}
+                    @else
+                        —
+                    @endif
+                </flux:text>
+            </flux:card>
+            <flux:card class="h-full p-3 hover:border-blue-300 transition-colors">
+                <flux:heading size="xs">{{ __('Total earnings') }}</flux:heading>
+                <flux:text class="text-lg font-bold mt-1">
+                    {{ number_format($this->payslipTotals['earnings'], 0, ',', '.') }}
+                </flux:text>
+            </flux:card>
         </div>
 
         <!-- Multi-column detail table -->
-        <div class="mb-12 grid gap-8 {{ $this->gridClass }}">
+        <div class="mb-12 grid gap-4 {{ $this->gridClass }}">
             @foreach ($this->chunkedData as $chunk)
-                <flux:table>
+                <flux:table class="[&_th]:py-2 [&_th]:px-2 [&_td]:py-1 [&_td]:px-2 [&_th]:text-xs [&_td]:text-xs">
                     <flux:table.columns>
                         <flux:table.column>{{ __('Date') }}</flux:table.column>
                         <flux:table.column>{{ __('Weight (kg)') }}</flux:table.column>
@@ -249,20 +254,6 @@ new class extends Component {
                     </flux:table.rows>
                 </flux:table>
             @endforeach
-        </div>
-
-        <!-- Totals summary -->
-        <div class="border-t-2 border-gray-200 pt-4">
-            <div class="flex flex-wrap gap-6 text-sm font-semibold">
-                <div>
-                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400">{{ __('Total buckets') }}</flux:text>
-                    <flux:text size="md" class="text-right">{{ $this->payslipTotals['buckets'] }}</flux:text>
-                </div>
-                <div>
-                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400">{{ __('Total weight harvested') }}</flux:text>
-                    <flux:text size="md" class="text-right">{{ number_format($this->payslipTotals['weight'], 2, ',', '.') }} kg</flux:text>
-                </div>
-            </div>
         </div>
     @endif
 </flux:card>

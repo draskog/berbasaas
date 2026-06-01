@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\HarvestRecord;
+use App\Models\HarvesterAssignment;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -28,6 +29,8 @@ class extends Component
 
     public string|array|null $dateRangeValue = null;
 
+    public string $searchHarvesterName = '';
+
     #[Computed]
     public function availableYears()
     {
@@ -54,10 +57,34 @@ class extends Component
             $query->whereDate('weighed_at', '<=', $this->dateTo);
         }
 
-        return $query->distinct()
+        $harvesterNumbers = $query->distinct()
             ->pluck('harvester_number')
             ->sort()
             ->values();
+
+        if (! $this->searchHarvesterName) {
+            return $harvesterNumbers;
+        }
+
+        $search = strtolower($this->searchHarvesterName);
+        $companyId = auth()->user()->company_id;
+
+        return $harvesterNumbers->filter(function ($number) use ($search, $companyId) {
+            $assignment = HarvesterAssignment::where('company_id', $companyId)
+                ->where('year', $this->selectedYear)
+                ->where('number', $number)
+                ->with('harvester')
+                ->first();
+
+            if (! $assignment || ! $assignment->harvester) {
+                return false;
+            }
+
+            $name = strtolower($assignment->harvester->name);
+            $prefix = strtolower($assignment->harvester->prefix ?? '');
+
+            return str_contains($name, $search) || str_contains($prefix, $search);
+        });
     }
 
     #[Computed]
@@ -216,6 +243,13 @@ class extends Component
                 –
                 {{ $dateTo ? Carbon::parse($dateTo)->isoFormat('D MMM YYYY') : '—' }}
             </flux:button>
+            <flux:input
+                wire:model.live="searchHarvesterName"
+                type="text"
+                placeholder="{{ __('Search harvester name...') }}"
+                icon="magnifying-glass"
+                clearable
+            />
         </div>
         <div class="space-y-8">
             @foreach ($this->harvesterNumbers as $harvesterNumber)
