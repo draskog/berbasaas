@@ -360,7 +360,7 @@ class extends Component {
 
         try {
             $path = $this->importedFile->getRealPath();
-            $file = fopen($path, 'r');
+            $file = fopen($path, 'rb');
 
             if (! $file) {
                 throw new \Exception(__('Could not open file.'));
