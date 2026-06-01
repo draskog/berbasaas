@@ -118,8 +118,8 @@ class extends Component {
         }
 
         $query->when($this->search !== '', fn($q) => $q->where(fn($q) => $q
-            ->where('harvesters.name', 'like', "%{$this->search}%")
-            ->orWhere(\DB::raw('CAST(harvester_assignments.number AS CHAR)'), 'like', "%{$this->search}%")
+            ->where('harvesters.name', 'like', "%$this->search%")
+            ->orWhere(DB::raw('CAST(harvester_assignments.number AS CHAR)'), 'like', "%$this->search%")
         ));
 
         $sortColumn = match ($this->sortBy) {
@@ -363,7 +363,7 @@ class extends Component {
             $file = fopen($path, 'rb');
 
             if (! $file) {
-                throw new \Exception(__('Could not open file.'));
+                throw new RuntimeException(__('Could not open file.'));
             }
 
             fgets($file);
@@ -431,7 +431,7 @@ class extends Component {
             );
 
             $this->dispatch('$refresh');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Flux::toast(text: __('Error importing harvesters: :message', ['message' => $e->getMessage()]), variant: 'danger');
         }
     }
