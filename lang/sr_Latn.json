@@ -207,6 +207,7 @@
     "Harvest settings": "Podešavanja berbe",
     "Harvest settings updated.": "Podešavanja berbe su ažurirana.",
     "Harvester": "Berač",
+    "Harvester #": "Berač br.",
     "Harvester # (for harvester errors)": "Broj berača (za greške berača)",
     "Harvester #:number": "Berač br. :number",
     "Harvester :attribute does not exist for year :year.": "Berač :attribute ne postoji za godinu :year.",

@@ -7,8 +7,7 @@ use Carbon\Carbon;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 
-new class extends Component
-{
+new class extends Component {
     public int $harvesterNumber;
 
     public int $year;
@@ -17,7 +16,7 @@ new class extends Component
 
     public ?string $dateTo = null;
 
-    public function harvesterInfo(): array
+    public function harvesterInfo (): array
     {
         $assignment = HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->year)
@@ -31,17 +30,17 @@ new class extends Component
         ];
     }
 
-    private function priceForRecord(HarvestRecord $record): ?float
+    private function priceForRecord (HarvestRecord $record): ?float
     {
         return HarvestPrice::where('company_id', auth()->user()->company_id)
             ->where('product_id', $record->product_id)
             ->where('effective_from', '<=', $record->weighed_at->format('Y-m-d'))
-            ->where(fn ($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $record->weighed_at->format('Y-m-d')))
+            ->where(fn($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $record->weighed_at->format('Y-m-d')))
             ->value('price_per_kg');
     }
 
     #[Computed]
-    public function payslipData(): array
+    public function payslipData (): array
     {
         $query = HarvestRecord::where('company_id', auth()->user()->company_id)
             ->where('harvester_number', $this->harvesterNumber)
@@ -76,7 +75,7 @@ new class extends Component
     }
 
     #[Computed]
-    public function payslipTotals(): array
+    public function payslipTotals (): array
     {
         $data = $this->payslipData;
         if (empty($data)) {
@@ -84,7 +83,7 @@ new class extends Component
         }
 
         // Group by date and aggregate
-        $groupedByDate = collect($data)->groupBy(fn ($r) => Carbon::parse($r['datetime'])->format('Y-m-d'));
+        $groupedByDate = collect($data)->groupBy(fn($r) => Carbon::parse($r['datetime'])->format('Y-m-d'));
 
         $totalWeight = 0;
         $totalEarnings = 0;
@@ -132,7 +131,7 @@ new class extends Component
     }
 
     #[Computed]
-    public function chunkedData(): array
+    public function chunkedData (): array
     {
         $data = $this->payslipData;
         if (empty($data)) {
@@ -154,7 +153,7 @@ new class extends Component
     }
 
     #[Computed]
-    public function gridClass(): string
+    public function gridClass (): string
     {
         $count = count($this->chunkedData);
 
@@ -165,7 +164,7 @@ new class extends Component
         };
     }
 
-    public function placeholder(): string
+    public function placeholder (): string
     {
         return <<<'HTML'
             <flux:card class="p-4 print:border-0 print:bg-white print:shadow-none shadow-sm">
@@ -187,7 +186,7 @@ new class extends Component
     <!-- Header: Harvester left, Company right -->
     <div class="border-b-2 border-blue-200 pb-4 dark:border-blue-900 flex justify-between items-start print:border-b print:border-gray-200 print:pb-2 mb-4 print:mb-2">
         <div>
-            <flux:heading size="lg">#{{ $this->harvesterNumber }}
+            <flux:heading size="lg">{{ __('Harvester #') }} {{ $this->harvesterNumber }} -
                 @if ($this->harvesterInfo()['prefix'])
                     <span class="font-normal italic text-gray-500 dark:text-zinc-400">{{ $this->harvesterInfo()['prefix'] }}</span>
                 @endif
