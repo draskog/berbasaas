@@ -34,11 +34,11 @@
                 <!-- Summary block -->
                 <div class="payslip-summary">
                     <div>
-                        <div class="payslip-summary-label">{{ __('Ukupna težina ubrano') }}</div>
+                        <div class="payslip-summary-label">{{ __('Total weight harvested') }}</div>
                         <div class="payslip-summary-value">{{ number_format($harvester['totals']['weight'], 2, '.', '') }} kg</div>
                     </div>
                     <div>
-                        <div class="payslip-summary-label">{{ __('Cena po kg') }}</div>
+                        <div class="payslip-summary-label">{{ __('Price per kg') }}</div>
                         <div class="payslip-summary-value">
                             @if ($harvester['totals']['price_per_kg'])
                                 {{ number_format($harvester['totals']['price_per_kg'], 0, '.', '') }}
@@ -48,7 +48,7 @@
                         </div>
                     </div>
                     <div>
-                        <div class="payslip-summary-label">{{ __('Ukupna zarada') }}</div>
+                        <div class="payslip-summary-label">{{ __('Total earnings') }}</div>
                         <div class="payslip-summary-value earnings">{{ number_format($harvester['totals']['earnings'], 0, '.', '') }}</div>
                     </div>
                 </div>
@@ -63,8 +63,8 @@
                         <table class="payslip-table">
                             <thead>
                                 <tr>
-                                    <th>{{ __('Datum') }}</th>
-                                    <th class="text-right">{{ __('Tezina (kg)') }}</th>
+                                    <th>{{ __('Date') }}</th>
+                                    <th class="text-right">{{ __('Weight (kg)') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -81,11 +81,11 @@
                     <!-- Totals summary with spacing -->
                     <div class="payslip-totals-summary">
                         <div class="payslip-totals-item">
-                            <div class="payslip-totals-label">{{ __('Ukupno gajbica') }}:</div>
+                            <div class="payslip-totals-label">{{ __('Total buckets') }}:</div>
                             <div class="payslip-totals-value">{{ $harvester['totals']['buckets'] }}</div>
                         </div>
                         <div class="payslip-totals-item">
-                            <div class="payslip-totals-label">{{ __('Ukupna težina') }}:</div>
+                            <div class="payslip-totals-label">{{ __('Total weight') }}:</div>
                             <div class="payslip-totals-value">{{ number_format($harvester['totals']['weight'], 2, '.', '') }}</div>
                         </div>
                     </div>

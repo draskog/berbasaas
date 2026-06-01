@@ -206,11 +206,11 @@ new class extends Component
         <div class="border-b-2 border-green-200 pb-4 dark:border-green-900 mb-6 print:border-b print:border-gray-200 print:pb-2 print:mb-4">
             <div class="flex flex-wrap gap-8 text-sm font-semibold print:gap-6">
                 <div>
-                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Ukupna težina ubrano') }}</flux:text>
+                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Total weight harvested') }}</flux:text>
                     <flux:text size="md">{{ number_format($this->payslipTotals['weight'], 2, ',', '.') }} kg</flux:text>
                 </div>
                 <div>
-                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Cena po kg') }}</flux:text>
+                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Price per kg') }}</flux:text>
                     <flux:text size="md">
                         @if ($this->payslipTotals['price_per_kg'])
                             {{ number_format($this->payslipTotals['price_per_kg'], 0, ',', '.') }}
@@ -220,7 +220,7 @@ new class extends Component
                     </flux:text>
                 </div>
                 <div>
-                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Ukupna zarada') }}</flux:text>
+                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mb-1">{{ __('Total earnings') }}</flux:text>
                     <flux:text size="md">{{ number_format($this->payslipTotals['earnings'], 0, ',', '.') }}</flux:text>
                 </div>
             </div>
@@ -231,8 +231,8 @@ new class extends Component
             @foreach ($this->chunkedData as $chunk)
                 <flux:table>
                     <flux:table.columns>
-                        <flux:table.column>{{ __('Datum') }}</flux:table.column>
-                        <flux:table.column>{{ __('Tezina (kg)') }}</flux:table.column>
+                        <flux:table.column>{{ __('Date') }}</flux:table.column>
+                        <flux:table.column>{{ __('Weight (kg)') }}</flux:table.column>
                     </flux:table.columns>
 
                     <flux:table.rows>
@@ -251,11 +251,11 @@ new class extends Component
         <div class="border-t-2 border-gray-200 pt-4 print:border-t print:border-gray-200 print:pt-6">
             <div class="flex flex-wrap gap-6 text-sm font-semibold print:gap-8">
                 <div>
-                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400">{{ __('Ukupno gabica') }}</flux:text>
+                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400">{{ __('Total buckets') }}</flux:text>
                     <flux:text size="md">{{ $this->payslipTotals['buckets'] }}</flux:text>
                 </div>
                 <div>
-                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400">{{ __('Ukupna težina ubrano') }}</flux:text>
+                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400">{{ __('Total weight harvested') }}</flux:text>
                     <flux:text size="md">{{ number_format($this->payslipTotals['weight'], 2, ',', '.') }} kg</flux:text>
                 </div>
             </div>
