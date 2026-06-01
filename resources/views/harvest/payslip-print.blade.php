@@ -75,13 +75,19 @@
                                     </tr>
                                 @endforeach
                             </tbody>
-                            <tfoot>
-                                <tr class="totals-row">
-                                    <td class="totals-label">{{ __('Total Weight') }}:</td>
-                                    <td class="text-right">{{ number_format($harvester['totals']['weight'], 3, '.', '') }}</td>
-                                </tr>
-                            </tfoot>
                         </table>
+                    </div>
+
+                    <!-- Totals summary with spacing -->
+                    <div class="payslip-totals-summary">
+                        <div class="payslip-totals-item">
+                            <div class="payslip-totals-label">{{ __('Ukupno gabica') }}:</div>
+                            <div class="payslip-totals-value">{{ $harvester['totals']['buckets'] }}</div>
+                        </div>
+                        <div class="payslip-totals-item">
+                            <div class="payslip-totals-label">{{ __('Ukupna težina') }}:</div>
+                            <div class="payslip-totals-value">{{ number_format($harvester['totals']['weight'], 2, '.', '') }}</div>
+                        </div>
                     </div>
                 @else
                     <div class="no-data">

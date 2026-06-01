@@ -227,7 +227,7 @@ new class extends Component
         </div>
 
         <!-- Multi-column detail table -->
-        <div class="mb-4 grid gap-8 {{ $this->gridClass }}">
+        <div class="mb-12 grid gap-8 {{ $this->gridClass }}">
             @foreach ($this->chunkedData as $chunk)
                 <flux:table>
                     <flux:table.columns>
@@ -245,6 +245,20 @@ new class extends Component
                     </flux:table.rows>
                 </flux:table>
             @endforeach
+        </div>
+
+        <!-- Totals summary -->
+        <div class="border-t-2 border-gray-200 pt-4 print:border-t print:border-gray-200 print:pt-6">
+            <div class="flex flex-wrap gap-6 text-sm font-semibold print:gap-8">
+                <div>
+                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400">{{ __('Ukupno gabica') }}</flux:text>
+                    <flux:text size="md">{{ $this->payslipTotals['buckets'] }}</flux:text>
+                </div>
+                <div>
+                    <flux:text size="xs" class="text-gray-500 dark:text-zinc-400">{{ __('Ukupna težina ubrano') }}</flux:text>
+                    <flux:text size="md">{{ number_format($this->payslipTotals['weight'], 2, ',', '.') }} kg</flux:text>
+                </div>
+            </div>
         </div>
     @endif
 </flux:card>

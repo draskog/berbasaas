@@ -77,7 +77,6 @@ html, body {
     background-color: rgba(0, 0, 0, 0.75);
     display: flex;
     align-items: center;
-    justify-content: center;
     color: white;
     font-size: 18px;
     z-index: 9999;
@@ -165,6 +164,27 @@ html, body {
 .payslip-summary-value.earnings {
     font-weight: 600;
     font-size: 14px;
+}
+
+.payslip-totals-summary {
+    margin-top: 15mm;
+    display: flex;
+    gap: 30mm;
+    font-size: 11px;
+}
+
+.payslip-totals-item {
+    display: flex;
+    gap: 8px;
+}
+
+.payslip-totals-label {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.payslip-totals-value {
+    color: #1f2937;
 }
 
 .payslip-header-spacing {
@@ -269,7 +289,6 @@ html, body {
         width: 100%;
         display: flex;
         flex-direction: column;
-        align-items: center;
         gap: 1mm;
     }
 
