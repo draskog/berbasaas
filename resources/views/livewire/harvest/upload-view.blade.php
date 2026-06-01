@@ -5,6 +5,7 @@ use App\Models\HarvestRecord;
 use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
 use Flux\Flux;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -76,7 +77,7 @@ class extends Component
     }
 
     #[Computed]
-    public function harvestersByNumber()
+    public function harvestersByNumber(): Collection
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->year)
@@ -139,8 +140,13 @@ class extends Component
     </flux:header>
 
     <div class="p-6">
-        <flux:tabs wire:model.live="activeTab">
-            <flux:tabs.tab name="staging" icon="inbox-stack" label="{{ __('Staging Records') }}">
+        <flux:tab.group>
+            <flux:tabs wire:model.live="activeTab">
+                <flux:tab name="staging" icon="inbox-stack">{{ __('Staging Records') }}</flux:tab>
+                <flux:tab name="harvest" icon="check-circle">{{ __('Harvest Records') }}</flux:tab>
+            </flux:tabs>
+
+            <flux:tab.panel name="staging">
                 <div class="space-y-6 mt-6">
                     <div class="flex items-center justify-between gap-4">
                         <flux:input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search by harvester number...') }}" icon="magnifying-glass" class="flex-1"/>
@@ -221,9 +227,9 @@ class extends Component
                         </flux:table.rows>
                     </flux:table>
                 </div>
-            </flux:tabs.tab>
+            </flux:tab.panel>
 
-            <flux:tabs.tab name="harvest" icon="check-circle" label="{{ __('Harvest Records') }}">
+            <flux:tab.panel name="harvest">
                 <div class="space-y-6 mt-6">
                     <div class="flex items-center justify-between gap-4">
                         <flux:input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search by harvester number or name...') }}" icon="magnifying-glass" class="flex-1"/>
@@ -311,7 +317,7 @@ class extends Component
                         </flux:table.rows>
                     </flux:table>
                 </div>
-            </flux:tabs.tab>
-        </flux:tabs>
+            </flux:tab.panel>
+        </flux:tab.group>
     </div>
 </flux:main>

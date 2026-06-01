@@ -48,7 +48,6 @@ class extends Component {
     public string $search = '';
 
 
-
     #[Session]
     public int $selectedYear = 0;
     #[Session]
@@ -237,11 +236,11 @@ class extends Component {
             ]);
 
             if ($skippedCount > 0) {
-                $message .= ' ' . __('(:skipped duplicate record(s) skipped)', ['skipped' => $skippedCount]);
+                $message .= ' '.__('(:skipped duplicate record(s) skipped)', ['skipped' => $skippedCount]);
             }
 
             if ($invalidCount > 0) {
-                $message .= ' ' . __('(:invalid invalid record(s) require review)', ['invalid' => $invalidCount]);
+                $message .= ' '.__('(:invalid invalid record(s) require review)', ['invalid' => $invalidCount]);
             }
 
             $variant = 'success';
@@ -446,10 +445,6 @@ class extends Component {
     </flux:header>
 
     <div class="p-6">
-        <div class="flex items-center justify-between mb-6 gap-4">
-            <flux:input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search by filename...') }}" icon="magnifying-glass" class="flex-1"/>
-        </div>
-
         <div class="space-y-4 mb-6">
             <div>
                 <flux:radio.group wire:model.live="selectedYear" label="{{ __('Year') }}" variant="pills">
@@ -479,13 +474,15 @@ class extends Component {
                     <flux:radio value="reseno" label="{{ __('Resolved') }}"/>
                 </flux:radio.group>
             </div>
-
-            <div class="flex justify-between items-center">
+            <div>
                 <flux:radio.group wire:model.live="selectedResolved" label="{{ __('Resolution Status') }}" variant="pills">
                     <flux:radio value="all" label="{{ __('All') }}"/>
                     <flux:radio value="resolved" label="{{ __('Resolved') }}"/>
                     <flux:radio value="unresolved" label="{{ __('Unresolved') }}"/>
                 </flux:radio.group>
+            </div>
+            <div class="flex justify-between items-center">
+                <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search by filename...') }}" icon="magnifying-glass" class="w-72!"/>
                 <flux:select wire:model.live="perPage" size="sm" class="w-28">
                     <flux:select.option value="25">25</flux:select.option>
                     <flux:select.option value="50">50</flux:select.option>

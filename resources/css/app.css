@@ -55,7 +55,7 @@
 }
 
 [data-flux-label] {
-    @apply !mb-0 !leading-tight;
+    @apply mb-0! leading-tight!;
 }
 
 input:focus[data-flux-control],
@@ -67,14 +67,14 @@ select:focus[data-flux-control] {
 /* Show sidebar labels when collapsed */
 @layer base {
     [data-flux-sidebar-collapsed-desktop] [data-flux-sidebar-item] {
-        @apply !w-auto !justify-start !px-3;
+        @apply w-auto! justify-start! px-3!;
     }
 
     [data-flux-sidebar-collapsed-desktop] [data-flux-sidebar-item] [data-content] {
-        @apply !block !flex-1;
+        @apply block! flex-1!;
     }
 
     [data-flux-sidebar-collapsed-desktop] svg[class*="size-"] {
-        @apply !flex-shrink-0;
+        @apply shrink-0!;
     }
 }
