@@ -214,10 +214,12 @@ class extends Component {
             return;
         }
 
+        $year = $this->selectedYear ?: now()->year;
+
         // Check if assignment already exists for this year and number
         if (HarvesterAssignment::where([
             'company_id' => auth()->user()->company_id,
-            'year' => $this->selectedYear,
+            'year' => $year,
             'number' => $this->newNumber,
         ])->exists()) {
             Flux::toast(text: __('An assignment with this number already exists for this year.'), variant: 'warning');
@@ -228,7 +230,7 @@ class extends Component {
         HarvesterAssignment::create([
             'company_id' => auth()->user()->company_id,
             'harvester_id' => $this->newHarvesterId,
-            'year' => $this->selectedYear,
+            'year' => $year,
             'number' => $this->newNumber,
         ]);
 
@@ -547,7 +549,7 @@ class extends Component {
 
     <flux:modal name="create-assignment" wire:model="showCreateAssignmentModal">
         <flux:heading>{{ __('Add Harvester Assignment') }}</flux:heading>
-        <flux:subheading>{{ __('Assign a harvester for :year', ['year' => $this->selectedYear]) }}</flux:subheading>
+        <flux:subheading>{{ __('Assign a harvester for :year', ['year' => $this->selectedYear ?: now()->year]) }}</flux:subheading>
 
         <div class="mt-6 space-y-4">
             <flux:field>
