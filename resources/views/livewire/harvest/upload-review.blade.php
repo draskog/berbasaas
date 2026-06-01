@@ -447,38 +447,26 @@ class extends Component
         </a>
     </flux:header>
 
-    <div class="p-6">
+    <div class="p-6 space-y-6">
         @if(!$this->hasAnyInvalidRecords)
             <flux:callout type="success" icon="check-circle" title="{{ __('All Clear') }}">
                 {{ __('All records have been corrected.') }}
             </flux:callout>
         @else
-            @if(!$this->invalidRecords->isEmpty())
-                <div class="flex items-center justify-between gap-4 mb-6">
-                    <flux:input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search by harvester number...') }}" icon="magnifying-glass" class="flex-1"/>
-                    <flux:select wire:model.live="perPage" size="sm" class="w-28">
-                        <flux:select.option value="25">25</flux:select.option>
-                        <flux:select.option value="50">50</flux:select.option>
-                        <flux:select.option value="100">100</flux:select.option>
-                        <flux:select.option value="0">{{ __('All') }}</flux:select.option>
-                    </flux:select>
-                </div>
-            @endif
-
-            <div class="mb-6">
+            <div>
                 <flux:radio.group wire:model.live="selectedReason" label="{{ __('Reason') }}" variant="pills">
                     <flux:radio value="all" label="{{ __('All') }}"/>
                     <flux:radio value="harvester_not_found" label="{{ __('Harvester not found') }}"/>
                     <flux:radio value="tare_out_of_range" label="{{ __('Tare out of range') }}"/>
                 </flux:radio.group>
             </div>
-            <div class="mb-6">
+            <div>
                 <flux:text variant="subtle">
                     {{ __(':count record(s) need correction', ['count' => $this->perPage > 0 ? $this->invalidRecords->total() : $this->invalidRecords->count()]) }}
                 </flux:text>
             </div>
 
-            <flux:callout type="info" icon="information-circle" class="mb-6">
+            <flux:callout type="info" icon="information-circle">
                 <div class="text-sm">
                     <div class="font-semibold mb-2">{{ __('How to Resolve') }}</div>
                     <div class="space-y-2">
@@ -497,14 +485,23 @@ class extends Component
                     {{ __('No records match this filter. Switch the filter above to see remaining errors.') }}
                 </flux:callout>
             @else
+                <div class="flex items-center justify-between gap-4">
+                    <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search by harvester number...') }}" icon="magnifying-glass" class="w-72!"/>
+                    <flux:select wire:model.live="perPage" size="sm" class="w-28">
+                        <flux:select.option value="25">25</flux:select.option>
+                        <flux:select.option value="50">50</flux:select.option>
+                        <flux:select.option value="100">100</flux:select.option>
+                        <flux:select.option value="0">{{ __('All') }}</flux:select.option>
+                    </flux:select>
+                </div>
                 @if(!empty($selectedIds))
                     @php $stats = $this->selectedReasonStats; $isMixed = $stats['has_harvester'] && $stats['has_tare']; @endphp
                     @if($isMixed)
-                        <flux:callout type="warning" icon="exclamation-triangle" class="mb-4">
+                        <flux:callout type="warning" icon="exclamation-triangle">
                             {{ __('Selected records have different error types (harvester and tare). Please filter by reason first.') }}
                         </flux:callout>
                     @else
-                        <div class="flex flex-wrap items-end gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 mb-4">
+                        <div class="flex flex-wrap items-end gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
                             <flux:text class="font-medium">{{ __(':count selected', ['count' => count($selectedIds)]) }}</flux:text>
                             @if($stats['has_harvester'])
                                 <flux:field>

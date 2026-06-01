@@ -74,8 +74,17 @@ class extends Component
         return HarvestRecord::where('upload_id', $this->upload->id)
             ->when($this->harvestCorrected === 'corrected', fn ($q) => $q->where('corrected', true))
             ->when($this->harvestCorrected === 'not_corrected', fn ($q) => $q->where('corrected', false))
-            ->when($this->search !== '', fn ($q) => $q->where('harvester_number', 'like', "%$this->search%")
-                ->orWhereHas('upload.product', fn ($sq) => $sq))
+            ->when($this->search !== '', fn ($q) => $q
+                ->where('harvester_number', 'like', "%$this->search%")
+                ->orWhereRaw("EXISTS (
+                    SELECT 1 FROM harvester_assignments ha
+                    JOIN harvesters h ON ha.harvester_id = h.id
+                    WHERE ha.number = harvest_records.harvester_number
+                    AND ha.company_id = harvest_records.company_id
+                    AND ha.year = ?
+                    AND h.name LIKE ?
+                )", [$this->year, "%$this->search%"])
+            )
             ->count();
     }
 
@@ -85,8 +94,17 @@ class extends Component
         $query = HarvestRecord::where('upload_id', $this->upload->id)
             ->when($this->harvestCorrected === 'corrected', fn ($q) => $q->where('corrected', true))
             ->when($this->harvestCorrected === 'not_corrected', fn ($q) => $q->where('corrected', false))
-            ->when($this->search !== '', fn ($q) => $q->where('harvester_number', 'like', "%$this->search%")
-                ->orWhereHas('upload.product', fn ($sq) => $sq))
+            ->when($this->search !== '', fn ($q) => $q
+                ->where('harvester_number', 'like', "%$this->search%")
+                ->orWhereRaw("EXISTS (
+                    SELECT 1 FROM harvester_assignments ha
+                    JOIN harvesters h ON ha.harvester_id = h.id
+                    WHERE ha.number = harvest_records.harvester_number
+                    AND ha.company_id = harvest_records.company_id
+                    AND ha.year = ?
+                    AND h.name LIKE ?
+                )", [$this->year, "%$this->search%"])
+            )
             ->orderBy($this->sortBy, $this->sortDirection);
 
         if ($this->perPage === 0) {
