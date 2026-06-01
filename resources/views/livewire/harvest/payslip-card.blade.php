@@ -83,11 +83,13 @@ new class extends Component
             return ['buckets' => 0, 'weight' => 0, 'earnings' => 0, 'price_per_kg' => null];
         }
 
+        $firstPriceRecord = collect($data)->first(fn ($r) => $r['price_per_kg'] !== null);
+
         return [
             'buckets' => count($data),
             'weight' => round(collect($data)->sum('weight'), 3),
             'earnings' => round(collect($data)->sum('earnings') ?? 0, 2),
-            'price_per_kg' => collect($data)->first(fn ($r) => $r['price_per_kg'] !== null)?['price_per_kg'],
+            'price_per_kg' => $firstPriceRecord ? $firstPriceRecord['price_per_kg'] : null,
         ];
     }
 
