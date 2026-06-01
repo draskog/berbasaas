@@ -209,7 +209,7 @@ class HarvestImportService
 
         // Get keys from harvest_records
         HarvestRecord::where('company_id', $companyId)
-            ->select('product_id', 'harvester_number', 'weighed_at')
+            ->select('product_id', 'harvester_number', 'weighed_at', 'sequence_number')
             ->each(function ($record) use (&$keys) {
                 $key = $this->generateRecordKeyFromModel($record);
                 $keys[$key] = true;
@@ -217,7 +217,7 @@ class HarvestImportService
 
         // Get keys from harvest_record_staging
         HarvestRecordStaging::where('company_id', $companyId)
-            ->select('product_id', 'harvester_number', 'weighed_at')
+            ->select('product_id', 'harvester_number', 'weighed_at', 'sequence_number')
             ->each(function ($record) use (&$keys) {
                 $key = $this->generateRecordKeyFromModel($record);
                 $keys[$key] = true;
