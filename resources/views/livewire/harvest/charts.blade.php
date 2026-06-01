@@ -244,7 +244,7 @@ class extends Component {
             ->groupBy('date')
             ->orderBy($this->chartDailySortBy, $this->chartDailySortDirection)
             ->get()
-            ->map(fn($row) => [
+            ->map(fn(object $row) => [
                 'date' => $row->date,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
@@ -292,12 +292,14 @@ class extends Component {
             ->groupBy('harvester_number')
             ->orderBy($this->chartHarvesterSortBy, $this->chartHarvesterSortDirection)
             ->get()
-            ->map(fn($row) => [
-                'number' => $row->harvester_number,
-                'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
-                'bucket_count' => $row->bucket_count,
-                'total_weight' => round($row->total_weight, 3),
-            ]);
+            ->map(function (object $row) {
+                return [
+                    'number' => $row->harvester_number,
+                    'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
+                    'bucket_count' => $row->bucket_count,
+                    'total_weight' => round($row->total_weight, 3),
+                ];
+            });
     }
 
     #[Computed]
@@ -322,7 +324,7 @@ class extends Component {
             ->groupBy('product_id')
             ->with('product')
             ->get()
-            ->map(fn($row) => [
+            ->map(fn(HarvestRecord $row) => [
                 'name' => $row->product->name,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
@@ -380,11 +382,11 @@ class extends Component {
             ->get();
 
         return [
-            'labels' => $data->map(fn($row) => $names[$row->harvester_number] ?? "#$row->harvester_number")->values()->toArray(),
+            'labels' => $data->map(fn(object $row) => $names[$row->harvester_number] ?? "#$row->harvester_number")->values()->toArray(),
             'datasets' => [
                 [
                     'label' => __('Total kg'),
-                    'data' => $data->map(fn($row) => round($row->total_weight, 2))->values()->toArray(),
+                    'data' => $data->map(fn(object $row) => round($row->total_weight, 2))->values()->toArray(),
                     'backgroundColor' => 'rgba(34, 197, 94, 0.8)',
                     'borderColor' => 'rgba(34, 197, 94, 1)',
                     'borderWidth' => 1,
@@ -433,6 +435,7 @@ class extends Component {
         $labels = [];
         $data = [];
 
+        /** @var HarvestRecord $record */
         foreach ($records as $record) {
             $cumulative += $record->weight;
             $labels[] = $record->weighed_at->format('d.m H:i');
@@ -497,7 +500,7 @@ class extends Component {
             ->orderByDesc('total_weight')
             ->limit(20)
             ->get()
-            ->map(fn($row) => [
+            ->map(fn(object $row) => [
                 'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
                 'total_weight' => round($row->total_weight, 2),
             ]);
