@@ -1,4 +1,7 @@
 :root {
+    --width: 210mm;
+    --height: 297mm;
+    --orientation: portrait;
     --color-mbox: rgba(0, 0, 0, 0.2);
     --margin: 4px;
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
@@ -7,18 +10,12 @@
     --color-marginBox: green;
 }
 
-[contenteditable]:focus {
-    outline: 0 solid transparent
-}
-
-[data-id="controls"] {
-    display: none
-}
-html{
+html {
     font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
     font-feature-settings: var(--default-font-feature-settings, normal);
     font-variation-settings: var(--default-font-variation-settings, normal);
 }
+
 @media screen {
     body {
         background-color: whitesmoke
@@ -27,7 +24,6 @@ html{
     .pagedjs_page {
         background-color: #fdfdfd;
         margin: calc(var(--margin) * 4) var(--margin);
-        flex: none;
         box-shadow: 0 0 0 1px var(--color-mbox)
     }
 
@@ -40,9 +36,11 @@ html{
         transform-origin: 0 0;
         margin: 0 auto
     }
+
     .pagedjs_pagebox {
         box-shadow: 0 0 0 1px var(--color-pageBox);
     }
+
     /* show the margin-box */
     .pagedjs_margin-top-left-corner-holder,
     .pagedjs_margin-top,
@@ -399,44 +397,3 @@ div.photo p {
         font-family: sans-serif
     }
 }
-
-.pagedjs_page .pagedjs_margin-footnote {
-    margin: 0.6em 0 0 0;
-    padding: 0.3em 0 0 0;
-    max-height: 10em;
-}
-
-.pagedjs_page .pagedjs_margin-top-center {
-    align-items: flex-end;
-    padding-bottom: 10mm
-}
-
-.pagedjs_page .pagedjs_margin-top-center > .pagedjs_margin-content > * {
-    display: block
-}
-
-.pagedjs_page .pagedjs_margin-top-center > .pagedjs_margin-content::after {
-    content: var(--string-booktitle)
-}
-
-
-.pagedjs_page.pagedjs_named_page.pagedjs_cover_page .pagedjs_margin-top-center {
-}
-
-.pagedjs_page.pagedjs_named_page.pagedjs_cover_page .pagedjs_margin-top-center > .pagedjs_margin-content > * {
-    display: none
-}
-
-.pagedjs_page.pagedjs_named_page.pagedjs_cover_page .pagedjs_margin-top-center > .pagedjs_margin-content::after {
-    content: none
-}
-
-.pagedjs_page.pagedjs_named_page.pagedjs_cover_page {
-}
-
-:root {
-    --width: 210mm;
-    --height: 297mm;
-    --orientation: portrait;
-}
-

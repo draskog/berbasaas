@@ -10,9 +10,10 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/css/app.css',
-                'resources/css/payslip-print.css',
                 'resources/js/app.js',
                 'resources/js/passkeys.js',
+                'resources/css/payslip-interface.css',
+                'resources/css/payslip-print.css',
                 'resources/js/paged.polyfill.js',
             ],
             refresh: true,

@@ -18,25 +18,67 @@
 <body>
 <div id="content">
     @foreach ($harvesters as $harvester)
-        <table class="payslip-header">
-            <tr>
-                <td colspan="2">
-                    {{ __('Harvester') }} #{{ $harvester['number'] }} {{ $harvester['name'] }}
-                    @if ($harvester['prefix'])
-                        ({{ $harvester['prefix'] }})
-                    @endif
-                </td>
-                <td>{{ $company->name }}</td>
-            </tr>
-            <tr>
-                <td colspan="3">{{ __('Period') }}: {{ Carbon\Carbon::parse($dateFrom)->format('d.m.Y') }} – {{ Carbon\Carbon::parse($dateTo)->format('d.m.Y') }}</td>
-            </tr>
-        </table>
+        <section class="px-2 payslip-page">
+            <table class="border-collapse m-0 w-full">
+                <tr>
+                    <td colspan="2" class="text-lg">
+                        {{ __('Harvester #') }} {{ $harvester['number'] }} <span class="ml-2 font-bold">{{ $harvester['name'] }}</span>
+                    </td>
+                    <td class="text-right">{{ $company->name }}</td>
+                </tr>
+                <tr class="mt-2">
+                    <td colspan="3" class="text-sm">{{ __('Period') }}: <strong>{{ Carbon\Carbon::parse($dateFrom)->format('d.m.Y') }} – {{ Carbon\Carbon::parse($dateTo)->format('d.m.Y') }}</strong>
+                    </td>
+                </tr>
+            </table>
+            <table class="mt-8 border-collapse m-0 w-full">
+                <tr>
+                    <td>{{ __('Total buckets') }}</td>
+                    <td>{{ __('Total weight') }}</td>
+                    <td>{{ __('Price per kg') }}</td>
+                    <td class="text-right font-semibold">{{ __('Total earnings') }}</td>
+                </tr>
+                <tr class="mt-2">
+                    <td>{{ $harvester['totals']['buckets'] }}</td>
+                    <td>{{ number_format($harvester['totals']['weight'], 2, ',', '') }} kg</td>
+                    <td>{{ $harvester['totals']['price_per_kg'] ?? '—' }}</td>
+                    <td class="text-right font-bold">{{ number_format($harvester['totals']['earnings'], 0, '', '') }}</td>
+                </tr>
+            </table>
+            @if (count($harvester['records']) > 0)
+                <div class="mt-8">
+                    <p>{{ __('Harvest Records') }} {{ __('for') }} {{ $harvester['name'] }}</p>
+                    <div class="text-sm grid grid-cols-4 gap-2">
+                        @php
+                            $records = $harvester['records'];
+                            $recordsPerColumn = 40;
+                            $columns = array_chunk($records, $recordsPerColumn);
+                        @endphp
+                        @foreach ($columns as $column)
+                            <div class="w-full text-center">
+                                <div class="grid grid-cols-2 gap-2 mb-2">
+                                    <span>{{ __('Date') }}</span>
+                                    <span>{{ __('Weight (kg)') }}</span>
+                                </div>
+                                @foreach ($column as $record)
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <span>{{ explode(' ', $record['datetime'])[0] }}</span>
+                                        <span>{{ number_format($record['weight'], 2, ',', '') }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @else
+                <p class="text-center">{{ __('No records found.') }}</p>
+            @endif
+        </section>
     @endforeach
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', async function() {
+    document.addEventListener('DOMContentLoaded', async function () {
         console.log('DOM loaded, waiting for Paged...');
 
         // Wait for Paged to be available
