@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('Payslips') }} - {{ $company->name }}</title>
+    <title>{{ __('Harvesters Payslips') }} - {{ $company->name }}</title>
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -46,33 +46,56 @@
                 </tr>
             </table>
             @if (count($harvester['records']) > 0)
-                <div class="mt-8">
-                    <p>{{ __('Harvest Records') }} {{ __('for') }} {{ $harvester['name'] }}</p>
-                    <div class="text-sm grid grid-cols-4 gap-2">
-                        @php
-                            $records = $harvester['records'];
-                            $recordsPerColumn = 40;
-                            $columns = array_chunk($records, $recordsPerColumn);
-                        @endphp
-                        @foreach ($columns as $column)
-                            <div class="w-full text-center">
-                                <div class="grid grid-cols-2 gap-2 mb-2">
-                                    <span>{{ __('Date') }}</span>
-                                    <span>{{ __('Weight (kg)') }}</span>
-                                </div>
-                                @foreach ($column as $record)
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <span>{{ explode(' ', $record['datetime'])[0] }}</span>
-                                        <span>{{ number_format($record['weight'], 2, ',', '') }}</span>
+                @php
+                    $records = $harvester['records'];
+                    $recordsPerPage = 40*4;
+                    $pageChunks = array_chunk($records, $recordsPerPage);
+                @endphp
+                @foreach ($pageChunks as $pageIndex => $pageRecords)
+                    @if ($pageIndex > 0)
+                        <div>
+                            <table class="border-collapse m-0 w-full">
+                                <tr>
+                                    <td colspan="2" class="text-lg">
+                                        {{ __('Harvester #') }} {{ $harvester['number'] }} <span class="ml-2 font-bold">{{ $harvester['name'] }}</span>
+                                    </td>
+                                    <td class="text-right">{{ $company->name }}</td>
+                                </tr>
+                                <tr class="mt-2">
+                                    <td colspan="3" class="text-sm">{{ __('Period') }}: <strong>{{ Carbon\Carbon::parse($dateFrom)->format('d.m.Y') }} – {{ Carbon\Carbon::parse($dateTo)->format('d.m.Y') }}</strong>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="mt-4 mb-2 text-sm">{{ __('Harvest Records') }} {{ __('for') }} {{ $harvester['name'] }} {{ __('nastavak') }}</p>
+                            @else
+                                <div class="mt-4">
+                                    <p class="mb-2 text-sm">{{ __('Harvest Records') }} {{ __('for') }} {{ $harvester['name'] }}</p>
+                                    @endif
+                                    <div class="text-sm grid grid-cols-4 gap-2">
+                                        @php
+                                            $recordsPerColumn = 40;
+                                            $columns = array_chunk($pageRecords, $recordsPerColumn);
+                                        @endphp
+                                        @foreach ($columns as $column)
+                                            <div class="w-full text-center">
+                                                <div class="grid grid-cols-2 gap-2 mb-2">
+                                                    <span>{{ __('Date') }}</span>
+                                                    <span>{{ __('Weight (kg)') }}</span>
+                                                </div>
+                                                @foreach ($column as $record)
+                                                    <div class="grid grid-cols-2 gap-2">
+                                                        <span>{{ explode(' ', $record['datetime'])[0] }}</span>
+                                                        <span>{{ number_format($record['weight'], 2, ',', '') }}</span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endforeach
                                     </div>
+                                </div>
                                 @endforeach
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            @else
-                <p class="text-center">{{ __('No records found.') }}</p>
-            @endif
+                                @else
+                                    <p class="text-center">{{ __('No records found.') }}</p>
+                    @endif
         </section>
     @endforeach
 </div>

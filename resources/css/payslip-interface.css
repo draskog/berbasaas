@@ -39,6 +39,10 @@
     height: 100%;
 }
 
+.payslip-records-header {
+    break-inside: avoid;
+}
+
 @media print {
     html {
         width: 100%;
