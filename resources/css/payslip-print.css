@@ -1,3 +1,7 @@
+html {
+    color-scheme: light;
+}
+
 @page {
     size: A4 portrait !important;
     margin: 10mm !important;
