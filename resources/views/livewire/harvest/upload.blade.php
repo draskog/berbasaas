@@ -364,6 +364,21 @@ class extends Component
         }
 
         $resolved = 0;
+        $deleted = 0;
+
+        // Handle duplicates - automatically delete them
+        $duplicates = HarvestRecordStaging::where('upload_id', $uploadId)
+            ->where('status', 'invalid')
+            ->where(function ($q) {
+                $q->where('validation_reason', 'like', '%in_file_duplicate%')
+                    ->orWhere('validation_reason', 'like', '%db_duplicate%');
+            })
+            ->get();
+
+        foreach ($duplicates as $record) {
+            $record->delete();
+            $deleted++;
+        }
 
         // Handle tare_out_of_range errors with suggestions
         $tareErrors = HarvestRecordStaging::where('upload_id', $uploadId)
@@ -449,11 +464,22 @@ class extends Component
 
         $this->dispatch('$refresh');
 
-        $message = $resolved === 0
-            ? __('No records could be auto-resolved. Please resolve manually.')
-            : __('Auto-resolved :count record(s).', ['count' => $resolved]);
+        if ($resolved === 0 && $deleted === 0) {
+            $message = __('No records could be auto-resolved. Please resolve manually.');
+            $variant = 'warning';
+        } else {
+            $parts = [];
+            if ($resolved > 0) {
+                $parts[] = __(':count resolved', ['count' => $resolved]);
+            }
+            if ($deleted > 0) {
+                $parts[] = __(':count duplicate(s) deleted', ['count' => $deleted]);
+            }
+            $message = __('Auto-resolved: :summary', ['summary' => implode(', ', $parts)]);
+            $variant = 'success';
+        }
 
-        Flux::toast(text: $message, variant: $resolved > 0 ? 'success' : 'warning');
+        Flux::toast(text: $message, variant: $variant);
     }
 
     private function promoteRecord(HarvestRecordStaging $record, ?int $originalHarvesterNumber = null): void
@@ -639,6 +665,7 @@ class extends Component
                 <div class="font-semibold mb-2">{{ __('Auto-Resolve Logic') }}</div>
                 <ul class="text-sm space-y-1">
                     <li>{{ __('Tare out of range: uses the tare value from the next sequential record (★ suggestion)') }}</li>
+                    <li>{{ __('Duplicates (database or in-file): automatically deleted from staging') }}</li>
                 </ul>
                 <div class="text-sm mt-2">{{ __('Records that cannot be resolved are skipped and remain for manual review.') }}</div>
             </flux:callout>
