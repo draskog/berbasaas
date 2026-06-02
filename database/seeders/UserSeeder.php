@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * @package     BerbaSaaS
+ *
+ * @author      Drasko Gajic PR Pametna Rešenja
+ * @copyright   Drasko Gajic PR Pametna Rešenja
+ * @license     Proprietary
+ */
+
 namespace Database\Seeders;
 
 use App\Models\Company;
