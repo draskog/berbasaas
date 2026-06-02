@@ -146,6 +146,10 @@ class extends Component
     #[On('updated-selected-year')]
     public function updatedSelectedYear(): void
     {
+        // Reset dates when year changes to avoid cross-year filtering issues
+        $this->dateFrom = null;
+        $this->dateTo = null;
+        $this->dateRange = null;
         $this->updateDatesForSelectedYear();
         if ($this->dateFrom && $this->dateTo) {
             $this->dateRange = new DateRange($this->dateFrom, $this->dateTo);
