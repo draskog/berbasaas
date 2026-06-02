@@ -168,7 +168,7 @@ class extends Component
                     effectiveTo: $this->newEffectiveTo ? Carbon::parse($this->newEffectiveTo) : null,
                 ),
             ]],
-            ['newEffectiveFrom.overlap' => __('The effective date range overlaps with an existing price for this product.')],
+            ['newEffectiveFrom.overlap' => __('Period važenja se preklapa sa postojećom cijenom za ovaj proizvod.')],
         );
 
         HarvestPrice::create([
@@ -240,7 +240,7 @@ class extends Component
                     excludeId: $this->editingPriceId,
                 ),
             ]],
-            ['editEffectiveFrom.overlap' => __('The effective date range overlaps with an existing price for this product.')],
+            ['editEffectiveFrom.overlap' => __('Period važenja se preklapa sa postojećom cijenom za ovaj proizvod.')],
         );
 
         $price->update([
