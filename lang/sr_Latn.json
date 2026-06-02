@@ -686,5 +686,19 @@
     "results": "rezultata",
     "start range": "početak opsega",
     "to": "do",
-    "for": "za"
+    "for": "za",
+    "Today": "Danas",
+    "Yesterday": "Juče",
+    "This Week": "Ova nedelja",
+    "Last 7 Days": "Poslednjih 7 dana",
+    "Last 30 Days": "Poslednjih 30 dana",
+    "This Month": "Ovaj mesec",
+    "Last Month": "Prethodni mesec",
+    "This Year": "Ove godine",
+    "Last Year": "Prethodne godine",
+    "This Quarter": "Ovaj kvartal",
+    "Last Quarter": "Prethodni kvartal",
+    "This Season": "Ovo sezono",
+    "Last Season": "Prethodno sezono",
+    "Year to Date": "Ove godine do danas"
 }
