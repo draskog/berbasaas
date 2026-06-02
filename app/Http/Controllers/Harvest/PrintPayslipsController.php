@@ -136,7 +136,7 @@ class PrintPayslipsController extends Controller
             ];
         }
 
-        return view('harvest.payslip-print', [
+        return view('layouts.payslip-print', [
             'harvesters' => $harvesters,
             'company' => $company,
             'dateFrom' => $dateFrom,
