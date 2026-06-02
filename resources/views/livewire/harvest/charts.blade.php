@@ -5,6 +5,7 @@ use App\Models\HarvesterAssignment;
 use App\Models\HarvestRecord;
 use App\Models\Product;
 use Carbon\Carbon;
+use Flux\DateRange;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -29,9 +30,7 @@ class extends Component {
     #[Session]
     public int $selectedProductId = 0;
 
-    public bool $showDateRangeModal = false;
-
-    public ?string $dateRangeValue = null;
+    public ?DateRange $dateRange = null;
 
     #[Session]
     public int $selectedHarvesterNumber = 0;
@@ -146,7 +145,7 @@ class extends Component {
         $this->updateDatesForSelectedYear();
 
         if ($this->fromDate && $this->toDate) {
-            $this->dateRangeValue = $this->fromDate.'/'.$this->toDate;
+            $this->dateRange = new DateRange($this->fromDate, $this->toDate);
         }
     }
 
@@ -154,19 +153,15 @@ class extends Component {
     {
         $this->updateDatesForSelectedYear();
         if ($this->fromDate && $this->toDate) {
-            $this->dateRangeValue = $this->fromDate.'/'.$this->toDate;
+            $this->dateRange = new DateRange($this->fromDate, $this->toDate);
         }
     }
 
-    public function updatedDateRangeValue (?string $value): void
+    public function updatedDateRange (): void
     {
-        if ($value && str_contains($value, '/')) {
-            [$from, $to] = explode('/', $value, 2);
-            if ($from && $to) {
-                $this->fromDate = $from;
-                $this->toDate = $to;
-                $this->showDateRangeModal = false;
-            }
+        if ($this->dateRange instanceof DateRange) {
+            $this->fromDate = $this->dateRange->start()->format('Y-m-d');
+            $this->toDate = $this->dateRange->end()->format('Y-m-d');
         }
     }
 
@@ -589,16 +584,20 @@ class extends Component {
 
         <!-- Date Filters -->
         <div class="mb-6 flex flex-wrap items-end gap-4">
-            <flux:button
-                wire:click="$set('showDateRangeModal', true)"
-                variant="ghost"
-                size="sm"
-                icon="calendar-days"
+            <flux:date-picker
+                mode="range"
+                with-presets
+                presets="today yesterday thisWeek last7Days thisMonth yearToDate"
+                wire:model.live="dateRange"
+                locale="{{ str_replace('_', '-', app()->getLocale()) }}"
             >
-                {{ $fromDate ? Carbon::parse($fromDate)->isoFormat('D MMM YYYY') : '—' }}
-                –
-                {{ $toDate ? Carbon::parse($toDate)->isoFormat('D MMM YYYY') : '—' }}
-            </flux:button>
+                <x-slot name="trigger">
+                    <div class="flex flex-col sm:flex-row gap-6 sm:gap-4">
+                        <flux:date-picker.input size="sm" variant="custom" label="{{ __('From') }}"/>
+                        <flux:date-picker.input size="sm" variant="custom" label="{{ __('To') }}"/>
+                    </div>
+                </x-slot>
+            </flux:date-picker>
         </div>
 
         <!-- Tabs -->
@@ -704,26 +703,5 @@ class extends Component {
             </flux:tab.panel>
         </flux:tab.group>
 
-        <flux:modal name="date-range-picker" wire:model="showDateRangeModal" :dismissible="false" class="md:max-w-3xl! md:w-3xl!">
-            <flux:heading size="lg">{{ __('Select Date Range') }}</flux:heading>
-
-            <flux:calendar
-                mode="range"
-                selectable-header
-                week-numbers
-                locale="{{ str_replace('_', '-', app()->getLocale()) }}"
-                :unavailable="$this->unavailableDates"
-                :min="$this->minDate"
-                :max="$this->maxDate"
-                wire:model.live="dateRangeValue"
-                class="mt-4"
-            />
-
-            <div class="mt-6 flex justify-end">
-                <flux:button variant="ghost" wire:click="$set('showDateRangeModal', false)">
-                    {{ __('Close') }}
-                </flux:button>
-            </div>
-        </flux:modal>
     </div>
 </flux:main>

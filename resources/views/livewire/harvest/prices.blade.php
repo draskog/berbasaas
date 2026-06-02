@@ -311,6 +311,7 @@ class extends Component {
                 <flux:date-picker
                     mode="range"
                     with-presets
+                    presets="today yesterday thisWeek last7Days thisMonth yearToDate"
                     wire:model.live="newEffectiveDateRange"
                     locale="{{ str_replace('_', '-', app()->getLocale()) }}"
                 >
@@ -349,14 +350,14 @@ class extends Component {
                 <flux:date-picker
                     mode="range"
                     with-presets
+                    presets="today yesterday thisWeek last7Days thisMonth yearToDate"
                     wire:model.live="editEffectiveDateRange"
                     locale="{{ str_replace('_', '-', app()->getLocale()) }}"
-                    clearable
                 >
                     <x-slot name="trigger">
                         <div class="flex flex-col sm:flex-row gap-6 sm:gap-4">
                             <flux:date-picker.input variant="custom" label="{{ __('Effective From') }}"/>
-                            <flux:date-picker.input clearable variant="custom" label="{{ __('Effective To') }}"/>
+                            <flux:date-picker.input variant="custom" label="{{ __('Effective To') }}"/>
                         </div>
                     </x-slot>
                 </flux:date-picker>

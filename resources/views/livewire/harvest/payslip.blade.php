@@ -3,6 +3,7 @@
 use App\Models\HarvestRecord;
 use App\Models\HarvesterAssignment;
 use Carbon\Carbon;
+use Flux\DateRange;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -25,9 +26,7 @@ class extends Component
     #[Session]
     public ?string $dateTo = null;
 
-    public bool $showDateRangeModal = false;
-
-    public string|array|null $dateRangeValue = null;
+    public ?DateRange $dateRange = null;
 
     public string $searchHarvesterName = '';
 
@@ -140,7 +139,7 @@ class extends Component
         $this->updateDatesForSelectedYear();
 
         if ($this->dateFrom && $this->dateTo) {
-            $this->dateRangeValue = $this->dateFrom.'/'.$this->dateTo;
+            $this->dateRange = new DateRange($this->dateFrom, $this->dateTo);
         }
     }
 
@@ -149,27 +148,15 @@ class extends Component
     {
         $this->updateDatesForSelectedYear();
         if ($this->dateFrom && $this->dateTo) {
-            $this->dateRangeValue = $this->dateFrom.'/'.$this->dateTo;
+            $this->dateRange = new DateRange($this->dateFrom, $this->dateTo);
         }
     }
 
-    public function updatedDateRangeValue(string|array|null $value): void
+    public function updatedDateRange(): void
     {
-        if (! $value) {
-            return;
-        }
-
-        if (is_array($value) && isset($value['start'], $value['end'])) {
-            $this->dateFrom = $value['start'];
-            $this->dateTo = $value['end'];
-            $this->showDateRangeModal = false;
-        } elseif (is_string($value) && str_contains($value, '/')) {
-            [$from, $to] = explode('/', $value, 2);
-            if ($from && $to) {
-                $this->dateFrom = $from;
-                $this->dateTo = $to;
-                $this->showDateRangeModal = false;
-            }
+        if ($this->dateRange instanceof DateRange) {
+            $this->dateFrom = $this->dateRange->start()->format('Y-m-d');
+            $this->dateTo = $this->dateRange->end()->format('Y-m-d');
         }
     }
 
@@ -233,16 +220,20 @@ class extends Component
             </flux:radio.group>
         </div>
         <div>
-            <flux:button
-                wire:click="$set('showDateRangeModal', true)"
-                variant="ghost"
-                size="sm"
-                icon="calendar-days"
+            <flux:date-picker
+                mode="range"
+                with-presets
+                presets="today yesterday thisWeek last7Days thisMonth yearToDate"
+                wire:model.live="dateRange"
+                locale="{{ str_replace('_', '-', app()->getLocale()) }}"
             >
-                {{ $dateFrom ? Carbon::parse($dateFrom)->isoFormat('D MMM YYYY') : '—' }}
-                –
-                {{ $dateTo ? Carbon::parse($dateTo)->isoFormat('D MMM YYYY') : '—' }}
-            </flux:button>
+                <x-slot name="trigger">
+                    <div class="flex flex-col sm:flex-row gap-6 sm:gap-4">
+                        <flux:date-picker.input size="sm" variant="custom" label="{{ __('From') }}"/>
+                        <flux:date-picker.input size="sm" variant="custom" label="{{ __('To') }}"/>
+                    </div>
+                </x-slot>
+            </flux:date-picker>
         </div>
         <div class="flex flex-wrap items-end gap-4">
             <flux:input
@@ -275,27 +266,6 @@ class extends Component
             @endforeach
         </div>
 
-        <flux:modal name="date-range-picker" wire:model="showDateRangeModal" :dismissible="false" class="md:max-w-3xl! md:w-3xl!">
-            <flux:heading size="lg">{{ __('Select Date Range') }}</flux:heading>
-
-            <flux:calendar
-                mode="range"
-                selectable-header
-                week-numbers
-                locale="{{ str_replace('_', '-', app()->getLocale()) }}"
-                :unavailable="$this->unavailableDates"
-                :min="$this->minDate"
-                :max="$this->maxDate"
-                wire:model.live="dateRangeValue"
-                class="mt-4"
-            />
-
-            <div class="mt-6 flex justify-end">
-                <flux:button variant="ghost" wire:click="$set('showDateRangeModal', false)">
-                    {{ __('Close') }}
-                </flux:button>
-            </div>
-        </flux:modal>
     </div>
 </flux:main>
 

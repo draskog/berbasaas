@@ -182,7 +182,7 @@ new class extends Component {
     }
 }; ?>
 
-<flux:card class="p-4 shadow-sm">
+<flux:card class="p-4 shadow-sm" x-cloak>
     <!-- Header: Harvester left, Company right -->
     <div class="border-b-2 border-green-400 pb-4 dark:border-green-800 flex justify-between items-start mb-4">
         <div>

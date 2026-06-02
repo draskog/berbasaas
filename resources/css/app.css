@@ -78,3 +78,5 @@ select:focus[data-flux-control] {
         @apply shrink-0!;
     }
 }
+
+[x-cloak] { display: none !important; }
