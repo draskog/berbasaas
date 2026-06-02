@@ -572,10 +572,10 @@ class extends Component {
         <!-- Date Filters -->
         <div class="mb-6 flex flex-wrap items-end gap-4">
             <flux:button
-                    wire:click="$set('showDateRangeModal', true)"
-                    variant="ghost"
-                    size="sm"
-                    icon="calendar-days"
+                wire:click="$set('showDateRangeModal', true)"
+                variant="ghost"
+                size="sm"
+                icon="calendar-days"
             >
                 {{ $fromDate ? Carbon::parse($fromDate)->isoFormat('D MMM YYYY') : '—' }}
                 –
@@ -672,13 +672,14 @@ class extends Component {
             </flux:tab.panel>
         </flux:tab.group>
 
-        <flux:modal name="date-range-picker" wire:model="showDateRangeModal">
+        <flux:modal name="date-range-picker" wire:model="showDateRangeModal" :dismissible="false" class="md:max-w-3xl! md:w-3xl!">
             <flux:heading size="lg">{{ __('Select Date Range') }}</flux:heading>
 
             <flux:calendar
-                    mode="range"
-                    week-numbers
-                    locale="{{ app()->getLocale() }}"
+                mode="range"
+                selectable-header
+                week-numbers
+                locale="{{ app()->getLocale() }}"
                 :unavailable="$this->unavailableDates"
                 :min="$this->minDate"
                 :max="$this->maxDate"

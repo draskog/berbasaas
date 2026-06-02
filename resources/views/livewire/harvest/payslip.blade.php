@@ -224,15 +224,15 @@ class extends Component
         >{{ __('Print') }}</flux:button>
     </flux:header>
 
-    <div class="p-6">
-        <div class="mb-6 flex flex-wrap items-end gap-4">
+    <div class="p-6 space-y-6">
+        <div class="flex flex-wrap items-end gap-4">
             <flux:radio.group wire:model.live="selectedYear" label="{{ __('Year') }}" variant="pills">
                 @foreach($this->availableYears as $year)
                     <flux:radio label="{{ $year }}" value="{{ $year }}"/>
                 @endforeach
             </flux:radio.group>
         </div>
-        <div class="mb-6 flex flex-wrap items-end gap-4">
+        <div>
             <flux:button
                 wire:click="$set('showDateRangeModal', true)"
                 variant="ghost"
@@ -243,12 +243,16 @@ class extends Component
                 –
                 {{ $dateTo ? Carbon::parse($dateTo)->isoFormat('D MMM YYYY') : '—' }}
             </flux:button>
+        </div>
+        <div class="flex flex-wrap items-end gap-4">
             <flux:input
-                wire:model.live="searchHarvesterName"
-                type="text"
-                placeholder="{{ __('Search harvester name...') }}"
+                size="sm"
+                wire:model.live.debounce.300ms="searchHarvesterName"
+                type="search"
+                placeholder="{{ __('Search by harvester name...') }}"
                 icon="magnifying-glass"
                 clearable
+                class="w-72!"
             />
         </div>
         <div class="space-y-8">

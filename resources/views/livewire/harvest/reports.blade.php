@@ -559,11 +559,12 @@ class extends Component {
             </flux:table>
         </flux:tab.panel>
 
-        <flux:modal name="date-range-picker" wire:model="showDateRangeModal">
+        <flux:modal name="date-range-picker" wire:model="showDateRangeModal" :dismissible="false" class="md:max-w-3xl! md:w-3xl!">
             <flux:heading size="lg">{{ __('Select Date Range') }}</flux:heading>
 
             <flux:calendar
                 mode="range"
+                selectable-header
                 week-numbers
                 locale="{{ app()->getLocale() }}"
                 :unavailable="$this->unavailableDates"
