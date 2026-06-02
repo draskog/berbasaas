@@ -1,70 +1,43 @@
 html {
     color-scheme: light;
     font-family: system-ui, -apple-system, sans-serif;
-    font-size: 16px;
-    line-height: 1.5;
+    font-size: 14px;
+    line-height: 1.4;
     color: #000;
 }
 
 body {
     background-color: #fff;
-    padding: 1rem;
+    padding: 0;
     margin: 0;
 }
 
 #loadingOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 50;
-}
-
-#loadingOverlay .text-center {
-    text-align: center;
-}
-
-#loadingOverlay .mb-4 {
-    margin-bottom: 1rem;
-}
-
-#loadingOverlay svg {
-    width: 2.5rem;
-    height: 2.5rem;
-    color: #3b82f6;
-    margin: 0 auto;
-    animation: spin 1s linear infinite;
-}
-
-#loadingOverlay .text-gray-500 {
-    color: #6b7280;
-    font-size: 0.875rem;
-    margin-top: 1rem;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
+    display: none;
 }
 
 @page {
-    size: A4 portrait !important;
-    margin: 10mm !important;
-    bleed: 2mm;
+    size: A4 portrait;
+    margin: 10mm;
+}
+
+#content {
+    margin: 0;
+    padding: 0;
 }
 
 .payslip-section {
     background-color: #fff;
     border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    padding: 1rem;
-    margin-bottom: 1rem;
-    break-after: page;
+    border-radius: 4px;
+    padding: 10mm;
+    margin: 0;
+    page-break-inside: avoid;
+    page-break-after: always;
+}
+
+.payslip-section:last-child {
+    page-break-after: auto;
 }
 
 .payslip-header {
@@ -72,12 +45,13 @@ body {
     justify-content: space-between;
     align-items: flex-start;
     border-bottom: 2px solid #22c55e;
-    padding-bottom: 1rem;
-    margin-bottom: 1rem;
+    padding-bottom: 6mm;
+    margin-bottom: 6mm;
+    page-break-inside: avoid;
 }
 
 .payslip-header h2 {
-    font-size: 1.125rem;
+    font-size: 14px;
     font-weight: 600;
     margin: 0;
 }
@@ -91,81 +65,89 @@ body {
 .payslip-header .company {
     text-align: right;
     color: #6b7280;
-    font-size: 1.125rem;
+    font-size: 14px;
 }
 
 .payslip-period {
     color: #4b5563;
-    font-size: 0.875rem;
-    margin-bottom: 1rem;
+    font-size: 11px;
+    margin-bottom: 6mm;
+    page-break-inside: avoid;
 }
 
 .payslip-summary {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4mm;
+    margin-bottom: 8mm;
+    page-break-inside: avoid;
 }
 
 .summary-card {
     border: 1px solid #e5e7eb;
-    border-radius: 0.25rem;
-    padding: 0.75rem;
+    border-radius: 3px;
+    padding: 4mm;
 }
 
 .summary-card-label {
-    font-size: 0.75rem;
+    font-size: 10px;
     font-weight: 600;
     color: #374151;
+    margin: 0;
 }
 
 .summary-card-value {
-    font-size: 1.125rem;
+    font-size: 13px;
     font-weight: 700;
-    margin-top: 0.25rem;
+    margin: 2mm 0 0 0;
 }
 
 .summary-card-unit {
-    font-size: 0.75rem;
+    font-size: 10px;
     color: #6b7280;
-    margin-top: 0.125rem;
+    margin: 1mm 0 0 0;
 }
 
 .table-wrapper {
-    margin-bottom: 3rem;
+    margin-bottom: 0;
+    page-break-inside: avoid;
 }
 
 .table-wrapper.cols-1 {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
+    display: block;
 }
 
 .table-wrapper.cols-2 {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 4mm;
 }
 
 .table-wrapper.cols-3 {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4mm;
 }
 
 .payslip-table {
     width: 100%;
-    font-size: 0.875rem;
+    font-size: 10px;
     border-collapse: collapse;
+    page-break-inside: avoid;
+}
+
+.payslip-table thead {
+    display: table-header-group;
 }
 
 .payslip-table th {
     text-align: left;
-    padding: 0.5rem;
-    font-size: 0.75rem;
+    padding: 2mm 3mm;
+    font-size: 10px;
     font-weight: 600;
     color: #374151;
     border-bottom: 1px solid #d1d5db;
+    background-color: #f3f4f6;
 }
 
 .payslip-table th.text-right {
@@ -173,18 +155,22 @@ body {
 }
 
 .payslip-table td {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-    border-bottom: 1px solid #f3f4f6;
+    padding: 2mm 3mm;
+    font-size: 10px;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .payslip-table td.text-right {
     text-align: right;
 }
 
+.payslip-table tbody tr {
+    page-break-inside: avoid;
+}
+
 .no-data {
     text-align: center;
     color: #6b7280;
-    padding: 2rem;
-    font-size: 0.875rem;
+    padding: 8mm;
+    font-size: 11px;
 }

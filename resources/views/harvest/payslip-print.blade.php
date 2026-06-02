@@ -8,17 +8,6 @@
     @vite(['resources/css/payslip-print.css', 'resources/js/paged.polyfill.js'])
 </head>
 <body>
-<div id="loadingOverlay">
-    <div class="text-center">
-        <div class="mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-        </div>
-        <p class="text-gray-500">Preparing for print...</p>
-    </div>
-</div>
 
 <div id="content">
     @foreach ($harvesters as $harvester)
@@ -119,13 +108,6 @@
         auto: true,
         allowHyphenation: false,
     };
-
-    document.addEventListener('renderedPagedJs', function () {
-        const overlay = document.getElementById('loadingOverlay');
-        if (overlay) {
-            overlay.style.display = 'none';
-        }
-    });
 </script>
 </body>
 </html>
