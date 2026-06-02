@@ -76,14 +76,14 @@ class extends Component
             ->when($this->harvestCorrected === 'not_corrected', fn ($q) => $q->where('corrected', false))
             ->when($this->search !== '', fn ($q) => $q
                 ->where('harvester_number', 'like', "%$this->search%")
-                ->orWhereRaw("EXISTS (
+                ->orWhereRaw('EXISTS (
                     SELECT 1 FROM harvester_assignments ha
                     JOIN harvesters h ON ha.harvester_id = h.id
                     WHERE ha.number = harvest_records.harvester_number
                     AND ha.company_id = harvest_records.company_id
                     AND ha.year = ?
                     AND h.name LIKE ?
-                )", [$this->year, "%$this->search%"])
+                )', [$this->year, "%$this->search%"])
             )
             ->count();
     }
@@ -96,14 +96,14 @@ class extends Component
             ->when($this->harvestCorrected === 'not_corrected', fn ($q) => $q->where('corrected', false))
             ->when($this->search !== '', fn ($q) => $q
                 ->where('harvester_number', 'like', "%$this->search%")
-                ->orWhereRaw("EXISTS (
+                ->orWhereRaw('EXISTS (
                     SELECT 1 FROM harvester_assignments ha
                     JOIN harvesters h ON ha.harvester_id = h.id
                     WHERE ha.number = harvest_records.harvester_number
                     AND ha.company_id = harvest_records.company_id
                     AND ha.year = ?
                     AND h.name LIKE ?
-                )", [$this->year, "%$this->search%"])
+                )', [$this->year, "%$this->search%"])
             )
             ->orderBy($this->sortBy, $this->sortDirection);
 
@@ -135,6 +135,63 @@ class extends Component
             ->orderBy('number')
             ->get()
             ->keyBy('number');
+    }
+
+    #[Computed]
+    public function availableReasons(): array
+    {
+        $records = HarvestRecordStaging::where('upload_id', $this->upload->id)
+            ->where('status', 'invalid')
+            ->pluck('validation_reason')
+            ->filter()
+            ->unique();
+
+        $reasons = [];
+        foreach ($records as $reasonData) {
+            $reasonArray = is_array($reasonData)
+                ? $reasonData
+                : json_decode($reasonData, true, flags: JSON_THROW_ON_ERROR);
+
+            if (is_array($reasonArray)) {
+                $reasons = array_merge($reasons, $reasonArray);
+            }
+        }
+
+        return array_unique($reasons);
+    }
+
+    #[Computed]
+    public function availableStatusesStaging(): array
+    {
+        $statuses = HarvestRecordStaging::where('upload_id', $this->upload->id)
+            ->distinct()
+            ->pluck('status')
+            ->toArray();
+
+        return array_unique($statuses);
+    }
+
+    #[Computed]
+    public function availableCorrected(): array
+    {
+        $corrected = [];
+
+        $hasCorrected = HarvestRecord::where('upload_id', $this->upload->id)
+            ->where('corrected', true)
+            ->exists();
+
+        $hasNotCorrected = HarvestRecord::where('upload_id', $this->upload->id)
+            ->where('corrected', false)
+            ->exists();
+
+        if ($hasCorrected) {
+            $corrected[] = 'corrected';
+        }
+        if ($hasNotCorrected) {
+            $corrected[] = 'not_corrected';
+        }
+
+        return $corrected;
     }
 
     public function mount(): void
@@ -235,18 +292,32 @@ class extends Component
                         <div>
                             <flux:radio.group wire:model.live="stagingStatus" label="{{ __('Status') }}" variant="pills">
                                 <flux:radio value="all" label="{{ __('All') }}"/>
-                                <flux:radio value="pending" label="{{ __('Pending') }}"/>
-                                <flux:radio value="valid" label="{{ __('Valid') }}"/>
-                                <flux:radio value="invalid" label="{{ __('Invalid') }}"/>
+                                @if(in_array('pending', $this->availableStatusesStaging, true))
+                                    <flux:radio value="pending" label="{{ __('Pending') }}"/>
+                                @endif
+                                @if(in_array('valid', $this->availableStatusesStaging, true))
+                                    <flux:radio value="valid" label="{{ __('Valid') }}"/>
+                                @endif
+                                @if(in_array('invalid', $this->availableStatusesStaging, true))
+                                    <flux:radio value="invalid" label="{{ __('Invalid') }}"/>
+                                @endif
                             </flux:radio.group>
                         </div>
                         <div>
                             <flux:radio.group wire:model.live="stagingReason" label="{{ __('Reason') }}" variant="pills">
                                 <flux:radio value="all" label="{{ __('All') }}"/>
-                                <flux:radio value="harvester_not_found" label="{{ __('Harvester not found') }}"/>
-                                <flux:radio value="tare_out_of_range" label="{{ __('Tare out of range') }}"/>
-                                <flux:radio value="in_file_duplicate" label="{{ __('In-file Duplicate') }}"/>
-                                <flux:radio value="db_duplicate" label="{{ __('DB Duplicate') }}"/>
+                                @if(in_array('harvester_not_found', $this->availableReasons, true))
+                                    <flux:radio value="harvester_not_found" label="{{ __('Harvester not found') }}"/>
+                                @endif
+                                @if(in_array('tare_out_of_range', $this->availableReasons, true))
+                                    <flux:radio value="tare_out_of_range" label="{{ __('Tare out of range') }}"/>
+                                @endif
+                                @if(in_array('in_file_duplicate', $this->availableReasons, true))
+                                    <flux:radio value="in_file_duplicate" label="{{ __('In-file Duplicate') }}"/>
+                                @endif
+                                @if(in_array('db_duplicate', $this->availableReasons, true))
+                                    <flux:radio value="db_duplicate" label="{{ __('DB Duplicate') }}"/>
+                                @endif
                             </flux:radio.group>
                         </div>
                         <div class="flex justify-between items-center">
@@ -284,30 +355,30 @@ class extends Component
                                     <flux:table.cell>{{ number_format($record->tare, 3, ',', '.') }}</flux:table.cell>
                                     <flux:table.cell>{{ number_format($record->gross, 3, ',', '.') }}</flux:table.cell>
                                     <flux:table.cell>
-                                        <flux:badge variant="warning">{{ $record->harvester_number }}</flux:badge>
+                                        <flux:badge color="amber">{{ $record->harvester_number }}</flux:badge>
                                     </flux:table.cell>
                                     <flux:table.cell>
                                         @if($record->status === 'pending')
-                                            <flux:badge variant="zinc">{{ __('Pending') }}</flux:badge>
+                                            <flux:badge color="zinc" size="sm">{{ __('Pending') }}</flux:badge>
                                         @elseif($record->status === 'valid')
-                                            <flux:badge variant="success">{{ __('Valid') }}</flux:badge>
+                                            <flux:badge color="green" size="sm">{{ __('Valid') }}</flux:badge>
                                         @elseif($record->status === 'invalid')
-                                            <flux:badge variant="danger">{{ __('Invalid') }}</flux:badge>
+                                            <flux:badge color="danger" size="sm">{{ __('Invalid') }}</flux:badge>
                                         @endif
                                     </flux:table.cell>
                                     <flux:table.cell>
                                         @php $reasons = (array) $record->validation_reason; @endphp
                                         @foreach($reasons as $reason)
                                             @if($reason === 'harvester_not_found')
-                                                <flux:badge variant="warning" size="sm">{{ __('Harvester not found') }}</flux:badge>
+                                                <flux:badge color="amber" size="sm">{{ __('Harvester not found') }}</flux:badge>
                                             @elseif($reason === 'tare_out_of_range')
-                                                <flux:badge variant="danger" size="sm">{{ __('Tare out of range') }}</flux:badge>
+                                                <flux:badge color="danger" size="sm">{{ __('Tare out of range') }}</flux:badge>
                                             @elseif($reason === 'in_file_duplicate')
-                                                <flux:badge variant="zinc" size="sm">{{ __('In-file Duplicate') }}</flux:badge>
+                                                <flux:badge color="zinc" size="sm">{{ __('In-file Duplicate') }}</flux:badge>
                                             @elseif($reason === 'db_duplicate')
-                                                <flux:badge variant="zinc" size="sm">{{ __('DB Duplicate') }}</flux:badge>
+                                                <flux:badge color="zinc" size="sm">{{ __('DB Duplicate') }}</flux:badge>
                                             @else
-                                                <flux:badge variant="zinc" size="sm">{{ $reason }}</flux:badge>
+                                                <flux:badge color="zinc" size="sm">{{ $reason }}</flux:badge>
                                             @endif
                                         @endforeach
                                     </flux:table.cell>
@@ -328,8 +399,12 @@ class extends Component
                     <div>
                         <flux:radio.group wire:model.live="harvestCorrected" label="{{ __('Corrected') }}" variant="pills">
                             <flux:radio value="all" label="{{ __('All') }}"/>
-                            <flux:radio value="corrected" label="{{ __('Only corrected') }}"/>
-                            <flux:radio value="not_corrected" label="{{ __('Not corrected') }}"/>
+                            @if(in_array('corrected', $this->availableCorrected, true))
+                                <flux:radio value="corrected" label="{{ __('Only corrected') }}"/>
+                            @endif
+                            @if(in_array('not_corrected', $this->availableCorrected, true))
+                                <flux:radio value="not_corrected" label="{{ __('Not corrected') }}"/>
+                            @endif
                         </flux:radio.group>
                     </div>
                     <div class="flex items-center justify-between gap-4">
@@ -359,9 +434,9 @@ class extends Component
                                     <flux:table.cell>
                                         @if($record->original_tare !== null)
                                             <div class="flex items-center gap-2 text-sm">
-                                                <flux:badge variant="warning">{{ number_format($record->original_tare, 3, ',', '.') }}</flux:badge>
+                                                <flux:badge color="amber">{{ number_format($record->original_tare, 3, ',', '.') }}</flux:badge>
                                                 <span>→</span>
-                                                <flux:badge variant="success">{{ number_format($record->tare, 3, ',', '.') }}</flux:badge>
+                                                <flux:badge color="green">{{ number_format($record->tare, 3, ',', '.') }}</flux:badge>
                                             </div>
                                         @else
                                             {{ number_format($record->tare, 3, ',', '.') }}
@@ -376,9 +451,9 @@ class extends Component
                                         @if($hasOriginal)
                                             <div class="flex flex-col gap-1 text-sm">
                                                 <div class="flex items-center gap-2">
-                                                    <flux:badge variant="warning">{{ $record->original_harvester_number }}</flux:badge>
+                                                    <flux:badge color="amber">{{ $record->original_harvester_number }}</flux:badge>
                                                     <span>→</span>
-                                                    <flux:badge variant="success">{{ $record->harvester_number }}</flux:badge>
+                                                    <flux:badge color="green">{{ $record->harvester_number }}</flux:badge>
                                                 </div>
                                                 @if($assignment)
                                                     <div class="text-xs text-gray-500">{{ $assignment->harvester?->name }}@if($assignment->harvester?->prefix)
@@ -388,7 +463,7 @@ class extends Component
                                             </div>
                                         @else
                                             <div>
-                                                <flux:badge variant="info">{{ $record->harvester_number }}</flux:badge>
+                                                <flux:badge color="info">{{ $record->harvester_number }}</flux:badge>
                                                 @if($assignment)
                                                     <div class="text-xs text-gray-500 mt-1">{{ $assignment->harvester?->name }}@if($assignment->harvester?->prefix)
                                                             ({{ $assignment->harvester->prefix }})
@@ -399,9 +474,9 @@ class extends Component
                                     </flux:table.cell>
                                     <flux:table.cell>
                                         @if($record->corrected)
-                                            <flux:badge variant="success">{{ __('Yes') }}</flux:badge>
+                                            <flux:badge color="green">{{ __('Yes') }}</flux:badge>
                                         @else
-                                            <flux:badge variant="zinc">{{ __('No') }}</flux:badge>
+                                            <flux:badge color="zinc">{{ __('No') }}</flux:badge>
                                         @endif
                                     </flux:table.cell>
                                 </flux:table.row>

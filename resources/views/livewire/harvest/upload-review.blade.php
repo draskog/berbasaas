@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Session;
 use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
@@ -34,6 +35,7 @@ class extends Component
 
     public string $sortDirection = 'asc';
 
+    #[Session]
     public string $selectedReason = 'all';
 
     public array $selectedIds = [];
@@ -215,6 +217,29 @@ class extends Component
         return $invalid > 0 && $invalid === $duplicates;
     }
 
+    #[Computed]
+    public function availableReasons(): array
+    {
+        $records = HarvestRecordStaging::where('upload_id', $this->upload->id)
+            ->where('status', 'invalid')
+            ->pluck('validation_reason')
+            ->filter()
+            ->unique();
+
+        $reasons = [];
+        foreach ($records as $reasonData) {
+            $reasonArray = is_array($reasonData)
+                ? $reasonData
+                : json_decode($reasonData, true, flags: JSON_THROW_ON_ERROR);
+
+            if (is_array($reasonArray)) {
+                $reasons = array_merge($reasons, $reasonArray);
+            }
+        }
+
+        return array_unique($reasons);
+    }
+
     public function mount(): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
@@ -391,6 +416,7 @@ class extends Component
 
             if (in_array('in_file_duplicate', $reasons, true) || in_array('db_duplicate', $reasons, true)) {
                 $skipped++;
+
                 continue;
             }
 
@@ -564,10 +590,18 @@ class extends Component
             <div>
                 <flux:radio.group wire:model.live="selectedReason" label="{{ __('Reason') }}" variant="pills">
                     <flux:radio value="all" label="{{ __('All') }}"/>
-                    <flux:radio value="harvester_not_found" label="{{ __('Harvester not found') }}"/>
-                    <flux:radio value="tare_out_of_range" label="{{ __('Tare out of range') }}"/>
-                    <flux:radio value="in_file_duplicate" label="{{ __('In-file Duplicate') }}"/>
-                    <flux:radio value="db_duplicate" label="{{ __('DB Duplicate') }}"/>
+                    @if(in_array('harvester_not_found', $this->availableReasons, true))
+                        <flux:radio value="harvester_not_found" label="{{ __('Harvester not found') }}"/>
+                    @endif
+                    @if(in_array('tare_out_of_range', $this->availableReasons, true))
+                        <flux:radio value="tare_out_of_range" label="{{ __('Tare out of range') }}"/>
+                    @endif
+                    @if(in_array('in_file_duplicate', $this->availableReasons, true))
+                        <flux:radio value="in_file_duplicate" label="{{ __('In-file Duplicate') }}"/>
+                    @endif
+                    @if(in_array('db_duplicate', $this->availableReasons, true))
+                        <flux:radio value="db_duplicate" label="{{ __('DB Duplicate') }}"/>
+                    @endif
                 </flux:radio.group>
             </div>
             <div>
@@ -624,7 +658,7 @@ class extends Component
                             @endif
                             @if($stats['has_tare'])
                                 <flux:field>
-                                    <flux:label>{{ __('Tare') }}</flux:label>
+                                    <flux:label>{{ __('Tara') }}</flux:label>
                                     <flux:tooltip>
                                         <flux:input wire:model="bulkTare" type="number" step="0.001" min="0" placeholder="0,000" size="sm" class="w-32"/>
                                         <flux:tooltip.content>
@@ -733,7 +767,11 @@ class extends Component
                                 {{ number_format($record->gross, 3, ',', '.') }}
                             </flux:table.cell>
                             <flux:table.cell>
-                                <flux:badge variant="warning">{{ $record->harvester_number }}</flux:badge>
+                                @if(in_array('harvester_not_found', $reasons, true))
+                                    <flux:badge color="amber">{{ $record->harvester_number }}</flux:badge>
+                                @else
+                                    <flux:badge color="zinc">{{ $record->harvester_number }}</flux:badge>
+                                @endif
                                 @if($this->harvestersByNumber->has($record->harvester_number))
                                     <span class="text-sm text-gray-400 ml-1">
                                         {{ $this->harvestersByNumber[$record->harvester_number]->harvester?->name }}
@@ -778,15 +816,15 @@ class extends Component
                             <flux:table.cell>
                                 @foreach($reasons as $reason)
                                     @if($reason === 'harvester_not_found')
-                                        <flux:badge variant="warning" size="sm">{{ __('Harvester not found') }}</flux:badge>
+                                        <flux:badge color="amber" size="sm">{{ __('Harvester not found') }}</flux:badge>
                                     @elseif($reason === 'tare_out_of_range')
-                                        <flux:badge variant="danger" size="sm">{{ __('Tare out of range') }}</flux:badge>
+                                        <flux:badge color="red" size="sm">{{ __('Tare out of range') }}</flux:badge>
                                     @elseif($reason === 'in_file_duplicate')
-                                        <flux:badge variant="zinc" size="sm">{{ __('In-file Duplicate') }}</flux:badge>
+                                        <flux:badge color="zinc" size="sm">{{ __('In-file Duplicate') }}</flux:badge>
                                     @elseif($reason === 'db_duplicate')
-                                        <flux:badge variant="zinc" size="sm">{{ __('DB Duplicate') }}</flux:badge>
+                                        <flux:badge color="zinc" size="sm">{{ __('DB Duplicate') }}</flux:badge>
                                     @else
-                                        <flux:badge variant="zinc" size="sm">{{ $reason }}</flux:badge>
+                                        <flux:badge color="zinc" size="sm">{{ $reason }}</flux:badge>
                                     @endif
                                 @endforeach
                             </flux:table.cell>

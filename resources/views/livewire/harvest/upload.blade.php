@@ -90,6 +90,84 @@ class extends Component
     }
 
     #[Computed]
+    public function availableStatuses(): array
+    {
+        $query = HarvestUpload::where('company_id', auth()->user()->company_id)
+            ->withCount('harvestRecords as valid_count')
+            ->withCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
+
+        if ($this->selectedYear > 0) {
+            $query->whereYear('date_from', $this->selectedYear);
+        }
+
+        if ($this->selectedProduct !== 'all') {
+            $query->where('product_id', $this->selectedProduct);
+        }
+
+        $statuses = [];
+        foreach ($query->get() as $upload) {
+            if ($upload->valid_count > 0 && $upload->invalid_count === 0) {
+                $statuses['valid'] = true;
+            } elseif ($upload->valid_count === 0 && $upload->invalid_count > 0) {
+                $statuses['invalid'] = true;
+            } elseif ($upload->valid_count > 0 && $upload->invalid_count > 0) {
+                $statuses['partially_valid'] = true;
+            }
+            if ($upload->resolved_at !== null && $upload->invalid_count === 0) {
+                $statuses['resolved'] = true;
+            }
+        }
+
+        return array_keys($statuses);
+    }
+
+    #[Computed]
+    public function availableResolved(): array
+    {
+        $query = HarvestUpload::where('company_id', auth()->user()->company_id)
+            ->withCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
+
+        if ($this->selectedYear > 0) {
+            $query->whereYear('date_from', $this->selectedYear);
+        }
+
+        if ($this->selectedProduct !== 'all') {
+            $query->where('product_id', $this->selectedProduct);
+        }
+
+        if ($this->selectedStatus !== 'all') {
+            $uploads = $query->get();
+            $filtered = $uploads->filter(function ($upload) {
+                if ($this->selectedStatus === 'valid') {
+                    return $upload->valid_count > 0 && $upload->invalid_count === 0;
+                } elseif ($this->selectedStatus === 'invalid') {
+                    return $upload->valid_count === 0;
+                } elseif ($this->selectedStatus === 'partially_valid') {
+                    return $upload->valid_count > 0 && $upload->invalid_count > 0;
+                } elseif ($this->selectedStatus === 'resolved') {
+                    return $upload->resolved_at !== null && $upload->invalid_count === 0;
+                }
+
+                return true;
+            });
+            $query = $filtered;
+        } else {
+            $query = $query->get();
+        }
+
+        $resolved = [];
+        foreach ($query as $upload) {
+            if ($upload->invalid_count === 0) {
+                $resolved['resolved'] = true;
+            } else {
+                $resolved['unresolved'] = true;
+            }
+        }
+
+        return array_keys($resolved);
+    }
+
+    #[Computed]
     public function recentUploads()
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
@@ -438,17 +516,29 @@ class extends Component
             <div>
                 <flux:radio.group wire:model.live="selectedStatus" :label="__('Status')" variant="pills">
                     <flux:radio value="all" :label="__('All')"/>
-                    <flux:radio value="valid" :label="__('Valid')"/>
-                    <flux:radio value="invalid" :label="__('Invalid')"/>
-                    <flux:radio value="partially_valid" :label="__('Partially Valid')"/>
-                    <flux:radio value="resolved" :label="__('Resolved')"/>
+                    @if(in_array('valid', $this->availableStatuses, true))
+                        <flux:radio value="valid" :label="__('Valid')"/>
+                    @endif
+                    @if(in_array('invalid', $this->availableStatuses, true))
+                        <flux:radio value="invalid" :label="__('Invalid')"/>
+                    @endif
+                    @if(in_array('partially_valid', $this->availableStatuses, true))
+                        <flux:radio value="partially_valid" :label="__('Partially Valid')"/>
+                    @endif
+                    @if(in_array('resolved', $this->availableStatuses, true))
+                        <flux:radio value="resolved" :label="__('Resolved')"/>
+                    @endif
                 </flux:radio.group>
             </div>
             <div>
                 <flux:radio.group wire:model.live="selectedResolved" :label="__('Resolution Status')" variant="pills">
                     <flux:radio value="all" :label="__('All')"/>
-                    <flux:radio value="resolved" :label="__('Resolved')"/>
-                    <flux:radio value="unresolved" :label="__('Unresolved')"/>
+                    @if(in_array('resolved', $this->availableResolved, true))
+                        <flux:radio value="resolved" :label="__('Resolved')"/>
+                    @endif
+                    @if(in_array('unresolved', $this->availableResolved, true))
+                        <flux:radio value="unresolved" :label="__('Unresolved')"/>
+                    @endif
                 </flux:radio.group>
             </div>
             <div class="flex justify-between items-center">
