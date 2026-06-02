@@ -228,10 +228,12 @@ class extends Component {
 
     private function harvesterNames (): array
     {
+        // Get all harvester names, grouped by number (latest year wins)
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
-            ->where('year', $this->selectedYear)
             ->with('harvester')
+            ->orderByDesc('year')
             ->get()
+            ->unique('number')
             ->pluck('harvester.name', 'number')
             ->all();
     }
@@ -292,7 +294,7 @@ class extends Component {
             ->groupBy('harvester_number')
             ->orderBy($this->chartHarvesterSortBy, $this->chartHarvesterSortDirection)
             ->get()
-            ->map(function (object $row) {
+            ->map(function (object $row) use ($names) {
                 return [
                     'number' => $row->harvester_number,
                     'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
@@ -469,12 +471,13 @@ class extends Component {
     public function dailyChartRows ()
     {
         $data = $this->baseQuery()
-            ->selectRaw('DATE(weighed_at) as date, SUM(weight) as total_weight')
+            ->selectRaw('DATE(weighed_at) as date, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('date')
             ->orderBy('date')
             ->get()
             ->map(fn($row) => [
                 'date' => Carbon::parse($row->date)->format('d.m.Y'),
+                'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 2),
             ]);
 
@@ -482,6 +485,7 @@ class extends Component {
             $firstDate = Carbon::createFromFormat('d.m.Y', $data->first()['date'])->subDay();
             $data->prepend([
                 'date' => $firstDate->format('d.m.Y'),
+                'bucket_count' => 0,
                 'total_weight' => 0,
             ]);
         }
@@ -495,13 +499,16 @@ class extends Component {
         $names = $this->harvesterNames();
 
         return $this->baseQuery()
-            ->selectRaw('harvester_number, SUM(weight) as total_weight')
+            ->selectRaw('harvester_number, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('harvester_number')
             ->orderByDesc('total_weight')
             ->limit(20)
             ->get()
             ->map(fn(object $row) => [
+                'number' => $row->harvester_number,
                 'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
+                'label' => ($names[$row->harvester_number] ?? "#$row->harvester_number") . "\n#" . $row->harvester_number,
+                'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 2),
             ]);
     }
@@ -524,22 +531,33 @@ class extends Component {
 
             @if ($dailyData !== null)
                 <flux:card class="p-4">
-                    <flux:text size="sm" class="text-zinc-500">{{ __('Total Harvest') }}</flux:text>
+                    <flux:text size="sm" class="text-zinc-500">{{ __('Total harvest') }}</flux:text>
                     <div class="mt-2 text-2xl font-semibold">{{ $this->dailyWeightDisplay['value'] }} {{ $this->dailyWeightDisplay['unit'] }}</div>
                     <div class="text-xs text-zinc-400">{{ count($this->dailyData) }} {{ __('days') }}</div>
                 </flux:card>
 
                 <flux:card class="p-4">
-                    <flux:text size="sm" class="text-zinc-500">{{ __('Total Buckets') }}</flux:text>
+                    <flux:text size="sm" class="text-zinc-500">{{ __('Total buckets') }}</flux:text>
                     <div class="mt-2 text-2xl font-semibold">{{ $this->dailyTotals['buckets'] }}</div>
                 </flux:card>
             @endif
 
             @if ($harvesterData !== null)
+                @php
+                    $topHarvester = $this->harvesterData[0] ?? null;
+                    $harvesterNumber = $topHarvester['number'] ?? null;
+                    $harvesterName = $topHarvester['name'] ?? __('Unknown');
+                    $hasCustomName = $harvesterName !== "#$harvesterNumber";
+                @endphp
                 <flux:card class="p-4">
                     <flux:text size="sm" class="text-zinc-500">{{ __('Top Harvester') }}</flux:text>
-                    <div class="mt-2 text-lg font-semibold">{{ $this->harvesterData[0]['name'] ?? __('Unknown') }}</div>
-                    <div class="text-xs text-zinc-400">{{ number_format($this->harvesterData[0]['total_weight'] ?? 0, 3, ',', '.') }} kg</div>
+                    <div class="mt-2">
+                        @if ($hasCustomName)
+                            <span class="text-xs italic text-zinc-400">#{{ $harvesterNumber }}</span>
+                        @endif
+                        <div class="text-lg font-semibold">{{ $harvesterName }}</div>
+                    </div>
+                    <div class="text-xs text-zinc-400">{{ number_format($topHarvester['total_weight'] ?? 0, 2, ',', '.') }} kg</div>
                 </flux:card>
             @endif
 
@@ -597,19 +615,22 @@ class extends Component {
                     <flux:card>
                         <flux:chart :value="$this->dailyChartRows->toArray()" class="aspect-3/1">
                             <flux:chart.svg>
-                                <flux:chart.bar field="total_weight" class="text-blue-500"/>
-                                <flux:chart.axis axis="x" field="date">
+                                <flux:chart.bar field="total_weight" class="text-blue-500" stacked/>
+                                <flux:chart.bar field="bucket_count" class="text-amber-500" stacked/>
+                                <flux:chart.axis axis="x" field="date" tick-count="7">
                                     <flux:chart.axis.tick/>
                                     <flux:chart.axis.line/>
                                 </flux:chart.axis>
-                                <flux:chart.axis axis="y" tick-suffix=" kg">
+                                <flux:chart.axis axis="y" :format="['useGrouping' => true]">
                                     <flux:chart.axis.grid/>
                                     <flux:chart.axis.tick/>
                                 </flux:chart.axis>
+                                <flux:chart.cursor type="area" />
                             </flux:chart.svg>
                             <flux:chart.tooltip>
                                 <flux:chart.tooltip.heading field="date" />
-                                <flux:chart.tooltip.value field="total_weight" label="{{__('Total Weight')}}" :format="['useGrouping' => true]" suffix=" kg" />
+                                <flux:chart.tooltip.value field="total_weight" label="{{__('Total weight')}}" :format="['useGrouping' => true]" suffix=" kg" />
+                                <flux:chart.tooltip.value field="bucket_count" label="{{__('Buckets')}}" :format="['useGrouping' => true]" />
                             </flux:chart.tooltip>
                         </flux:chart>
                     </flux:card>
@@ -626,16 +647,23 @@ class extends Component {
                     <flux:card>
                         <flux:chart :value="$this->harvesterChartRows->toArray()" class="aspect-3/1">
                             <flux:chart.svg>
-                                <flux:chart.bar field="total_weight" class="text-green-500"/>
-                                <flux:chart.axis axis="x" field="name">
+                                <flux:chart.bar field="total_weight" class="text-blue-500" stacked/>
+                                <flux:chart.bar field="bucket_count" class="text-amber-500" stacked/>
+                                <flux:chart.axis axis="x" field="label">
                                     <flux:chart.axis.tick/>
                                     <flux:chart.axis.line/>
                                 </flux:chart.axis>
-                                <flux:chart.axis axis="y">
+                                <flux:chart.axis axis="y" :format="['useGrouping' => true]">
                                     <flux:chart.axis.grid/>
                                     <flux:chart.axis.tick/>
+                                    <flux:chart.cursor type="area" />
                                 </flux:chart.axis>
                             </flux:chart.svg>
+                            <flux:chart.tooltip>
+                                <flux:chart.tooltip.heading field="label" />
+                                <flux:chart.tooltip.value field="total_weight" label="{{__('Total weight')}}" :format="['useGrouping' => true]" suffix=" kg" />
+                                <flux:chart.tooltip.value field="bucket_count" label="{{__('Buckets')}}" :format="['useGrouping' => true]" />
+                            </flux:chart.tooltip>
                         </flux:chart>
                     </flux:card>
                 @else

@@ -518,7 +518,7 @@ class extends Component {
                     <flux:table.column>{{ __('Product') }}</flux:table.column>
                     <flux:table.column sortable :sorted="$productSortBy === 'bucket_count'" :direction="$productSortDirection" wire:click="sortProducts('bucket_count')">{{ __('Total kg') }}</flux:table.column>
                     <flux:table.column>{{ __('Price/kg') }}</flux:table.column>
-                    <flux:table.column sortable :sorted="$productSortBy === 'total_weight'" :direction="$productSortDirection" wire:click="sortProducts('total_weight')">{{ __('Total Earnings') }}</flux:table.column>
+                    <flux:table.column sortable :sorted="$productSortBy === 'total_weight'" :direction="$productSortDirection" wire:click="sortProducts('total_weight')">{{ __('Total earnings') }}</flux:table.column>
                 </flux:table.columns>
 
                 <flux:table.rows>

@@ -123,10 +123,10 @@ class extends Component
 
         <!-- Row 1: Counters -->
         <div class="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            <!-- Total Harvest -->
+            <!-- Total harvest -->
             <a href="{{ route('harvest.reports') }}" wire:navigate class="block">
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
-                    <flux:heading size="sm">{{ __('Total Harvest') }}</flux:heading>
+                    <flux:heading size="sm">{{ __('Total harvest') }}</flux:heading>
                     <flux:text class="text-2xl font-bold mt-2">
                         {{ $this->currentYearKgDisplay['value'] }} {{ $this->currentYearKgDisplay['unit'] }}
                     </flux:text>
@@ -134,10 +134,10 @@ class extends Component
                 </flux:card>
             </a>
 
-            <!-- Total Buckets -->
+            <!-- Total buckets -->
             <a href="{{ route('harvest.reports') }}" wire:navigate class="block">
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
-                    <flux:heading size="sm">{{ __('Total Buckets') }}</flux:heading>
+                    <flux:heading size="sm">{{ __('Total buckets') }}</flux:heading>
                     <flux:text class="text-2xl font-bold mt-2">
                         {{ number_format($this->currentYearBuckets, 0, ',', '.') }}
                     </flux:text>
