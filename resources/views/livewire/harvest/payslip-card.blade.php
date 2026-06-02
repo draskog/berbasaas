@@ -71,7 +71,7 @@ new class extends Component {
                 'price_per_kg' => $pricePerKg,
                 'price_effective_from' => $priceModel?->effective_from,
                 'price_effective_to' => $priceModel?->effective_to,
-                'earnings' => round($earnings),
+                'earnings' => $earnings,
             ];
         }
 
@@ -119,7 +119,7 @@ new class extends Component {
                     'effective_from' => $effectiveFrom,
                     'effective_to' => $effectiveTo,
                     'total_weight' => $totalWeightRounded,
-                    'earnings' => round($earnings),
+                    'earnings' => $earnings,
                 ];
             }
         }
@@ -158,7 +158,7 @@ new class extends Component {
         return [
             'buckets' => count($data),
             'weight' => round($totalWeight, 3),
-            'earnings' => round($totalEarnings),
+            'earnings' => round($totalEarnings, 2),
         ];
     }
 
@@ -296,7 +296,7 @@ new class extends Component {
                                 </flux:table.cell>
                                 <flux:table.cell>{{ number_format($period['total_weight'], 2, ',', '.') }}</flux:table.cell>
                                 <flux:table.cell class="text-right">{{ number_format($period['price_per_kg'], 0, '', '') }} RSD</flux:table.cell>
-                                <flux:table.cell class="text-right font-semibold">{{ number_format(round($period['earnings']), 0, '', '') }} RSD</flux:table.cell>
+                                <flux:table.cell class="text-right font-semibold">{{ number_format($period['earnings'], 0, '', '') }} RSD</flux:table.cell>
                             </flux:table.row>
                         @endforeach
                     </flux:table.rows>
