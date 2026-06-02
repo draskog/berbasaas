@@ -1235,7 +1235,7 @@
      * Determine whether a node's text content is entirely whitespace.
      *
      * @param {Node} node  A node implementing the |CharacterData| interface (i.e., a |Text|, |Comment|, or |CDATASection| node)
-     * @return {boolean} true if all the text content of |nod| is whitespace, otherwise false.
+     * @return {boolean} true if all of the text content of |nod| is whitespace, otherwise false.
      */
     function isAllWhitespace(node) {
         return !(/[^\t\n\r ]/.test(node.textContent));

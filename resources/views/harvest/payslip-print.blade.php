@@ -10,46 +10,63 @@
 <body>
 
 @foreach ($harvesters as $harvester)
-    <section>
-        <h1>Harvester #{{ $harvester['number'] }} {{ $harvester['name'] }}
-            @if ($harvester['prefix'])
-                ({{ $harvester['prefix'] }})
-            @endif
-        </h1>
+    <div class="payslip">
+        <div class="header">
+            <div class="title">Harvester #{{ $harvester['number'] }} {{ $harvester['name'] }}
+                @if ($harvester['prefix'])
+                    ({{ $harvester['prefix'] }})
+                @endif
+            </div>
+            <div class="company">{{ $company->name }}</div>
+        </div>
 
-        <p><strong>Company:</strong> {{ $company->name }}</p>
-        <p><strong>Period:</strong> {{ Carbon::parse($dateFrom)->format('d.m.Y') }} – {{ Carbon::parse($dateTo)->format('d.m.Y') }}</p>
+        <p class="info">Company: {{ $company->name }}</p>
+        <p class="info">Period: {{ Carbon::parse($dateFrom)->format('d.m.Y') }} – {{ Carbon::parse($dateTo)->format('d.m.Y') }}</p>
 
-        <h2>Summary</h2>
-        <p>
-            <strong>Total buckets:</strong> {{ $harvester['totals']['buckets'] }}<br>
-            <strong>Total weight:</strong> {{ number_format($harvester['totals']['weight'], 2, '.', '') }} kg<br>
-            <strong>Price per kg:</strong> {{ $harvester['totals']['price_per_kg'] ?? '—' }}<br>
-            <strong>Total earnings:</strong> {{ number_format($harvester['totals']['earnings'], 2, '.', '') }}
-        </p>
+        <div class="summary-section">
+            <div class="summary-card">
+                <span class="label">Total buckets</span>
+                <span class="value">{{ $harvester['totals']['buckets'] }}</span>
+            </div>
+            <div class="summary-card">
+                <span class="label">Total weight</span>
+                <span class="value">{{ number_format($harvester['totals']['weight'], 2, '.', '') }}</span>
+                <span class="unit">kg</span>
+            </div>
+            <div class="summary-card">
+                <span class="label">Price per kg</span>
+                <span class="value">{{ $harvester['totals']['price_per_kg'] ?? '—' }}</span>
+            </div>
+            <div class="summary-card">
+                <span class="label">Total earnings</span>
+                <span class="value">{{ number_format($harvester['totals']['earnings'], 2, '.', '') }}</span>
+            </div>
+        </div>
 
         @if (count($harvester['records']) > 0)
-            <h2>Records</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Weight (kg)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($harvester['records'] as $record)
+            <div class="records-section">
+                <p class="section-title">Records</p>
+                <table>
+                    <thead>
                         <tr>
-                            <td>{{ explode(' ', $record['datetime'])[0] }}</td>
-                            <td>{{ number_format($record['weight'], 3, '.', '') }}</td>
+                            <th>Date</th>
+                            <th>Weight (kg)</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach ($harvester['records'] as $record)
+                            <tr>
+                                <td>{{ explode(' ', $record['datetime'])[0] }}</td>
+                                <td>{{ number_format($record['weight'], 3, '.', '') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         @else
-            <p>No records found for the selected period.</p>
+            <p class="no-data">No records found.</p>
         @endif
-    </section>
+    </div>
 @endforeach
 
 <script>
