@@ -11,46 +11,98 @@
 
 html {
     font-family: Arial, sans-serif;
-    font-size: 10pt;
-    line-height: 1.5;
+    font-size: 11pt;
+    line-height: 1.4;
+    color: #333;
 }
 
 body {
     background: white;
-    color: black;
+    color: #333;
 }
 
 section {
     page-break-after: always;
     page-break-inside: avoid;
+    margin-bottom: 20mm;
 }
 
 section:last-child {
     page-break-after: avoid;
+    margin-bottom: 0;
 }
 
-h1, h2, h3, p {
-    margin: 0;
-    padding: 0;
+h1 {
+    font-size: 16pt;
+    font-weight: bold;
+    margin-bottom: 8mm;
+    border-bottom: 2px solid #22c55e;
+    padding-bottom: 5mm;
+    page-break-inside: avoid;
+}
+
+h2 {
+    font-size: 12pt;
+    font-weight: bold;
+    margin-top: 10mm;
+    margin-bottom: 5mm;
+    page-break-inside: avoid;
+}
+
+p {
+    margin-bottom: 3mm;
+    page-break-inside: avoid;
+}
+
+strong {
+    font-weight: bold;
+}
+
+br {
+    margin-bottom: 2mm;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 10mm 0;
+    margin-top: 5mm;
+    margin-bottom: 10mm;
+    font-size: 10pt;
+    page-break-inside: auto;
 }
 
 thead {
     display: table-header-group;
+    page-break-inside: avoid;
+    page-break-after: avoid;
 }
 
-th, td {
-    border: 1px solid #ccc;
-    padding: 3mm;
-    text-align: left;
+tbody {
+    page-break-inside: auto;
+}
+
+tbody tr {
+    page-break-inside: avoid;
 }
 
 th {
-    background: #f5f5f5;
+    background-color: #f0f0f0;
+    border: 1px solid #999;
+    padding: 4mm 3mm;
+    text-align: left;
     font-weight: bold;
+    font-size: 10pt;
+}
+
+td {
+    border: 1px solid #ccc;
+    padding: 3mm;
+    text-align: left;
+    font-size: 10pt;
+}
+
+td:last-child,
+th:last-child {
+    text-align: right;
+    padding-right: 5mm;
 }
