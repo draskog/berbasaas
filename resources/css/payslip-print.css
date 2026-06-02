@@ -1,29 +1,29 @@
-html {
-    color-scheme: light;
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 14px;
-    line-height: 1.4;
-    color: #000;
-}
-
-body {
-    background-color: #fff;
-    padding: 0;
-    margin: 0;
-}
-
-#loadingOverlay {
-    display: none;
-}
-
 @page {
     size: A4 portrait;
     margin: 10mm;
 }
 
-#content {
-    margin: 0;
-    padding: 0;
+:root {
+    color-scheme: light;
+}
+
+@media print {
+    html {
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 14px;
+        line-height: 1.4;
+        color: #000;
+    }
+
+    body {
+        background-color: #fff;
+        padding: 0;
+        margin: 0;
+    }
+
+    #loadingOverlay {
+        display: none;
+    }
 }
 
 .payslip-section {
