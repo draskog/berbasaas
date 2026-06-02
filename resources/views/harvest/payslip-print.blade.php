@@ -10,83 +10,44 @@
 <body>
 
 @foreach ($harvesters as $harvester)
-    <section class="payslip-section">
-        <header class="payslip-header">
-            <h1>{{ __('Harvester #') }} {{ $harvester['number'] }}
-                @if ($harvester['prefix'])
-                    <span class="prefix">{{ $harvester['prefix'] }}</span>
-                @endif
-                {{ $harvester['name'] }}
-            </h1>
-            <div class="company">{{ $company->name }}</div>
-        </header>
+    <section>
+        <h1>Harvester #{{ $harvester['number'] }} {{ $harvester['name'] }}
+            @if ($harvester['prefix'])
+                ({{ $harvester['prefix'] }})
+            @endif
+        </h1>
 
-        <p class="payslip-period">
-            {{ __('Period') }}: {{ Carbon::parse($dateFrom)->format('d.m.Y') }} – {{ Carbon::parse($dateTo)->format('d.m.Y') }}
+        <p><strong>Company:</strong> {{ $company->name }}</p>
+        <p><strong>Period:</strong> {{ Carbon::parse($dateFrom)->format('d.m.Y') }} – {{ Carbon::parse($dateTo)->format('d.m.Y') }}</p>
+
+        <h2>Summary</h2>
+        <p>
+            <strong>Total buckets:</strong> {{ $harvester['totals']['buckets'] }}<br>
+            <strong>Total weight:</strong> {{ number_format($harvester['totals']['weight'], 2, '.', '') }} kg<br>
+            <strong>Price per kg:</strong> {{ $harvester['totals']['price_per_kg'] ?? '—' }}<br>
+            <strong>Total earnings:</strong> {{ number_format($harvester['totals']['earnings'], 2, '.', '') }}
         </p>
 
-        <div class="payslip-summary">
-            <div class="summary-card">
-                <span class="summary-card-label">{{ __('Total buckets') }}</span>
-                <span class="summary-card-value">{{ $harvester['totals']['buckets'] }}</span>
-            </div>
-            <div class="summary-card">
-                <span class="summary-card-label">{{ __('Total weight') }}</span>
-                <span class="summary-card-value">{{ number_format($harvester['totals']['weight'], 2, ',', '.') }}</span>
-                <span class="summary-card-unit">{{ __('kg') }}</span>
-            </div>
-            <div class="summary-card">
-                <span class="summary-card-label">{{ __('Price per kg') }}</span>
-                <span class="summary-card-value">
-                    @if ($harvester['totals']['price_per_kg'])
-                        {{ number_format($harvester['totals']['price_per_kg'], 0, ',', '.') }}
-                    @else
-                        —
-                    @endif
-                </span>
-            </div>
-            <div class="summary-card">
-                <span class="summary-card-label">{{ __('Total earnings') }}</span>
-                <span class="summary-card-value">{{ number_format($harvester['totals']['earnings'], 0, ',', '.') }}</span>
-            </div>
-        </div>
-
         @if (count($harvester['records']) > 0)
-            @php
-                $recordCount = count($harvester['records']);
-                if ($recordCount <= 25) {
-                    $columnCount = 1;
-                } elseif ($recordCount <= 50) {
-                    $columnCount = 2;
-                } else {
-                    $columnCount = 3;
-                }
-                $chunkSize = (int) ceil($recordCount / $columnCount);
-                $chunkedRecords = array_chunk($harvester['records'], $chunkSize);
-            @endphp
-
-            <div class="table-wrapper cols-{{ $columnCount }}">
-                @foreach ($chunkedRecords as $chunk)
-                    <table class="payslip-table">
-                        <thead>
-                            <tr>
-                                <th>{{ __('Date') }}</th>
-                                <th class="text-right">{{ __('Weight (kg)') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($chunk as $record)
-                                <tr>
-                                    <td>{{ explode(' ', $record['datetime'])[0] }}</td>
-                                    <td class="text-right">{{ number_format($record['weight'], 3, ',', '.') }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @endforeach
-            </div>
+            <h2>Records</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Weight (kg)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($harvester['records'] as $record)
+                        <tr>
+                            <td>{{ explode(' ', $record['datetime'])[0] }}</td>
+                            <td>{{ number_format($record['weight'], 3, '.', '') }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         @else
-            <p class="no-data">{{ __('No records found for the selected period.') }}</p>
+            <p>No records found for the selected period.</p>
         @endif
     </section>
 @endforeach
@@ -97,5 +58,6 @@
         allowHyphenation: false,
     };
 </script>
+
 </body>
 </html>
