@@ -192,7 +192,7 @@ class extends Component
 }; ?>
 
 <flux:main>
-    <flux:header heading="{{ __('View Upload: :filename', ['filename' => $upload->original_filename]) }}">
+    <flux:header heading="{{ __('View Upload') }}: {{ $upload->original_filename }}">
         <flux:spacer/>
         <a href="{{ route('harvest.upload') }}" wire:navigate>
             <flux:button variant="ghost">{{ __('Back') }}</flux:button>
@@ -210,13 +210,13 @@ class extends Component
         @if($dbDuplicateCount > 0)
             <flux:callout type="warning" icon="exclamation-circle"
                 title="{{ __(':count records are not imported because they already exist in the system', ['count' => $dbDuplicateCount]) }}">
-                {{ __('These records were found as duplicates of previously imported records and were not re-imported. They can be deleted or kept as a reference.') }}
+                {{ __('Duplicate explanation') }}
             </flux:callout>
         @endif
 
         @if (!$this->hasStagingRecords && !$this->hasHarvestRecords)
-            <flux:callout type="info" icon="information-circle" title="{{ __('Svi duplikati') }}">
-                {{ __('Svi zapisi iz ovog fajla su bili duplikati prethodno importovanih zapisa i nisu ponovo uvezeni.') }}
+            <flux:callout type="info" icon="information-circle" title="{{ __('All duplicates') }}">
+                {{ __('All duplicates explanation') }}
             </flux:callout>
         @else
             <flux:tab.group>

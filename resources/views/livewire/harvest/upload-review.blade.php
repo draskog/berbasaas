@@ -291,7 +291,7 @@ class extends Component
         $reasons = (array) $stagingRecord->validation_reason;
 
         if (in_array('in_file_duplicate', $reasons, true) || in_array('db_duplicate', $reasons, true)) {
-            Flux::toast(text: __('Duplikati ne mogu biti rešeni, samo izbrisani.'), variant: 'warning');
+            Flux::toast(text: __('Duplicates cannot be resolved, only deleted.'), variant: 'warning');
 
             return;
         }
@@ -562,8 +562,8 @@ class extends Component
             @endif
 
             <div>
-                <flux:radio.group wire:model.live="selectedReason" label="{{ __('Razlog') }}" variant="pills">
-                    <flux:radio value="all" label="{{ __('Sve') }}"/>
+                <flux:radio.group wire:model.live="selectedReason" label="{{ __('Reason') }}" variant="pills">
+                    <flux:radio value="all" label="{{ __('All') }}"/>
                     <flux:radio value="harvester_not_found" label="{{ __('Harvester not found') }}"/>
                     <flux:radio value="tare_out_of_range" label="{{ __('Tare out of range') }}"/>
                     <flux:radio value="in_file_duplicate" label="{{ __('In-file Duplicate') }}"/>
@@ -613,7 +613,7 @@ class extends Component
                             {{ __('Selected records have different error types (harvester and tare). Please filter by reason first.') }}
                         </flux:callout>
                     @else
-                        <div class="flex flex-wrap items-end gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <div class="flex flex-wrap items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
                             <flux:text class="font-medium">{{ __(':count selected', ['count' => count($selectedIds)]) }}</flux:text>
                             @if($stats['has_harvester'])
                                 <flux:field>
