@@ -51,21 +51,24 @@
 }
 
 .payslip-header h2 {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     margin: 0;
+    line-height: 1.2;
 }
 
 .payslip-header .prefix {
     font-style: italic;
     font-weight: normal;
     color: #6b7280;
+    font-size: 12px;
 }
 
 .payslip-header .company {
     text-align: right;
     color: #6b7280;
-    font-size: 14px;
+    font-size: 12px;
+    white-space: nowrap;
 }
 
 .payslip-period {
@@ -77,35 +80,41 @@
 
 .payslip-summary {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 4mm;
     margin-bottom: 8mm;
     page-break-inside: avoid;
+    width: 100%;
 }
 
 .summary-card {
     border: 1px solid #e5e7eb;
     border-radius: 3px;
     padding: 4mm;
+    display: flex;
+    flex-direction: column;
 }
 
 .summary-card-label {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 600;
     color: #374151;
     margin: 0;
+    line-height: 1.2;
 }
 
 .summary-card-value {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
-    margin: 2mm 0 0 0;
+    margin: 1mm 0 0 0;
+    line-height: 1.2;
 }
 
 .summary-card-unit {
-    font-size: 10px;
+    font-size: 9px;
     color: #6b7280;
-    margin: 1mm 0 0 0;
+    margin: 0.5mm 0 0 0;
+    line-height: 1.2;
 }
 
 .table-wrapper {
