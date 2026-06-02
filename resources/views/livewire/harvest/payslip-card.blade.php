@@ -48,11 +48,11 @@ new class extends Component {
             ->with('product');
 
         if ($this->dateFrom) {
-            $query->whereDate('weighed_at', '>=', $this->dateFrom);
+            $query->where('weighed_at', '>=', Carbon::parse($this->dateFrom)->startOfDay());
         }
 
         if ($this->dateTo) {
-            $query->whereDate('weighed_at', '<=', $this->dateTo);
+            $query->where('weighed_at', '<=', Carbon::parse($this->dateTo)->endOfDay());
         }
 
         $records = $query->orderBy('weighed_at', 'asc')->get();
