@@ -2,22 +2,24 @@
 
 use App\Models\HarvestPrice;
 use App\Models\Product;
+use App\Rules\NoOverlappingHarvestPrices;
+use Flux\DateRange;
 use Flux\Flux;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Title;
 use Livewire\Attributes\Session;
+use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
-use Flux\DateRange;
 
 new
 #[Layout('layouts.app.sidebar')]
 #[Title('Prices')]
-class extends Component {
+class extends Component
+{
     use WithPagination;
 
     public ?int $selectedProductId = null;
@@ -62,7 +64,7 @@ class extends Component {
     public string $sortDirection = 'desc';
 
     #[Computed]
-    public function products (): Collection
+    public function products(): Collection
     {
         return Product::where('company_id', auth()->user()->company_id)
             ->where('active', true)
@@ -71,28 +73,28 @@ class extends Component {
     }
 
     #[Computed]
-    public function filterProducts (): Collection
+    public function filterProducts(): Collection
     {
         return Product::where('company_id', auth()->user()->company_id)
-            ->whereHas('harvestPrices', fn($q) => $q->where('company_id', auth()->user()->company_id))
+            ->whereHas('harvestPrices', fn ($q) => $q->where('company_id', auth()->user()->company_id))
             ->orderBy('name')
             ->get();
     }
 
     #[Computed]
-    public function minPriceDate (): string
+    public function minPriceDate(): string
     {
         return now()->format('Y-m-d');
     }
 
     #[Computed]
-    public function maxPriceDate (): string
+    public function maxPriceDate(): string
     {
         return now()->addYears(2)->format('Y-m-d');
     }
 
     #[Computed]
-    public function pricesForProduct ()
+    public function pricesForProduct()
     {
         $query = HarvestPrice::where('company_id', auth()->user()->company_id)
             ->orderBy($this->sortBy, $this->sortDirection);
@@ -108,17 +110,17 @@ class extends Component {
         return $query->paginate($this->perPage);
     }
 
-    public function mount (): void
+    public function mount(): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
     }
 
-    public function updatedPerPage (): void
+    public function updatedPerPage(): void
     {
         $this->resetPage();
     }
 
-    public function sort (string $column): void
+    public function sort(string $column): void
     {
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -130,12 +132,12 @@ class extends Component {
     }
 
     #[On('updated-selectedProduct')]
-    public function updatePrices (): void
+    public function updatePrices(): void
     {
         $this->resetPage();
     }
 
-    public function openCreatePriceModal (): void
+    public function openCreatePriceModal(): void
     {
         if ($this->selectedProduct !== 'all') {
             $this->newProductId = (int) $this->selectedProduct;
@@ -144,16 +146,30 @@ class extends Component {
         $this->showCreatePriceModal = true;
     }
 
-    public function createPrice (): void
+    public function createPrice(): void
     {
-        $this->newEffectiveFrom = $this->newEffectiveDateRange->start();
-        $this->newEffectiveTo = $this->newEffectiveDateRange->start()->diffInDays($this->newEffectiveDateRange->end()) ? $this->newEffectiveDateRange->end() : null;
+        if ($this->newEffectiveDateRange) {
+            $this->newEffectiveFrom = $this->newEffectiveDateRange->start();
+            $this->newEffectiveTo = $this->newEffectiveDateRange->start()->diffInDays($this->newEffectiveDateRange->end()) ? $this->newEffectiveDateRange->end() : null;
+        }
         $this->validate([
             'newProductId' => 'required|exists:products,id',
             'newPricePerKg' => 'required|numeric|min:0',
             'newEffectiveFrom' => 'required|date',
             'newEffectiveTo' => 'nullable|date|after_or_equal:newEffectiveFrom',
         ]);
+
+        $this->validate(
+            ['newEffectiveFrom' => [
+                new NoOverlappingHarvestPrices(
+                    companyId: auth()->user()->company_id,
+                    productId: $this->newProductId,
+                    effectiveFrom: Carbon::parse($this->newEffectiveFrom),
+                    effectiveTo: $this->newEffectiveTo ? Carbon::parse($this->newEffectiveTo) : null,
+                ),
+            ]],
+            ['newEffectiveFrom.overlap' => __('The effective date range overlaps with an existing price for this product.')],
+        );
 
         HarvestPrice::create([
             'company_id' => auth()->user()->company_id,
@@ -174,13 +190,13 @@ class extends Component {
         Flux::toast(text: __('Price added successfully.'), variant: 'success');
     }
 
-    public function confirmDeletePrice (int $id): void
+    public function confirmDeletePrice(int $id): void
     {
         $this->deletingPriceId = $id;
         $this->showDeleteModal = true;
     }
 
-    public function deletePrice (): void
+    public function deletePrice(): void
     {
         HarvestPrice::find($this->deletingPriceId)?->delete();
         $this->deletingPriceId = null;
@@ -188,7 +204,7 @@ class extends Component {
         Flux::toast(text: __('Price deleted.'), variant: 'warning');
     }
 
-    public function editPrice (int $id): void
+    public function editPrice(int $id): void
     {
         $price = HarvestPrice::where('company_id', auth()->user()->company_id)->findOrFail($id);
         $this->editingPriceId = $id;
@@ -199,11 +215,12 @@ class extends Component {
         $this->showEditPriceModal = true;
     }
 
-
-    public function updatePrice (): void
+    public function updatePrice(): void
     {
-        $this->editEffectiveFrom = $this->editEffectiveDateRange->start();
-        $this->editEffectiveTo = $this->editEffectiveDateRange->start()->diffInDays($this->editEffectiveDateRange->end()) ? $this->editEffectiveDateRange->end() : null;
+        if ($this->editEffectiveDateRange) {
+            $this->editEffectiveFrom = $this->editEffectiveDateRange->start();
+            $this->editEffectiveTo = $this->editEffectiveDateRange->start()->diffInDays($this->editEffectiveDateRange->end()) ? $this->editEffectiveDateRange->end() : null;
+        }
         $this->validate([
             'editPricePerKg' => 'required|numeric|min:0',
             'editEffectiveFrom' => 'required|date',
@@ -212,6 +229,20 @@ class extends Component {
 
         $price = HarvestPrice::where('company_id', auth()->user()->company_id)
             ->findOrFail($this->editingPriceId);
+
+        $this->validate(
+            ['editEffectiveFrom' => [
+                new NoOverlappingHarvestPrices(
+                    companyId: auth()->user()->company_id,
+                    productId: $price->product_id,
+                    effectiveFrom: Carbon::parse($this->editEffectiveFrom),
+                    effectiveTo: $this->editEffectiveTo ? Carbon::parse($this->editEffectiveTo) : null,
+                    excludeId: $this->editingPriceId,
+                ),
+            ]],
+            ['editEffectiveFrom.overlap' => __('The effective date range overlaps with an existing price for this product.')],
+        );
+
         $price->update([
             'price_per_kg' => $this->editPricePerKg,
             'effective_from' => $this->editEffectiveFrom,
