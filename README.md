@@ -1,58 +1,211 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Serbian Blueberry Farms - Harvest Management System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A modern Laravel application for managing harvest data, worker payslips, and harvest records for blueberry farms. Built with Laravel 13, Livewire 4, and Volt single-file components.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- 🌾 **Harvest Record Management** - Track harvest data with date, weight, and pricing
+- 💼 **Payslip Generation** - Generate professional payslips with harvest records
+- 📄 **Multi-page Printing** - Support for printing large harvest datasets across multiple pages with repeating headers
+- 👥 **Harvester Profiles** - Manage harvester information and earnings
+- 📊 **Real-time Dashboard** - Interactive Livewire components for data management
+- 🎨 **Modern UI** - Built with Flux UI components and Tailwind CSS
+- 📱 **Responsive Design** - Works seamlessly on desktop and mobile
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tech Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Backend**: Laravel 13, PHP 8.5
+- **Frontend**: Livewire 4, Volt, Flux UI v2, Tailwind CSS v4
+- **Database**: SQLite/MySQL (configurable)
+- **Testing**: Pest v4
+- **Code Quality**: Laravel Pint
+- **Containerization**: Laravel Sail (Docker)
 
-## Learning Laravel
+## Requirements
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- Docker & Docker Compose (for Laravel Sail)
+- Or PHP 8.5+, Composer, and Node.js
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Installation
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### Using Docker (Recommended)
 
-## Agentic Development
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/berbasaas.git
+   cd berbasaas
+   ```
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+2. **Install dependencies**
+   ```bash
+   docker run --rm \
+     -u "$(id -u):$(id -g)" \
+     -v "$(pwd):/var/www/html" \
+     -w /var/www/html \
+     laravelsail/php85-composer:latest \
+     composer install --ignore-platform-reqs
+   ```
+
+3. **Copy environment file**
+   ```bash
+   cp .env.example .env
+   ```
+
+4. **Generate app key**
+   ```bash
+   ./vendor/bin/sail artisan key:generate
+   ```
+
+5. **Run migrations**
+   ```bash
+   ./vendor/bin/sail artisan migrate
+   ```
+
+### Without Docker
+
+1. **Clone and install**
+   ```bash
+   git clone https://github.com/yourusername/berbasaas.git
+   cd berbasaas
+   composer install
+   ```
+
+2. **Setup environment**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+3. **Run migrations**
+   ```bash
+   php artisan migrate
+   ```
+
+## Running the Application
+
+### With Docker (Sail)
 
 ```bash
-composer require laravel/boost --dev
+# Start services
+./vendor/bin/sail up -d
 
-php artisan boost:install
+# Run development server
+./vendor/bin/sail npm run dev
+
+# Open in browser
+./vendor/bin/sail open
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### Without Docker
+
+```bash
+# Start development server
+php artisan serve
+
+# In another terminal, build assets
+npm run dev
+```
+
+## Development
+
+### Running Tests
+
+```bash
+./vendor/bin/sail artisan test
+```
+
+### Code Formatting
+
+```bash
+./vendor/bin/sail bin pint
+```
+
+### Database Commands
+
+```bash
+# Run migrations
+./vendor/bin/sail artisan migrate
+
+# Seed with sample data
+./vendor/bin/sail artisan db:seed
+
+# Rollback
+./vendor/bin/sail artisan migrate:rollback
+```
+
+### Artisan Commands
+
+```bash
+# List available commands
+./vendor/bin/sail artisan list
+
+# Create new migration
+./vendor/bin/sail artisan make:migration create_table_name
+
+# Create new model
+./vendor/bin/sail artisan make:model ModelName
+```
+
+## Project Structure
+
+```
+├── app/
+│   ├── Models/          # Eloquent models
+│   ├── Http/            # Controllers, middleware
+│   ├── Actions/         # Business logic
+│   └── Jobs/            # Queued jobs
+├── resources/
+│   ├── views/           # Blade templates
+│   ├── js/              # JavaScript/Volt components
+│   └── css/             # Stylesheets
+├── database/
+│   ├── migrations/      # Database migrations
+│   └── seeders/         # Database seeders
+├── routes/              # Route definitions
+└── tests/               # Pest tests
+```
+
+## Key Features
+
+### Harvest Records
+- Track harvest data with automatic grid layout
+- Support for 120+ record entries per page
+- Dynamic column generation (4 columns × 40 rows)
+
+### Payslip Generation
+- Professional payslip design with A4 page format
+- Automatic page breaks for large datasets
+- Repeating headers on continuation pages
+- Print-ready formatting with zero margins
+
+### Livewire Components
+- Real-time form validation
+- Reactive data updates
+- Interactive tables with sorting and filtering
+
+## Configuration
+
+Key configuration files:
+- `.env` - Application environment variables
+- `config/app.php` - Application settings
+- `config/database.php` - Database connection
+- `config/cache.php` - Caching configuration
 
 ## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+1. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Commit changes (`git commit -m 'Add amazing feature'`)
+3. Push to branch (`git push origin feature/amazing-feature`)
+4. Open a Pull Request
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is private. All rights reserved.
+
+## Support
+
+For issues and questions, please contact the development team.
+
+---
+
+Built with ❤️ using Laravel & Livewire
