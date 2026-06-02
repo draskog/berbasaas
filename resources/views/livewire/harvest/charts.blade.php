@@ -602,11 +602,15 @@ class extends Component {
                                     <flux:chart.axis.tick/>
                                     <flux:chart.axis.line/>
                                 </flux:chart.axis>
-                                <flux:chart.axis axis="y">
+                                <flux:chart.axis axis="y" tick-suffix=" kg">
                                     <flux:chart.axis.grid/>
                                     <flux:chart.axis.tick/>
                                 </flux:chart.axis>
                             </flux:chart.svg>
+                            <flux:chart.tooltip>
+                                <flux:chart.tooltip.heading field="date" />
+                                <flux:chart.tooltip.value field="total_weight" label="{{__('Total Weight')}}" :format="['useGrouping' => true]" suffix=" kg" />
+                            </flux:chart.tooltip>
                         </flux:chart>
                     </flux:card>
                 @else
