@@ -138,10 +138,8 @@ class extends Component {
             $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
         }
 
-        if (! $this->fromDate || ! $this->toDate) {
-            $this->fromDate = now()->startOfYear()->format('Y-m-d');
-            $this->toDate = now()->endOfYear()->format('Y-m-d');
-        }
+        $this->fromDate = Carbon::create($this->selectedYear)->format('Y-m-d');
+        $this->toDate = Carbon::create($this->selectedYear, 12, 31)->format('Y-m-d');
 
         if (! $this->selectedProductId) {
             $product = $this->products->first();

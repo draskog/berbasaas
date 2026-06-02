@@ -137,9 +137,7 @@ class extends Component
             $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
         }
 
-        if (! $this->dateFrom || ! $this->dateTo) {
-            $this->updateDatesForSelectedYear();
-        }
+        $this->updateDatesForSelectedYear();
 
         if ($this->dateFrom && $this->dateTo) {
             $this->dateRangeValue = $this->dateFrom.'/'.$this->dateTo;

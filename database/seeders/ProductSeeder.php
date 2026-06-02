@@ -31,25 +31,19 @@ class ProductSeeder extends Seeder
             'company_id' => $company->id,
             'name' => 'Jagoda',
             'slug' => 'jagoda',
-            'active' => true,
+            'active' => false,
         ]);
 
         Product::create([
             'company_id' => $company->id,
             'name' => 'Malina',
             'slug' => 'malina',
-            'active' => true,
+            'active' => false,
         ]);
 
         HarvestPrice::create([
             'company_id' => $company->id,
             'product_id' => 1,
-            'price_per_kg' => 100,
-            'effective_from' => now()->subYears(4),
-        ]);
-        HarvestPrice::create([
-            'company_id' => $company->id,
-            'product_id' => 2,
             'price_per_kg' => 100,
             'effective_from' => now()->subYears(4),
         ]);
