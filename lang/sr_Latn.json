@@ -746,5 +746,6 @@
     "Duplicates (database or in-file): automatically deleted from staging": "Duplikati (baza podataka ili datoteka): automatski obrisani iz privremenih zapisa",
     "(:db_dup database duplicate record(s) staged)": "(:db_dup duplikat(a) iz baze)",
     "(:in_dup in-file duplicate record(s) staged)": "(:in_dup duplikat(a) iz datoteke)",
-    "(:resolvable invalid record(s) require review)": "(:resolvable neispravan(e) zapis(e) zahtevaju pregled)"
+    "(:resolvable invalid record(s) require review)": "(:resolvable neispravan(e) zapis(e) zahtevaju pregled)",
+    "The effective date range overlaps with an existing price for this product.": "Period važenja se preklapa sa postojećom cijenom za ovaj proizvod."
 }

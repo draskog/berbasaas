@@ -43,7 +43,7 @@ readonly class NoOverlappingHarvestPrices implements ValidationRule
             ->exists();
 
         if ($hasOverlap) {
-            $fail(__('Period važenja se preklapa sa postojećom cijenom za ovaj proizvod.'));
+            $fail(__('The effective date range overlaps with an existing price for this product.'));
         }
     }
 }
