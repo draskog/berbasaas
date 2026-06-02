@@ -35,22 +35,53 @@
                 <tr>
                     <td>{{ __('Total buckets') }}</td>
                     <td>{{ __('Total weight') }}</td>
-                    <td>{{ __('Price per kg') }}</td>
                     <td class="text-right font-semibold">{{ __('Total earnings') }}</td>
                 </tr>
                 <tr class="mt-2">
                     <td>{{ $harvester['totals']['buckets'] }} kom</td>
-                    <td>{{ number_format($harvester['totals']['weight'], 0, '', '') }} kg</td>
-                    <td>
-                        @if ($harvester['totals']['price_per_kg'])
-                            {{ number_format($harvester['totals']['price_per_kg'], 0, '', '') }} <span class="text-sm">RSD</span>
-                        @else
-                            —
-                        @endif
-                    </td>
+                    <td>{{ number_format($harvester['totals']['weight'], 2, ',', '') }} kg</td>
                     <td class="text-right font-bold">{{ number_format($harvester['totals']['earnings'], 0, '', '') }} <span class="text-sm">RSD</span></td>
                 </tr>
             </table>
+
+            <!-- Price breakdown -->
+            @if (count($harvester['price_periods']) === 1)
+                <!-- Single price period -->
+                @php $period = $harvester['price_periods'][0]; @endphp
+                <table class="mt-4 border-collapse m-0 w-full">
+                    <tr>
+                        <td class="text-sm font-semibold">{{ __('Price per kg') }}:</td>
+                        <td class="text-sm">{{ number_format($period['price_per_kg'], 0, '', '') }} RSD</td>
+                    </tr>
+                </table>
+            @elseif (count($harvester['price_periods']) > 1)
+                <!-- Multiple price periods -->
+                <p class="mt-6 mb-2 text-sm font-semibold">{{ __('Price breakdown') }}:</p>
+                <table class="border-collapse m-0 w-full text-sm">
+                    <tr>
+                        <td>{{ __('Period') }}</td>
+                        <td>{{ __('Weight (kg)') }}</td>
+                        <td class="text-right">{{ __('Price per kg') }}</td>
+                        <td class="text-right">{{ __('Subtotal') }}</td>
+                    </tr>
+                    @foreach ($harvester['price_periods'] as $period)
+                        <tr>
+                            <td>
+                                {{ Carbon\Carbon::parse($period['effective_from'])->format('d.m.Y') }}
+                                –
+                                @if ($period['effective_to'])
+                                    {{ Carbon\Carbon::parse($period['effective_to'])->format('d.m.Y') }}
+                                @else
+                                    {{ __('present') }}
+                                @endif
+                            </td>
+                            <td>{{ number_format($period['total_weight'], 2, ',', '') }}</td>
+                            <td class="text-right">{{ number_format($period['price_per_kg'], 0, '', '') }} RSD</td>
+                            <td class="text-right font-semibold">{{ number_format($period['earnings'], 0, '', '') }} RSD</td>
+                        </tr>
+                    @endforeach
+                </table>
+            @endif
             @if (count($harvester['records']) > 0)
                 @php
                     $records = $harvester['records'];

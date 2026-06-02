@@ -30,17 +30,17 @@ new class extends Component {
         ];
     }
 
-    private function priceForRecord (HarvestRecord $record): ?float
+    private function priceForRecord(HarvestRecord $record): ?HarvestPrice
     {
         return HarvestPrice::where('company_id', auth()->user()->company_id)
             ->where('product_id', $record->product_id)
             ->where('effective_from', '<=', $record->weighed_at->format('Y-m-d'))
-            ->where(fn($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $record->weighed_at->format('Y-m-d')))
-            ->value('price_per_kg');
+            ->where(fn ($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $record->weighed_at->format('Y-m-d')))
+            ->first();
     }
 
     #[Computed]
-    public function payslipData (): array
+    public function payslipData(): array
     {
         $query = HarvestRecord::where('company_id', auth()->user()->company_id)
             ->where('harvester_number', $this->harvesterNumber)
@@ -59,14 +59,18 @@ new class extends Component {
 
         $data = [];
         foreach ($records as $record) {
-            $price = $this->priceForRecord($record);
-            $earnings = $price ? round($record->weight * $price, 2) : null;
+            $priceModel = $this->priceForRecord($record);
+            $pricePerKg = $priceModel?->price_per_kg;
+            $earnings = $pricePerKg ? round($record->weight * $pricePerKg, 2) : null;
 
             $data[] = [
                 'datetime' => $record->weighed_at,
                 'product' => $record->product?->name ?? '—',
                 'weight' => round($record->weight, 3),
-                'price_per_kg' => $price,
+                'price_id' => $priceModel?->id,
+                'price_per_kg' => $pricePerKg,
+                'price_effective_from' => $priceModel?->effective_from,
+                'price_effective_to' => $priceModel?->effective_to,
                 'earnings' => $earnings,
             ];
         }
@@ -75,58 +79,86 @@ new class extends Component {
     }
 
     #[Computed]
-    public function payslipTotals (): array
+    public function priceBreakdown(): array
     {
         $data = $this->payslipData;
         if (empty($data)) {
-            return ['buckets' => 0, 'weight' => 0, 'earnings' => 0, 'price_per_kg' => null];
+            return [];
         }
 
-        // Group by date and aggregate
-        $groupedByDate = collect($data)->groupBy(fn($r) => Carbon::parse($r['datetime'])->format('Y-m-d'));
+        // Group by price_id to calculate earnings per price period
+        $groupedByPrice = collect($data)->groupBy(fn ($r) => $r['price_id'] ?? 'null');
 
+        $breakdown = [];
+        foreach ($groupedByPrice as $priceId => $records) {
+            if ($priceId === 'null') {
+                continue; // Skip records with no price
+            }
+
+            $totalWeight = 0;
+            $pricePerKg = null;
+            $effectiveFrom = null;
+            $effectiveTo = null;
+
+            foreach ($records as $record) {
+                $totalWeight += $record['weight'];
+                if ($pricePerKg === null && $record['price_per_kg'] !== null) {
+                    $pricePerKg = $record['price_per_kg'];
+                    $effectiveFrom = $record['price_effective_from'];
+                    $effectiveTo = $record['price_effective_to'];
+                }
+            }
+
+            if ($pricePerKg !== null) {
+                $totalWeightRounded = round($totalWeight, 2);
+                $earnings = round($totalWeightRounded * $pricePerKg, 2);
+
+                $breakdown[] = [
+                    'price_id' => $priceId,
+                    'price_per_kg' => $pricePerKg,
+                    'effective_from' => $effectiveFrom,
+                    'effective_to' => $effectiveTo,
+                    'total_weight' => $totalWeightRounded,
+                    'earnings' => $earnings,
+                ];
+            }
+        }
+
+        // Sort by effective_from ascending
+        usort($breakdown, static fn ($a, $b) => strtotime($a['effective_from']) <=> strtotime($b['effective_from']));
+
+        return $breakdown;
+    }
+
+    #[Computed]
+    public function payslipTotals(): array
+    {
+        $data = $this->payslipData;
+        if (empty($data)) {
+            return ['buckets' => 0, 'weight' => 0, 'earnings' => 0];
+        }
+
+        $breakdown = $this->priceBreakdown;
         $totalWeight = 0;
         $totalEarnings = 0;
-        $weightByPrice = []; // Track total weight for each price
 
-        foreach ($groupedByDate as $date => $dateRecords) {
-            $dateWeight = 0;
-            $datePrice = null;
-
-            foreach ($dateRecords as $record) {
-                $dateWeight += $record['weight'];
-                if ($datePrice === null && $record['price_per_kg'] !== null) {
-                    $datePrice = $record['price_per_kg'];
-                }
-            }
-
-            if ($datePrice !== null) {
-                $totalEarnings += round($dateWeight * $datePrice, 2);
-                // Track cumulative weight for each price
-                if (! isset($weightByPrice[$datePrice])) {
-                    $weightByPrice[$datePrice] = 0;
-                }
-                $weightByPrice[$datePrice] += $dateWeight;
-            }
-
-            $totalWeight += $dateWeight;
+        // Sum totals from price breakdown
+        foreach ($breakdown as $period) {
+            $totalWeight += $period['total_weight'];
+            $totalEarnings += $period['earnings'];
         }
 
-        // Calculate weighted average price: sum(weight * price) / total weight
-        $avgPrice = null;
-        if ($totalWeight > 0 && ! empty($weightByPrice)) {
-            $weightedPriceSum = 0;
-            foreach ($weightByPrice as $price => $weight) {
-                $weightedPriceSum += $price * $weight;
+        // Include weight from records without prices
+        foreach ($data as $record) {
+            if ($record['price_id'] === null) {
+                $totalWeight += $record['weight'];
             }
-            $avgPrice = round($weightedPriceSum / $totalWeight, 4);
         }
 
         return [
             'buckets' => count($data),
             'weight' => round($totalWeight, 3),
             'earnings' => round($totalEarnings, 2),
-            'price_per_kg' => $avgPrice,
         ];
     }
 
@@ -203,7 +235,7 @@ new class extends Component {
         </div>
     @else
         <!-- Summary cards -->
-        <div class="grid gap-3 grid-cols-4 mb-6">
+        <div class="grid gap-3 grid-cols-3 mb-6">
             <flux:card class="h-full p-3 hover:border-blue-300 transition-colors">
                 <flux:heading size="xs">{{ __('Total buckets') }}</flux:heading>
                 <flux:text class="text-lg font-bold mt-1">
@@ -218,22 +250,58 @@ new class extends Component {
 
             </flux:card>
             <flux:card class="h-full p-3 hover:border-blue-300 transition-colors">
-                <flux:heading size="xs">{{ __('Price per kg') }}</flux:heading>
-                <flux:text class="text-lg font-bold mt-1">
-                    @if ($this->payslipTotals['price_per_kg'])
-                        {{ number_format($this->payslipTotals['price_per_kg'], 0, '', '') }} <span class="text-gray-500 dark:text-zinc-400 text-xs">{{ __('RSD') }}</span>
-                    @else
-                        —
-                    @endif
-                </flux:text>
-            </flux:card>
-            <flux:card class="h-full p-3 hover:border-blue-300 transition-colors">
                 <flux:heading size="xs">{{ __('Total earnings') }}</flux:heading>
                 <flux:text class="text-lg font-bold mt-1">
                     {{ number_format($this->payslipTotals['earnings'], 0, '', '') }} <span class="text-gray-500 dark:text-zinc-400 text-xs">{{ __('RSD') }}</span>
                 </flux:text>
             </flux:card>
         </div>
+
+        <!-- Price breakdown -->
+        @if (count($this->priceBreakdown) === 1)
+            <!-- Single price period -->
+            @php $period = $this->priceBreakdown[0]; @endphp
+            <div class="mb-6">
+                <flux:card class="p-3">
+                    <flux:heading size="xs" class="mb-2">{{ __('Price per kg') }}</flux:heading>
+                    <flux:text class="text-lg font-bold">
+                        {{ number_format($period['price_per_kg'], 0, '', '') }} <span class="text-gray-500 dark:text-zinc-400 text-xs">{{ __('RSD') }}</span>
+                    </flux:text>
+                </flux:card>
+            </div>
+        @elseif (count($this->priceBreakdown) > 1)
+            <!-- Multiple price periods -->
+            <div class="mb-6">
+                <flux:heading size="xs" class="mb-3">{{ __('Price breakdown') }}</flux:heading>
+                <flux:table class="[&_th]:py-2 [&_th]:px-2 [&_td]:py-2 [&_td]:px-2 [&_th]:text-xs [&_td]:text-xs">
+                    <flux:table.columns>
+                        <flux:table.column>{{ __('Period') }}</flux:table.column>
+                        <flux:table.column>{{ __('Weight (kg)') }}</flux:table.column>
+                        <flux:table.column class="text-right">{{ __('Price per kg') }}</flux:table.column>
+                        <flux:table.column class="text-right">{{ __('Subtotal') }}</flux:table.column>
+                    </flux:table.columns>
+
+                    <flux:table.rows>
+                        @foreach ($this->priceBreakdown as $period)
+                            <flux:table.row>
+                                <flux:table.cell>
+                                    {{ Carbon::parse($period['effective_from'])->format('d.m.Y') }}
+                                    –
+                                    @if ($period['effective_to'])
+                                        {{ Carbon::parse($period['effective_to'])->format('d.m.Y') }}
+                                    @else
+                                        {{ __('present') }}
+                                    @endif
+                                </flux:table.cell>
+                                <flux:table.cell>{{ number_format($period['total_weight'], 2, ',', '.') }}</flux:table.cell>
+                                <flux:table.cell class="text-right">{{ number_format($period['price_per_kg'], 0, '', '') }} RSD</flux:table.cell>
+                                <flux:table.cell class="text-right font-semibold">{{ number_format($period['earnings'], 0, '', '') }} RSD</flux:table.cell>
+                            </flux:table.row>
+                        @endforeach
+                    </flux:table.rows>
+                </flux:table>
+            </div>
+        @endif
 
         <!-- Multi-column detail table -->
         <div class="mb-12 grid gap-4 {{ $this->gridClass }}">

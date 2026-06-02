@@ -18,7 +18,7 @@ class CompanyFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => 'Company ' . fake()->numberBetween(1000, 9999),
+            'name' => 'Company '.fake()->numberBetween(1000, 9999),
             'address' => fake()->address(),
             'tax_number' => fake()->numerify('###########'),
             'phone' => fake()->phoneNumber(),

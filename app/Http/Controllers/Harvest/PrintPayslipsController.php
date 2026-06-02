@@ -52,13 +52,11 @@ class PrintPayslipsController extends Controller
         }
 
         $harvesters = [];
-        $prices = HarvestPrice::where('company_id', $company->id)
-            ->where(function ($q) {
-                $q->whereNull('effective_to')
-                    ->orWhere('effective_to', '>=', now()->toDateString());
-            })
-            ->get()
-            ->keyBy(fn ($p) => (string) $p->product_id);
+        // Load all historical prices (not just currently active)
+        $allPrices = HarvestPrice::where('company_id', $company->id)
+            ->orderBy('product_id')
+            ->orderBy('effective_from')
+            ->get();
 
         foreach ($harvesterNumbers as $number) {
             $assignment = HarvesterAssignment::where('company_id', $company->id)
@@ -76,62 +74,79 @@ class PrintPayslipsController extends Controller
                 ->orderBy('weighed_at')
                 ->get();
 
+            // Group records by price period for correct math
+            $recordsByPriceId = [];
             $payslipRows = [];
             $totalWeight = 0;
             $totalEarnings = 0;
-            $weightByDate = []; // Track weight and price by date
 
             foreach ($records as $record) {
-                $price = $prices->get((string) $record->product_id)?->price_per_kg;
-                $earnings = $record->weight * ($price ?? 0);
-                $earnings = round($earnings, 2);
+                // Find price valid on this record's weighed_at date
+                $priceModel = $allPrices->first(function ($p) use ($record) {
+                    $recordDate = $record->weighed_at->format('Y-m-d');
 
+                    return $p->product_id === $record->product_id
+                        && $p->effective_from <= $recordDate
+                        && ($p->effective_to === null || $p->effective_to >= $recordDate);
+                });
+
+                $pricePerKg = $priceModel?->price_per_kg;
+                $priceId = $priceModel?->id;
+
+                // Track record for grouping by price
+                if ($priceId) {
+                    if (! isset($recordsByPriceId[$priceId])) {
+                        $recordsByPriceId[$priceId] = [
+                            'price_model' => $priceModel,
+                            'weight' => 0,
+                        ];
+                    }
+                    $recordsByPriceId[$priceId]['weight'] += $record->weight;
+                }
+
+                // Build payslip row (old format for detail listing)
+                $earnings = $pricePerKg ? round($record->weight * $pricePerKg, 2) : 0;
                 $payslipRows[] = [
                     'datetime' => $record->weighed_at->format('d.m.Y H:i'),
                     'product' => $record->product?->name ?? '—',
                     'weight' => round($record->weight, 3),
-                    'price_per_kg' => $price ? round($price, 4) : null,
+                    'price_per_kg' => $pricePerKg ? round($pricePerKg, 4) : null,
                     'earnings' => $earnings,
                 ];
 
                 $totalWeight += $record->weight;
+            }
+
+            // Calculate earnings and price periods using correct math
+            $pricePeriods = [];
+            foreach ($recordsByPriceId as $priceId => $data) {
+                $totalWeightRounded = round($data['weight'], 2);
+                $earnings = round($totalWeightRounded * $data['price_model']->price_per_kg, 2);
                 $totalEarnings += $earnings;
 
-                // Group by date for weighted price calculation
-                $date = $record->weighed_at->format('Y-m-d');
-                if (! isset($weightByDate[$date])) {
-                    $weightByDate[$date] = ['weight' => 0, 'price' => null];
-                }
-                $weightByDate[$date]['weight'] += $record->weight;
-                if ($weightByDate[$date]['price'] === null && $price !== null) {
-                    $weightByDate[$date]['price'] = $price;
-                }
+                $pricePeriods[] = [
+                    'price_id' => $priceId,
+                    'price_per_kg' => $data['price_model']->price_per_kg,
+                    'effective_from' => $data['price_model']->effective_from,
+                    'effective_to' => $data['price_model']->effective_to,
+                    'total_weight' => $totalWeightRounded,
+                    'earnings' => $earnings,
+                ];
             }
 
-            // Calculate weighted average price: sum(weight * price) / total weight
-            $avgPrice = null;
-            if ($totalWeight > 0) {
-                $weightedPriceSum = 0;
-                foreach ($weightByDate as $dateData) {
-                    if ($dateData['price'] !== null) {
-                        $weightedPriceSum += $dateData['weight'] * $dateData['price'];
-                    }
-                }
-                if ($weightedPriceSum > 0) {
-                    $avgPrice = round($weightedPriceSum / $totalWeight, 4);
-                }
-            }
+            // Sort price periods by effective_from
+            usort($pricePeriods, static fn ($a, $b) => strtotime($a['effective_from']) <=> strtotime($b['effective_from']));
 
             $harvesters[] = [
                 'number' => $number,
                 'name' => $assignment?->harvester?->name ?? 'Unknown',
                 'prefix' => $assignment?->harvester?->prefix,
                 'records' => $payslipRows,
+                'price_periods' => $pricePeriods,
                 'totals' => [
                     'buckets' => count($payslipRows),
                     'weight' => round($totalWeight, 3),
                     'earnings' => round($totalEarnings, 2),
-                    'price_per_kg' => $avgPrice,
                 ],
             ];
         }

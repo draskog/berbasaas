@@ -1,8 +1,6 @@
 <?php
 
 /**
- * @package     BerbaSaaS
- *
  * @author      Drasko Gajic PR Pametna Rešenja
  * @copyright   Drasko Gajic PR Pametna Rešenja
  * @license     Proprietary
