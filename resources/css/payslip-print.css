@@ -69,6 +69,7 @@ table {
     margin-bottom: 10mm;
     font-size: 10pt;
     page-break-inside: auto;
+    border: 1px solid #999;
 }
 
 thead {
@@ -83,26 +84,37 @@ tbody {
 
 tbody tr {
     page-break-inside: avoid;
+    border-bottom: 1px solid #ddd;
 }
 
 th {
     background-color: #f0f0f0;
-    border: 1px solid #999;
+    border-bottom: 2px solid #999;
+    border-right: 1px solid #999;
     padding: 4mm 3mm;
     text-align: left;
     font-weight: bold;
     font-size: 10pt;
 }
 
+th:first-child {
+    border-left: 1px solid #999;
+}
+
 td {
-    border: 1px solid #ccc;
     padding: 3mm;
     text-align: left;
     font-size: 10pt;
+    border-right: 1px solid #ddd;
+}
+
+td:first-child {
+    border-left: 1px solid #999;
 }
 
 td:last-child,
 th:last-child {
     text-align: right;
     padding-right: 5mm;
+    border-right: 1px solid #999;
 }
