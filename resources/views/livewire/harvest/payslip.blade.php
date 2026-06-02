@@ -119,13 +119,15 @@ class extends Component
     #[Computed]
     public function minDate(): string
     {
-        return Carbon::create($this->selectedYear)->format('Y-m-d');
+        $year = $this->selectedYear ?: $this->availableYears->first() ?? now()->year;
+        return Carbon::create($year)->format('Y-m-d');
     }
 
     #[Computed]
     public function maxDate(): string
     {
-        return Carbon::create($this->selectedYear, 12, 31)->format('Y-m-d');
+        $year = $this->selectedYear ?: $this->availableYears->first() ?? now()->year;
+        return Carbon::create($year, 12, 31)->format('Y-m-d');
     }
 
     public function mount(): void
