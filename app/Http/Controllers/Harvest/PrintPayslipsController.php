@@ -16,6 +16,7 @@ class PrintPayslipsController extends Controller
         $year = (int) $request->query('year');
         $dateFrom = $request->query('date_from');
         $dateTo = $request->query('date_to');
+        $search = $request->query('search', '');
 
         $company = auth()->user()->company;
 
@@ -29,6 +30,26 @@ class PrintPayslipsController extends Controller
             ->pluck('harvester_number')
             ->sort()
             ->values();
+
+        if ($search) {
+            $searchLower = strtolower($search);
+            $harvesterNumbers = $harvesterNumbers->filter(function ($number) use ($searchLower, $company, $year) {
+                $assignment = HarvesterAssignment::where('company_id', $company->id)
+                    ->where('year', $year)
+                    ->where('number', $number)
+                    ->with('harvester')
+                    ->first();
+
+                if (! $assignment || ! $assignment->harvester) {
+                    return false;
+                }
+
+                $name = strtolower($assignment->harvester->name);
+                $prefix = strtolower($assignment->harvester->prefix ?? '');
+
+                return str_contains($name, $searchLower) || str_contains($prefix, $searchLower);
+            })->values();
+        }
 
         $harvesters = [];
         $prices = HarvestPrice::where('company_id', $company->id)

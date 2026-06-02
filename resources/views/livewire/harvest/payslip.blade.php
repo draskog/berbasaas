@@ -206,7 +206,7 @@ class extends Component
             icon="printer"
             variant="primary"
             size="sm"
-            :href="route('harvest.print-payslips', ['year' => $selectedYear, 'date_from' => $dateFrom, 'date_to' => $dateTo])"
+            :href="route('harvest.print-payslips', ['year' => $selectedYear, 'date_from' => $dateFrom, 'date_to' => $dateTo, 'search' => $searchHarvesterName])"
             target="_blank"
         >{{ __('Print') }}</flux:button>
     </flux:header>
