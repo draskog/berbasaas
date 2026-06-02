@@ -747,5 +747,9 @@
     "(:db_dup database duplicate record(s) staged)": "(:db_dup duplikat(a) iz baze)",
     "(:in_dup in-file duplicate record(s) staged)": "(:in_dup duplikat(a) iz datoteke)",
     "(:resolvable invalid record(s) require review)": "(:resolvable neispravan(e) zapis(e) zahtevaju pregled)",
-    "The effective date range overlaps with an existing price for this product.": "Period važenja se preklapa sa postojećom cenom za ovaj proizvod."
+    "The effective date range overlaps with an existing price for this product.": "Period važenja se preklapa sa postojećom cenom za ovaj proizvod.",
+    "Price breakdown": "Raspodela cena",
+    "Subtotal": "Suma po ceni",
+    "present": "trenutno",
+    "nastavak": "nastavak"
 }
