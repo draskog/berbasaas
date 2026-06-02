@@ -316,7 +316,10 @@ class extends Component
         $reasons = (array) $stagingRecord->validation_reason;
 
         if (in_array('in_file_duplicate', $reasons, true) || in_array('db_duplicate', $reasons, true)) {
-            Flux::toast(text: __('Duplicates cannot be resolved, only deleted.'), variant: 'warning');
+            $stagingRecord->delete();
+            $this->markUploadResolvedIfAllInvalidRecordsGone();
+            $this->dispatch('$refresh');
+            Flux::toast(text: __('Duplicate deleted.'), variant: 'success');
 
             return;
         }
@@ -409,13 +412,15 @@ class extends Component
             ->get();
 
         $resolved = 0;
+        $deleted = 0;
         $skipped = 0;
 
         foreach ($records as $stagingRecord) {
             $reasons = (array) $stagingRecord->validation_reason;
 
             if (in_array('in_file_duplicate', $reasons, true) || in_array('db_duplicate', $reasons, true)) {
-                $skipped++;
+                $stagingRecord->delete();
+                $deleted++;
 
                 continue;
             }
@@ -500,11 +505,25 @@ class extends Component
         $this->bulkTare = '';
         $this->dispatch('$refresh');
 
-        $message = $skipped > 0
-            ? __('Resolved :resolved record(s), skipped :skipped (missing or invalid input).', ['resolved' => $resolved, 'skipped' => $skipped])
-            : __('Resolved :resolved record(s).', ['resolved' => $resolved]);
+        if ($resolved === 0 && $deleted === 0 && $skipped === 0) {
+            $message = __('No records were processed.');
+            $variant = 'warning';
+        } else {
+            $parts = [];
+            if ($resolved > 0) {
+                $parts[] = __(':count resolved', ['count' => $resolved]);
+            }
+            if ($deleted > 0) {
+                $parts[] = __(':count duplicate(s) deleted', ['count' => $deleted]);
+            }
+            if ($skipped > 0) {
+                $parts[] = __(':count skipped', ['count' => $skipped]);
+            }
+            $message = __('Resolved: :summary', ['summary' => implode(', ', $parts)]);
+            $variant = $skipped > 0 ? 'warning' : 'success';
+        }
 
-        Flux::toast(text: $message, variant: $skipped > 0 ? 'warning' : 'success');
+        Flux::toast(text: $message, variant: $variant);
     }
 
     public function delete(int $recordId): void
