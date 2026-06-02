@@ -48,9 +48,9 @@ class extends Component {
 
     public bool $showEditPriceModal = false;
 
-    public ?string $newEffectiveDateRange = null;
+    public string|array|null $newEffectiveDateRange = null;
 
-    public ?string $editEffectiveDateRange = null;
+    public string|array|null $editEffectiveDateRange = null;
 
     public ?int $deletingPriceId = null;
 
@@ -189,25 +189,31 @@ class extends Component {
     {
         $price = HarvestPrice::where('company_id', auth()->user()->company_id)->findOrFail($id);
         $this->editingPriceId = $id;
-        $this->editPricePerKg = (string) $price->price_per_kg;
+        $this->editPricePerKg = number_format($price->price_per_kg, 0, '', '');
         $this->editEffectiveFrom = $price->effective_from->format('Y-m-d');
         $this->editEffectiveTo = $price->effective_to?->format('Y-m-d');
-        $this->editEffectiveDateRange = $this->editEffectiveFrom.'/'.($this->editEffectiveTo ?: '');
+        $this->editEffectiveDateRange = $this->editEffectiveFrom.($this->editEffectiveTo ? '/'.$this->editEffectiveTo : '');
         $this->showEditPriceModal = true;
     }
 
-    public function updatedNewEffectiveDateRange (?string $value): void
+    public function updatedNewEffectiveDateRange (array|string|null $value): void
     {
-        if ($value && str_contains($value, '/')) {
+        if (is_array($value)) {
+            $this->newEffectiveFrom = $value['start'] ?? null;
+            $this->newEffectiveTo = $value['end'] ?? null;
+        } elseif ($value && str_contains($value, '/')) {
             [$from, $to] = explode('/', $value, 2);
             $this->newEffectiveFrom = $from ?: null;
             $this->newEffectiveTo = $to ?: null;
         }
     }
 
-    public function updatedEditEffectiveDateRange (?string $value): void
+    public function updatedEditEffectiveDateRange (array|string|null $value): void
     {
-        if ($value && str_contains($value, '/')) {
+        if (is_array($value)) {
+            $this->editEffectiveFrom = $value['start'] ?? null;
+            $this->editEffectiveTo = $value['end'] ?? null;
+        } elseif ($value && str_contains($value, '/')) {
             [$from, $to] = explode('/', $value, 2);
             $this->editEffectiveFrom = $from ?: null;
             $this->editEffectiveTo = $to ?: null;
@@ -322,15 +328,16 @@ class extends Component {
             <flux:field>
                 <flux:label>{{ __('Effective Date Range') }}</flux:label>
 
-                <flux:calendar
-                        mode="range"
-                        selectable-header
-                        week-numbers
-                        locale="{{ str_replace('_', '-', app()->getLocale()) }}"
-                        class="mt-4"
-                        :min="$this->minPriceDate"
-                        :max="$this->maxPriceDate"
-                        wire:model.live="newEffectiveDateRange"
+                <flux:date-picker
+                    mode="range"
+                    selectable-header
+                    week-numbers
+                    locale="{{ str_replace('_', '-', app()->getLocale()) }}"
+                    class="mt-4"
+                    :min="$this->minPriceDate"
+                    :max="$this->maxPriceDate"
+
+                    wire:model.live="newEffectiveDateRange"
                 />
                 <flux:error name="newEffectiveFrom"/>
                 <flux:error name="newEffectiveTo"/>
@@ -357,16 +364,30 @@ class extends Component {
 
             <flux:field>
                 <flux:label>{{ __('Effective Date Range') }}</flux:label>
-                <flux:calendar
-                        mode="range"
-                        selectable-header
-                        week-numbers
-                        locale="{{ str_replace('_', '-', app()->getLocale()) }}"
-                        class="mt-4"
-                        :min="$this->minPriceDate"
-                        :max="$this->maxPriceDate"
-                        wire:model.live="editEffectiveDateRange"
+                <flux:date-picker
+                    mode="range"
+                    selectable-header
+                    week-numbers
+                    locale="{{ str_replace('_', '-', app()->getLocale()) }}"
+                    class="mt-4"
+                    open-to="{{ $this->minPriceDate }}" force-open-to
+                    :min="$this->minPriceDate"
+                    :max="$this->maxPriceDate"
+                    wire:model.live="editEffectiveDateRange"
                 />
+                <flux:date-picker mode="range"
+                                  :min="$this->minPriceDate"
+                                  :max="$this->maxPriceDate"
+                                  wire:model.live="editEffectiveDateRange"
+                                  locale="{{ str_replace('_', '-', app()->getLocale()) }}"
+                >
+                    <x-slot name="trigger">
+                        <div class="flex flex-col sm:flex-row gap-6 sm:gap-4">
+                            <flux:date-picker.input variant="custom" label="{{ __('Effective From') }}" wire:model.live="editEffectiveFrom"/>
+                            <flux:date-picker.input variant="custom" label="{{ __('Effective To') }}"/>
+                        </div>
+                    </x-slot>
+                </flux:date-picker>
                 <flux:error name="editEffectiveFrom"/>
                 <flux:error name="editEffectiveTo"/>
             </flux:field>
