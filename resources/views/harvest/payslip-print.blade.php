@@ -1,80 +1,79 @@
-@php use Carbon\Carbon; @endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payslips - {{ $company->name }}</title>
-    @vite(['resources/css/payslip-print.css', 'resources/js/paged.polyfill.js'])
+    <title>{{ __('Payslips') }} - {{ $company->name }}</title>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preload" as="font" href="/build/assets/instrument-sans-400-normal-DRC__1Mx.woff2" type="font/woff2" crossorigin="anonymous"/>
+    @vite(['resources/css/payslip-interface.css', 'resources/css/payslip-print.css', 'resources/js/paged.polyfill.js'])
+    <script>
+        window.PagedConfig = {
+            auto: false // disable auto, we'll trigger manually
+        };
+    </script>
 </head>
 <body>
-
-@foreach ($harvesters as $harvester)
-    <div class="payslip">
-        <div class="header">
-            <div class="title">Harvester #{{ $harvester['number'] }} {{ $harvester['name'] }}
-                @if ($harvester['prefix'])
-                    ({{ $harvester['prefix'] }})
-                @endif
-            </div>
-            <div class="company">{{ $company->name }}</div>
-        </div>
-
-        <p class="info">Company: {{ $company->name }}</p>
-        <p class="info">Period: {{ Carbon::parse($dateFrom)->format('d.m.Y') }} – {{ Carbon::parse($dateTo)->format('d.m.Y') }}</p>
-
-        <div class="summary-section">
-            <div class="summary-card">
-                <span class="label">Total buckets</span>
-                <span class="value">{{ $harvester['totals']['buckets'] }}</span>
-            </div>
-            <div class="summary-card">
-                <span class="label">Total weight</span>
-                <span class="value">{{ number_format($harvester['totals']['weight'], 2, '.', '') }}</span>
-                <span class="unit">kg</span>
-            </div>
-            <div class="summary-card">
-                <span class="label">Price per kg</span>
-                <span class="value">{{ $harvester['totals']['price_per_kg'] ?? '—' }}</span>
-            </div>
-            <div class="summary-card">
-                <span class="label">Total earnings</span>
-                <span class="value">{{ number_format($harvester['totals']['earnings'], 2, '.', '') }}</span>
-            </div>
-        </div>
-
-        @if (count($harvester['records']) > 0)
-            <div class="records-section">
-                <p class="section-title">Records</p>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Weight (kg)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($harvester['records'] as $record)
-                            <tr>
-                                <td>{{ explode(' ', $record['datetime'])[0] }}</td>
-                                <td>{{ number_format($record['weight'], 3, '.', '') }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @else
-            <p class="no-data">No records found.</p>
-        @endif
-    </div>
-@endforeach
+<div id="content">
+    @foreach ($harvesters as $harvester)
+        <table class="payslip-header">
+            <tr>
+                <td colspan="2">
+                    {{ __('Harvester') }} #{{ $harvester['number'] }} {{ $harvester['name'] }}
+                    @if ($harvester['prefix'])
+                        ({{ $harvester['prefix'] }})
+                    @endif
+                </td>
+                <td>{{ $company->name }}</td>
+            </tr>
+            <tr>
+                <td colspan="3">{{ __('Period') }}: {{ Carbon\Carbon::parse($dateFrom)->format('d.m.Y') }} – {{ Carbon\Carbon::parse($dateTo)->format('d.m.Y') }}</td>
+            </tr>
+        </table>
+    @endforeach
+</div>
 
 <script>
-    window.PagedConfig = {
-        auto: true,
-        allowHyphenation: false,
-    };
-</script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        console.log('DOM loaded, waiting for Paged...');
 
+        // Wait for Paged to be available
+        let attempts = 0;
+        while (!window.Paged && attempts < 50) {
+            await new Promise(r => setTimeout(r, 100));
+            attempts++;
+        }
+
+        if (window.Paged) {
+            console.log('Paged available, creating previewer...');
+            try {
+                const previewer = new window.Paged.Previewer();
+                const contentElement = document.querySelector('#content');
+
+                // Create a container for the rendered pages
+                const renderContainer = document.createElement('div');
+                renderContainer.id = 'paged-render';
+                document.body.appendChild(renderContainer);
+
+                // Get all stylesheets
+                const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(link => link.href);
+
+                // Render the pages to the container
+                const result = await previewer.preview(contentElement.innerHTML, stylesheets, renderContainer);
+                console.log('Preview complete, pages rendered:', result.total);
+                console.log('Stylesheets passed:', stylesheets);
+
+                // Hide original content
+                contentElement.style.display = 'none';
+            } catch (err) {
+                console.error('Preview error:', err);
+            }
+        } else {
+            console.error('Paged never loaded!');
+        }
+    });
+</script>
 </body>
 </html>
