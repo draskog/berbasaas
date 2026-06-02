@@ -108,17 +108,13 @@ class extends Component
             $query->havingRaw('valid_count > 0')
                 ->havingRaw('invalid_count = 0');
         } elseif ($this->selectedStatus === 'invalid') {
-            $query->havingRaw('valid_count = 0')
-                ->havingRaw('invalid_count > 0');
+            $query->havingRaw('valid_count = 0');
         } elseif ($this->selectedStatus === 'partially_valid') {
             $query->havingRaw('valid_count > 0')
                 ->havingRaw('invalid_count > 0');
-        } elseif ($this->selectedStatus === 'duplicate') {
-            $query->havingRaw('valid_count = 0')
-                ->havingRaw('invalid_count = 0')
-                ->where('record_count', '>', 0);
         } elseif ($this->selectedStatus === 'resolved') {
-            $query->whereNotNull('resolved_at');
+            $query->whereNotNull('resolved_at')
+                ->havingRaw('invalid_count = 0');
         }
 
         if ($this->selectedResolved === 'resolved') {
@@ -211,8 +207,8 @@ class extends Component
         );
 
         $upload = $result['upload'];
-        $skippedCount = $result['skippedCount'];
-        $duplicateCount = $result['duplicateCount'];
+        $inFileDuplicateCount = $result['inFileDuplicateCount'];
+        $dbDuplicateCount = $result['dbDuplicateCount'];
 
         $this->uploadedFile = null;
         $this->showUploadModal = false;
@@ -220,15 +216,14 @@ class extends Component
         // Reload to get counts
         $upload->loadCount('harvestRecords as valid_count');
         $upload->loadCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
-        $upload->loadCount(['stagingRecords as resolvable_count' => fn ($q) => $q->where('status', 'invalid')->whereRaw("validation_reason NOT LIKE '%duplicate%'")]);
+        $upload->loadCount(['stagingRecords as resolvable_count' => fn ($q) => $q->where('status', 'invalid')->whereRaw("validation_reason NOT LIKE '%duplicate%' AND validation_reason NOT LIKE '%db_duplicate%'")]);
 
         $validCount = $upload->valid_count;
         $invalidCount = $upload->invalid_count;
         $resolvableCount = $upload->resolvable_count;
 
-        if ($validCount === 0 && $skippedCount === $upload->record_count) {
-            $message = __('All :count records from :filename were duplicates and skipped', [
-                'count' => $upload->record_count,
+        if ($validCount === 0 && $invalidCount === 0) {
+            $message = __('No records could be imported from :filename', [
                 'filename' => $upload->original_filename,
             ]);
             $variant = 'warning';
@@ -240,12 +235,12 @@ class extends Component
                 'to' => $upload->date_to->format('d.m.Y'),
             ]);
 
-            if ($skippedCount > 0) {
-                $message .= ' '.__('(:skipped duplicate record(s) skipped)', ['skipped' => $skippedCount]);
+            if ($dbDuplicateCount > 0) {
+                $message .= ' '.__('(:db_dup database duplicate record(s) staged)', ['db_dup' => $dbDuplicateCount]);
             }
 
-            if ($duplicateCount > 0) {
-                $message .= ' '.__('(:duplicate duplicate record(s) staged for review)', ['duplicate' => $duplicateCount]);
+            if ($inFileDuplicateCount > 0) {
+                $message .= ' '.__('(:in_dup in-file duplicate record(s) staged)', ['in_dup' => $inFileDuplicateCount]);
             }
 
             if ($resolvableCount > 0) {
@@ -446,7 +441,6 @@ class extends Component
                     <flux:radio value="valid" :label="__('Valid')"/>
                     <flux:radio value="invalid" :label="__('Invalid')"/>
                     <flux:radio value="partially_valid" :label="__('Partially Valid')"/>
-                    <flux:radio value="duplicate" :label="__('Duplicate')"/>
                     <flux:radio value="resolved" :label="__('Resolved')"/>
                 </flux:radio.group>
             </div>
@@ -499,13 +493,11 @@ class extends Component
                             @endif
                         </flux:table.cell>
                         <flux:table.cell>
-                            @if($upload->valid_count === 0 && $upload->invalid_count === 0 && $upload->record_count > 0)
-                                <flux:badge color="zinc">{{ __('Duplicate') }}</flux:badge>
-                            @elseif($upload->resolved_at !== null)
+                            @if($upload->resolved_at !== null && $upload->invalid_count === 0)
                                 <flux:badge color="blue">{{ __('Resolved') }}</flux:badge>
                             @elseif($upload->valid_count > 0 && $upload->invalid_count === 0)
                                 <flux:badge color="green">{{ __('Valid') }}</flux:badge>
-                            @elseif($upload->valid_count === 0 && $upload->invalid_count > 0)
+                            @elseif($upload->valid_count === 0)
                                 <flux:badge color="red">{{ __('Invalid') }}</flux:badge>
                             @else
                                 <flux:badge color="orange">{{ __('Partially Valid') }}</flux:badge>
@@ -524,13 +516,7 @@ class extends Component
                             <a href="{{ route('harvest.upload.view', $upload) }}" wire:navigate>
                                 <flux:button size="sm" variant="ghost">{{ __('View') }}</flux:button>
                             </a>
-                            @php
-                                $resolvableCount = HarvestRecordStaging::where('upload_id', $upload->id)
-                                    ->where('status', 'invalid')
-                                    ->whereRaw("validation_reason NOT LIKE '%duplicate%'")
-                                    ->count();
-                            @endphp
-                            @if($resolvableCount > 0)
+                            @if($upload->invalid_count > 0)
                                 <flux:button size="sm" variant="primary" wire:click="confirmResolveUpload({{ $upload->id }})">
                                     {{ __('Resolve') }}
                                 </flux:button>

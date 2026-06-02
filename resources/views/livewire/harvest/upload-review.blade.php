@@ -11,7 +11,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Session;
 use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
@@ -35,7 +34,6 @@ class extends Component
 
     public string $sortDirection = 'asc';
 
-    #[Session]
     public string $selectedReason = 'all';
 
     public array $selectedIds = [];
@@ -194,7 +192,8 @@ class extends Component
     {
         return HarvestRecordStaging::where('upload_id', $this->upload->id)
             ->where('status', 'invalid')
-            ->where('validation_reason', 'not like', '%duplicate%')
+            ->where('validation_reason', 'not like', '%in_file_duplicate%')
+            ->where('validation_reason', 'not like', '%db_duplicate%')
             ->exists();
     }
 
@@ -207,7 +206,10 @@ class extends Component
 
         $duplicates = HarvestRecordStaging::where('upload_id', $this->upload->id)
             ->where('status', 'invalid')
-            ->where('validation_reason', 'like', '%duplicate%')
+            ->where(function ($q) {
+                $q->where('validation_reason', 'like', '%in_file_duplicate%')
+                    ->orWhere('validation_reason', 'like', '%db_duplicate%');
+            })
             ->count();
 
         return $invalid > 0 && $invalid === $duplicates;
@@ -287,6 +289,13 @@ class extends Component
         }
 
         $reasons = (array) $stagingRecord->validation_reason;
+
+        if (in_array('in_file_duplicate', $reasons, true) || in_array('db_duplicate', $reasons, true)) {
+            Flux::toast(text: __('Duplikati ne mogu biti rešeni, samo izbrisani.'), variant: 'warning');
+
+            return;
+        }
+
         $harvesterNumber = $stagingRecord->harvester_number;
         $tare = $stagingRecord->tare;
         $weight = $stagingRecord->weight;
@@ -355,6 +364,8 @@ class extends Component
         $stagingRecord->update(['status' => 'valid']);
         $stagingRecord->delete();
 
+        $this->markUploadResolvedIfAllInvalidRecordsGone();
+
         unset($this->corrections[$recordId], $this->correctedTares[$recordId]);
         $this->dispatch('$refresh');
 
@@ -378,7 +389,7 @@ class extends Component
         foreach ($records as $stagingRecord) {
             $reasons = (array) $stagingRecord->validation_reason;
 
-            if (in_array('duplicate', $reasons, true)) {
+            if (in_array('in_file_duplicate', $reasons, true) || in_array('db_duplicate', $reasons, true)) {
                 $skipped++;
                 continue;
             }
@@ -455,6 +466,8 @@ class extends Component
             $resolved++;
         }
 
+        $this->markUploadResolvedIfAllInvalidRecordsGone();
+
         $this->selectedIds = [];
         $this->selectAll = false;
         $this->bulkHarvesterNumber = '';
@@ -479,6 +492,8 @@ class extends Component
         }
 
         $stagingRecord->delete();
+        $this->markUploadResolvedIfAllInvalidRecordsGone();
+
         $this->dispatch('$refresh');
         Flux::toast(text: __('Record deleted.'), variant: 'success');
     }
@@ -494,10 +509,19 @@ class extends Component
             ->where('upload_id', $this->upload->id)
             ->delete();
 
+        $this->markUploadResolvedIfAllInvalidRecordsGone();
+
         $this->selectedIds = [];
         $this->selectAll = false;
         $this->dispatch('$refresh');
         Flux::toast(text: __('Record(s) deleted.'), variant: 'success');
+    }
+
+    private function markUploadResolvedIfAllInvalidRecordsGone(): void
+    {
+        if ($this->upload->stagingRecords()->where('status', 'invalid')->doesntExist()) {
+            $this->upload->update(['resolved_at' => now()]);
+        }
     }
 
     public function skipDuplicate(int $recordId): void
@@ -521,26 +545,29 @@ class extends Component
             <flux:callout type="success" icon="check-circle" title="{{ __('All Clear') }}">
                 {{ __('All records have been corrected.') }}
             </flux:callout>
-        @elseif($this->duplicateOnlyRecords)
-            <flux:callout type="warning" icon="exclamation-circle" title="{{ __('Svi duplikati') }}">
-                <div class="space-y-2">
-                    <div>{{ __('Svi zapisi u ovom uploadu su duplikati prethodno importovanih zapisa.') }}</div>
-                    <div class="text-sm text-gray-300">
-                        {{ __('Možete:') }}
-                        <ul class="list-disc list-inside mt-1">
-                            <li>{{ __('Obrisati sve duplikate ispod') }}</li>
-                            <li>{{ __('Ili ih zadržati kao referencu') }}</li>
-                        </ul>
-                    </div>
-                </div>
-            </flux:callout>
         @else
+            @if($this->duplicateOnlyRecords)
+                <flux:callout type="warning" icon="exclamation-circle" title="{{ __('All records are duplicates') }}">
+                    <div class="space-y-2">
+                        <div>{{ __('All records in this upload are duplicates — either from the database or duplicates within the file.') }}</div>
+                        <div class="text-sm text-gray-300">
+                            {{ __('You can:') }}
+                            <ul class="list-disc list-inside mt-1">
+                                <li>{{ __('Delete all duplicates below') }}</li>
+                                <li>{{ __('Or keep them as a reference') }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </flux:callout>
+            @endif
+
             <div>
-                <flux:radio.group wire:model.live="selectedReason" label="{{ __('Reason') }}" variant="pills">
-                    <flux:radio value="all" label="{{ __('All') }}"/>
+                <flux:radio.group wire:model.live="selectedReason" label="{{ __('Razlog') }}" variant="pills">
+                    <flux:radio value="all" label="{{ __('Sve') }}"/>
                     <flux:radio value="harvester_not_found" label="{{ __('Harvester not found') }}"/>
                     <flux:radio value="tare_out_of_range" label="{{ __('Tare out of range') }}"/>
-                    <flux:radio value="duplicate" label="{{ __('Duplicate') }}"/>
+                    <flux:radio value="in_file_duplicate" label="{{ __('In-file Duplicate') }}"/>
+                    <flux:radio value="db_duplicate" label="{{ __('DB Duplicate') }}"/>
                 </flux:radio.group>
             </div>
             <div>
@@ -549,19 +576,21 @@ class extends Component
                 </flux:text>
             </div>
 
-            <flux:callout type="info" icon="information-circle">
-                <div class="text-sm">
-                    <div class="font-semibold mb-2">{{ __('How to Resolve') }}</div>
-                    <div class="space-y-2">
-                        <div>
-                            <strong>{{ __('Bulk Resolve') }}</strong>: {{ __('Select records, enter a value, and click "Resolve Selected". Empty tare field uses ★ suggestion automatically.') }}
-                        </div>
-                        <div>
-                            <strong>{{ __('Individual Resolve') }}</strong>: {{ __('Enter a corrected value in each row (or click ★ suggestion in tooltip), then press "Save".') }}
+            @if($this->hasResolvableRecords)
+                <flux:callout type="info" icon="information-circle">
+                    <div class="text-sm">
+                        <div class="font-semibold mb-2">{{ __('How to Resolve') }}</div>
+                        <div class="space-y-2">
+                            <div>
+                                <strong>{{ __('Bulk Resolve') }}</strong>: {{ __('Select records, enter a value, and click "Resolve Selected". Empty tare field uses ★ suggestion automatically.') }}
+                            </div>
+                            <div>
+                                <strong>{{ __('Individual Resolve') }}</strong>: {{ __('Enter a corrected value in each row (or click ★ suggestion in tooltip), then press "Save".') }}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </flux:callout>
+                </flux:callout>
+            @endif
 
             @if($this->invalidRecords->isEmpty())
                 <flux:callout type="info" icon="check-circle">
@@ -747,24 +776,22 @@ class extends Component
                                 @endif
                             </flux:table.cell>
                             <flux:table.cell>
-                                @if(in_array('duplicate', $reasons, true))
-                                    <span class="text-sm">
-                                        {{ __('Duplikat reda #:num', ['num' => $record->duplicate_of_sequence]) }}
-                                    </span>
-                                @else
-                                    @foreach($reasons as $reason)
-                                        @if($reason === 'harvester_not_found')
-                                            <flux:badge variant="warning" size="sm">{{ __('Harvester not found') }}</flux:badge>
-                                        @elseif($reason === 'tare_out_of_range')
-                                            <flux:badge variant="danger" size="sm">{{ __('Tare out of range') }}</flux:badge>
-                                        @else
-                                            <flux:badge variant="zinc" size="sm">{{ $reason }}</flux:badge>
-                                        @endif
-                                    @endforeach
-                                @endif
+                                @foreach($reasons as $reason)
+                                    @if($reason === 'harvester_not_found')
+                                        <flux:badge variant="warning" size="sm">{{ __('Harvester not found') }}</flux:badge>
+                                    @elseif($reason === 'tare_out_of_range')
+                                        <flux:badge variant="danger" size="sm">{{ __('Tare out of range') }}</flux:badge>
+                                    @elseif($reason === 'in_file_duplicate')
+                                        <flux:badge variant="zinc" size="sm">{{ __('In-file Duplicate') }}</flux:badge>
+                                    @elseif($reason === 'db_duplicate')
+                                        <flux:badge variant="zinc" size="sm">{{ __('DB Duplicate') }}</flux:badge>
+                                    @else
+                                        <flux:badge variant="zinc" size="sm">{{ $reason }}</flux:badge>
+                                    @endif
+                                @endforeach
                             </flux:table.cell>
                             <flux:table.cell>
-                                @if(in_array('duplicate', $reasons, true))
+                                @if(in_array('in_file_duplicate', $reasons, true) || in_array('db_duplicate', $reasons, true))
                                     <flux:button
                                         size="sm"
                                         variant="danger"

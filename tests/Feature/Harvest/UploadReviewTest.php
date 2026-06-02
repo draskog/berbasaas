@@ -9,6 +9,7 @@ use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
 use App\Models\Product;
 use App\Models\User;
+use Livewire\Livewire;
 
 beforeEach(function () {
     $this->company = Company::factory()->create();
@@ -295,4 +296,105 @@ test('harvester assignment exists for company year', function () {
 
     expect($assignment)->not->toBeNull();
     expect($assignment->harvester_id)->toBe($this->harvester->id);
+});
+
+test('resolved_at is set when last duplicate staging record is deleted', function () {
+    $staging = HarvestRecordStaging::create([
+        'company_id' => $this->company->id,
+        'upload_id' => $this->upload->id,
+        'product_id' => $this->product->id,
+        'harvester_number' => 1,
+        'weight' => 3.0,
+        'tare' => 0.200,
+        'gross' => 3.2,
+        'weighed_at' => now(),
+        'sequence_number' => 1,
+        'status' => 'invalid',
+        'validation_reason' => ['db_duplicate'],
+    ]);
+
+    expect($this->upload->resolved_at)->toBeNull();
+
+    Livewire::test('harvest.upload-review', ['upload' => $this->upload])
+        ->call('delete', $staging->id);
+
+    $this->upload->refresh();
+    expect($this->upload->resolved_at)->not->toBeNull();
+});
+
+test('resolved_at is set when all duplicate staging records are bulk deleted', function () {
+    $staging1 = HarvestRecordStaging::create([
+        'company_id' => $this->company->id,
+        'upload_id' => $this->upload->id,
+        'product_id' => $this->product->id,
+        'harvester_number' => 1,
+        'weight' => 3.0,
+        'tare' => 0.200,
+        'gross' => 3.2,
+        'weighed_at' => now(),
+        'sequence_number' => 1,
+        'status' => 'invalid',
+        'validation_reason' => ['db_duplicate'],
+    ]);
+
+    $staging2 = HarvestRecordStaging::create([
+        'company_id' => $this->company->id,
+        'upload_id' => $this->upload->id,
+        'product_id' => $this->product->id,
+        'harvester_number' => 1,
+        'weight' => 2.8,
+        'tare' => 0.150,
+        'gross' => 2.95,
+        'weighed_at' => now(),
+        'sequence_number' => 2,
+        'status' => 'invalid',
+        'validation_reason' => ['in_file_duplicate'],
+    ]);
+
+    expect($this->upload->resolved_at)->toBeNull();
+
+    Livewire::test('harvest.upload-review', ['upload' => $this->upload])
+        ->set('selectedIds', [(string) $staging1->id, (string) $staging2->id])
+        ->call('deleteSelected');
+
+    $this->upload->refresh();
+    expect($this->upload->resolved_at)->not->toBeNull();
+});
+
+test('resolved_at is not set when some invalid records still remain after delete', function () {
+    $staging1 = HarvestRecordStaging::create([
+        'company_id' => $this->company->id,
+        'upload_id' => $this->upload->id,
+        'product_id' => $this->product->id,
+        'harvester_number' => 1,
+        'weight' => 3.0,
+        'tare' => 0.200,
+        'gross' => 3.2,
+        'weighed_at' => now(),
+        'sequence_number' => 1,
+        'status' => 'invalid',
+        'validation_reason' => ['db_duplicate'],
+    ]);
+
+    $staging2 = HarvestRecordStaging::create([
+        'company_id' => $this->company->id,
+        'upload_id' => $this->upload->id,
+        'product_id' => $this->product->id,
+        'harvester_number' => 999,
+        'weight' => 2.8,
+        'tare' => 0.150,
+        'gross' => 2.95,
+        'weighed_at' => now(),
+        'sequence_number' => 2,
+        'status' => 'invalid',
+        'validation_reason' => ['harvester_not_found'],
+    ]);
+
+    expect($this->upload->resolved_at)->toBeNull();
+
+    Livewire::test('harvest.upload-review', ['upload' => $this->upload])
+        ->call('delete', $staging1->id);
+
+    $this->upload->refresh();
+    expect($this->upload->resolved_at)->toBeNull();
 });

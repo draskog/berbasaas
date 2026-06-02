@@ -115,6 +115,18 @@ class extends Component
     }
 
     #[Computed]
+    public function hasStagingRecords(): bool
+    {
+        return HarvestRecordStaging::where('upload_id', $this->upload->id)->exists();
+    }
+
+    #[Computed]
+    public function hasHarvestRecords(): bool
+    {
+        return HarvestRecord::where('upload_id', $this->upload->id)->exists();
+    }
+
+    #[Computed]
     public function harvestersByNumber(): Collection
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
@@ -140,25 +152,21 @@ class extends Component
     {
         $this->resetPage('staging_page');
         $this->resetPage('harvest_page');
-        $this->validateActiveTab();
     }
 
     public function updatedStagingStatus(): void
     {
         $this->resetPage('staging_page');
-        $this->validateActiveTab();
     }
 
     public function updatedStagingReason(): void
     {
         $this->resetPage('staging_page');
-        $this->validateActiveTab();
     }
 
     public function updatedHarvestCorrected(): void
     {
         $this->resetPage('harvest_page');
-        $this->validateActiveTab();
     }
 
     public function sort(string $column): void
@@ -171,15 +179,14 @@ class extends Component
         }
         $this->resetPage('staging_page');
         $this->resetPage('harvest_page');
-        $this->validateActiveTab();
     }
 
     private function validateActiveTab(): void
     {
-        if ($this->activeTab === 'staging' && $this->stagingRecordsCount === 0) {
-            $this->activeTab = $this->harvestRecordsCount > 0 ? 'harvest' : '';
-        } elseif ($this->activeTab === 'harvest' && $this->harvestRecordsCount === 0) {
-            $this->activeTab = $this->stagingRecordsCount > 0 ? 'staging' : '';
+        if ($this->activeTab === 'staging' && ! $this->hasStagingRecords) {
+            $this->activeTab = $this->hasHarvestRecords ? 'harvest' : '';
+        } elseif ($this->activeTab === 'harvest' && ! $this->hasHarvestRecords) {
+            $this->activeTab = $this->hasStagingRecords ? 'staging' : '';
         }
     }
 }; ?>
@@ -193,17 +200,31 @@ class extends Component
     </flux:header>
 
     <div class="p-6">
-        @if ($this->stagingRecordsCount === 0 && $this->harvestRecordsCount === 0)
+        @php
+            $dbDuplicateCount = \App\Models\HarvestRecordStaging::where('upload_id', $upload->id)
+                ->where('status', 'invalid')
+                ->where('validation_reason', 'like', '%db_duplicate%')
+                ->count();
+        @endphp
+
+        @if($dbDuplicateCount > 0)
+            <flux:callout type="warning" icon="exclamation-circle"
+                title="{{ __(':count records are not imported because they already exist in the system', ['count' => $dbDuplicateCount]) }}">
+                {{ __('These records were found as duplicates of previously imported records and were not re-imported. They can be deleted or kept as a reference.') }}
+            </flux:callout>
+        @endif
+
+        @if (!$this->hasStagingRecords && !$this->hasHarvestRecords)
             <flux:callout type="info" icon="information-circle" title="{{ __('Svi duplikati') }}">
-                {{ __('Svi zapisi iz ovog fajla su bili duplikati prethodno importovanih zapisa i preskaču tokom importa.') }}
+                {{ __('Svi zapisi iz ovog fajla su bili duplikati prethodno importovanih zapisa i nisu ponovo uvezeni.') }}
             </flux:callout>
         @else
             <flux:tab.group>
                 <flux:tabs wire:model.live="activeTab">
-                    @if ($this->stagingRecordsCount > 0)
+                    @if ($this->hasStagingRecords)
                         <flux:tab name="staging" icon="inbox-stack">{{ __('Staging Records') }}</flux:tab>
                     @endif
-                    @if ($this->harvestRecordsCount > 0)
+                    @if ($this->hasHarvestRecords)
                         <flux:tab name="harvest" icon="check-circle">{{ __('Harvest Records') }}</flux:tab>
                     @endif
                 </flux:tabs>
@@ -224,7 +245,8 @@ class extends Component
                                 <flux:radio value="all" label="{{ __('All') }}"/>
                                 <flux:radio value="harvester_not_found" label="{{ __('Harvester not found') }}"/>
                                 <flux:radio value="tare_out_of_range" label="{{ __('Tare out of range') }}"/>
-                                <flux:radio value="duplicate" label="{{ __('Duplicate') }}"/>
+                                <flux:radio value="in_file_duplicate" label="{{ __('In-file Duplicate') }}"/>
+                                <flux:radio value="db_duplicate" label="{{ __('DB Duplicate') }}"/>
                             </flux:radio.group>
                         </div>
                         <div class="flex justify-between items-center">
@@ -238,6 +260,11 @@ class extends Component
                         </div>
                     </div>
 
+                    @if ($this->stagingRecordsCount === 0)
+                        <flux:callout type="info" icon="information-circle">
+                            {{ __('No staging records match the current filter.') }}
+                        </flux:callout>
+                    @else
                     <flux:table :paginate="$this->perPage > 0 ? $this->stagingRecords : null" pageName="staging_page">
                         <flux:table.columns>
                             <flux:table.column sortable :sorted="$sortBy === 'weighed_at'" :direction="$sortDirection" wire:click="sort('weighed_at')">{{ __('Date / Time') }}</flux:table.column>
@@ -275,6 +302,10 @@ class extends Component
                                                 <flux:badge variant="warning" size="sm">{{ __('Harvester not found') }}</flux:badge>
                                             @elseif($reason === 'tare_out_of_range')
                                                 <flux:badge variant="danger" size="sm">{{ __('Tare out of range') }}</flux:badge>
+                                            @elseif($reason === 'in_file_duplicate')
+                                                <flux:badge variant="zinc" size="sm">{{ __('In-file Duplicate') }}</flux:badge>
+                                            @elseif($reason === 'db_duplicate')
+                                                <flux:badge variant="zinc" size="sm">{{ __('DB Duplicate') }}</flux:badge>
                                             @else
                                                 <flux:badge variant="zinc" size="sm">{{ $reason }}</flux:badge>
                                             @endif
@@ -288,6 +319,7 @@ class extends Component
                             @endforelse
                         </flux:table.rows>
                     </flux:table>
+                    @endif
                 </div>
             </flux:tab.panel>
 

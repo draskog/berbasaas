@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(vendor/bin/sail artisan test *)",
+      "Bash(vendor/bin/sail artisan tinker *)",
+      "Bash(vendor/bin/sail artisan config *)",
+      "Bash(vendor/bin/sail artisan route *)",
+      "Bash(vendor/bin/sail artisan list)",
+      "Bash(vendor/bin/sail artisan make *)",
+      "Bash(vendor/bin/sail up *)",
+      "Bash(vendor/bin/sail stop)",
+      "Bash(vendor/bin/sail open *)",
+      "Bash(vendor/bin/sail npm *)",
+      "Bash(vendor/bin/sail bin pint *)",
+      "Bash(vendor/bin/sail composer *)",
+      "Bash(vendor/bin/sail php *)",
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git show *)",
+      "Bash(git branch *)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(ls *)",
+      "mcp__laravel-boost__database-query",
+      "mcp__laravel-boost__database-schema",
+      "mcp__laravel-boost__search-docs",
+      "mcp__laravel-boost__application-info",
+      "mcp__laravel-boost__get-absolute-url",
+      "mcp__laravel-boost__read-log-entries",
+      "mcp__laravel-boost__last-error",
+      "mcp__laravel-boost__browser-logs"
+    ]
+  }
+}
