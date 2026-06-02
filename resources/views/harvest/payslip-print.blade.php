@@ -122,13 +122,9 @@
                 renderContainer.id = 'paged-render';
                 document.body.appendChild(renderContainer);
 
-                // Get all stylesheets
-                const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(link => link.href);
-
                 // Render the pages to the container
-                const result = await previewer.preview(contentElement.innerHTML, stylesheets, renderContainer);
+                const result = await previewer.preview(contentElement.innerHTML, [], renderContainer);
                 console.log('Preview complete, pages rendered:', result.total);
-                console.log('Stylesheets passed:', stylesheets);
 
                 // Hide original content
                 contentElement.style.display = 'none';
