@@ -104,7 +104,7 @@
                                     </td>
                                 </tr>
                             </table>
-                            <p class="mt-4 mb-2 text-sm">{{ __('Harvest Records') }} {{ __('for') }} {{ $harvester['name'] }} {{ __('nastavak') }}</p>
+                            <p class="mt-4 mb-2 text-sm">{{ __('Harvest Records') }} {{ __('for') }} {{ $harvester['name'] }} {{ __('continued') }}</p>
                             @else
                                 <div class="mt-4">
                                     <p class="mb-2 text-sm">{{ __('Harvest Records') }} {{ __('for') }} {{ $harvester['name'] }}</p>

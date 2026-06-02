@@ -30,17 +30,17 @@ new class extends Component {
         ];
     }
 
-    private function priceForRecord(HarvestRecord $record): ?HarvestPrice
+    private function priceForRecord (HarvestRecord $record): ?HarvestPrice
     {
         return HarvestPrice::where('company_id', auth()->user()->company_id)
             ->where('product_id', $record->product_id)
             ->where('effective_from', '<=', $record->weighed_at->format('Y-m-d'))
-            ->where(fn ($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $record->weighed_at->format('Y-m-d')))
+            ->where(fn($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $record->weighed_at->format('Y-m-d')))
             ->first();
     }
 
     #[Computed]
-    public function payslipData(): array
+    public function payslipData (): array
     {
         $query = HarvestRecord::where('company_id', auth()->user()->company_id)
             ->where('harvester_number', $this->harvesterNumber)
@@ -71,7 +71,7 @@ new class extends Component {
                 'price_per_kg' => $pricePerKg,
                 'price_effective_from' => $priceModel?->effective_from,
                 'price_effective_to' => $priceModel?->effective_to,
-                'earnings' => $earnings,
+                'earnings' => round($earnings),
             ];
         }
 
@@ -79,7 +79,7 @@ new class extends Component {
     }
 
     #[Computed]
-    public function priceBreakdown(): array
+    public function priceBreakdown (): array
     {
         $data = $this->payslipData;
         if (empty($data)) {
@@ -87,7 +87,7 @@ new class extends Component {
         }
 
         // Group by price_id to calculate earnings per price period
-        $groupedByPrice = collect($data)->groupBy(fn ($r) => $r['price_id'] ?? 'null');
+        $groupedByPrice = collect($data)->groupBy(fn($r) => $r['price_id'] ?? 'null');
 
         $breakdown = [];
         foreach ($groupedByPrice as $priceId => $records) {
@@ -119,19 +119,19 @@ new class extends Component {
                     'effective_from' => $effectiveFrom,
                     'effective_to' => $effectiveTo,
                     'total_weight' => $totalWeightRounded,
-                    'earnings' => $earnings,
+                    'earnings' => round($earnings),
                 ];
             }
         }
 
         // Sort by effective_from ascending
-        usort($breakdown, static fn ($a, $b) => strtotime($a['effective_from']) <=> strtotime($b['effective_from']));
+        usort($breakdown, static fn($a, $b) => strtotime($a['effective_from']) <=> strtotime($b['effective_from']));
 
         return $breakdown;
     }
 
     #[Computed]
-    public function payslipTotals(): array
+    public function payslipTotals (): array
     {
         $data = $this->payslipData;
         if (empty($data)) {
@@ -158,7 +158,7 @@ new class extends Component {
         return [
             'buckets' => count($data),
             'weight' => round($totalWeight, 3),
-            'earnings' => round($totalEarnings, 2),
+            'earnings' => round($totalEarnings),
         ];
     }
 
@@ -194,6 +194,12 @@ new class extends Component {
             2 => 'grid-cols-2',
             default => 'grid-cols-3',
         };
+    }
+
+    #[Computed]
+    public function summaryGridClass (): string
+    {
+        return count($this->priceBreakdown) === 1 ? 'grid-cols-4' : 'grid-cols-3';
     }
 
     public function placeholder (): string
@@ -235,7 +241,7 @@ new class extends Component {
         </div>
     @else
         <!-- Summary cards -->
-        <div class="grid gap-3 grid-cols-3 mb-6">
+        <div class="grid gap-3 {{ $this->summaryGridClass }} mb-6">
             <flux:card class="h-full p-3 hover:border-blue-300 transition-colors">
                 <flux:heading size="xs">{{ __('Total buckets') }}</flux:heading>
                 <flux:text class="text-lg font-bold mt-1">
@@ -247,8 +253,15 @@ new class extends Component {
                 <flux:text class="text-lg font-bold mt-1">
                     {{ number_format($this->payslipTotals['weight'], 2, ',', '.') }} <span class="text-gray-500 dark:text-zinc-400 text-xs">{{ __('kg') }}</span>
                 </flux:text>
-
             </flux:card>
+            @if (count($this->priceBreakdown) === 1)
+                <flux:card class="h-full p-3 hover:border-blue-300 transition-colors">
+                    <flux:heading size="xs">{{ __('Price per kg') }}</flux:heading>
+                    <flux:text class="text-lg font-bold mt-1">
+                        {{ number_format($this->priceBreakdown[0]['price_per_kg'], 0, '', '') }} <span class="text-gray-500 dark:text-zinc-400 text-xs">{{ __('RSD') }}</span>
+                    </flux:text>
+                </flux:card>
+            @endif
             <flux:card class="h-full p-3 hover:border-blue-300 transition-colors">
                 <flux:heading size="xs">{{ __('Total earnings') }}</flux:heading>
                 <flux:text class="text-lg font-bold mt-1">
@@ -258,18 +271,7 @@ new class extends Component {
         </div>
 
         <!-- Price breakdown -->
-        @if (count($this->priceBreakdown) === 1)
-            <!-- Single price period -->
-            @php $period = $this->priceBreakdown[0]; @endphp
-            <div class="mb-6">
-                <flux:card class="p-3">
-                    <flux:heading size="xs" class="mb-2">{{ __('Price per kg') }}</flux:heading>
-                    <flux:text class="text-lg font-bold">
-                        {{ number_format($period['price_per_kg'], 0, '', '') }} <span class="text-gray-500 dark:text-zinc-400 text-xs">{{ __('RSD') }}</span>
-                    </flux:text>
-                </flux:card>
-            </div>
-        @elseif (count($this->priceBreakdown) > 1)
+        @if (count($this->priceBreakdown) > 1)
             <!-- Multiple price periods -->
             <div class="mb-6">
                 <flux:heading size="xs" class="mb-3">{{ __('Price breakdown') }}</flux:heading>
@@ -277,10 +279,9 @@ new class extends Component {
                     <flux:table.columns>
                         <flux:table.column>{{ __('Period') }}</flux:table.column>
                         <flux:table.column>{{ __('Weight (kg)') }}</flux:table.column>
-                        <flux:table.column class="text-right">{{ __('Price per kg') }}</flux:table.column>
-                        <flux:table.column class="text-right">{{ __('Subtotal') }}</flux:table.column>
+                        <flux:table.column align="end">{{ __('Price per kg') }}</flux:table.column>
+                        <flux:table.column align="end">{{ __('Subtotal') }}</flux:table.column>
                     </flux:table.columns>
-
                     <flux:table.rows>
                         @foreach ($this->priceBreakdown as $period)
                             <flux:table.row>
@@ -295,7 +296,7 @@ new class extends Component {
                                 </flux:table.cell>
                                 <flux:table.cell>{{ number_format($period['total_weight'], 2, ',', '.') }}</flux:table.cell>
                                 <flux:table.cell class="text-right">{{ number_format($period['price_per_kg'], 0, '', '') }} RSD</flux:table.cell>
-                                <flux:table.cell class="text-right font-semibold">{{ number_format($period['earnings'], 0, '', '') }} RSD</flux:table.cell>
+                                <flux:table.cell class="text-right font-semibold">{{ number_format(round($period['earnings']), 0, '', '') }} RSD</flux:table.cell>
                             </flux:table.row>
                         @endforeach
                     </flux:table.rows>
