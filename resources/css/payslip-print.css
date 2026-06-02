@@ -7,6 +7,16 @@
     color-scheme: light;
 }
 
+p {
+    margin: 0;
+    padding: 0;
+}
+
+h2 {
+    margin: 0;
+    padding: 0;
+}
+
 @media print {
     html {
         font-family: system-ui, -apple-system, sans-serif;
