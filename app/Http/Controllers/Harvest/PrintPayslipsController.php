@@ -91,18 +91,16 @@ class PrintPayslipsController extends Controller
                 });
 
                 $pricePerKg = $priceModel?->price_per_kg;
-                $priceId = $priceModel?->id;
+                $priceId = $priceModel?->id ?? 'null';
 
-                // Track record for grouping by price
-                if ($priceId) {
-                    if (! isset($recordsByPriceId[$priceId])) {
-                        $recordsByPriceId[$priceId] = [
-                            'price_model' => $priceModel,
-                            'weight' => 0,
-                        ];
-                    }
-                    $recordsByPriceId[$priceId]['weight'] += $record->weight;
+                // Track record for grouping by price (including records without price)
+                if (! isset($recordsByPriceId[$priceId])) {
+                    $recordsByPriceId[$priceId] = [
+                        'price_model' => $priceModel,
+                        'weight' => 0,
+                    ];
                 }
+                $recordsByPriceId[$priceId]['weight'] += $record->weight;
 
                 // Build payslip row (old format for detail listing)
                 $earnings = $pricePerKg ? round($record->weight * $pricePerKg, 2) : 0;
@@ -120,6 +118,11 @@ class PrintPayslipsController extends Controller
             // Calculate earnings and price periods using correct math
             $pricePeriods = [];
             foreach ($recordsByPriceId as $priceId => $data) {
+                // Skip records without price
+                if ($data['price_model'] === null) {
+                    continue;
+                }
+
                 $totalWeightRounded = round($data['weight'], 2);
                 $earnings = round($totalWeightRounded * $data['price_model']->price_per_kg, 2);
                 $totalEarnings += $earnings;
