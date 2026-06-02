@@ -39,10 +39,16 @@
                     <td class="text-right font-semibold">{{ __('Total earnings') }}</td>
                 </tr>
                 <tr class="mt-2">
-                    <td>{{ $harvester['totals']['buckets'] }}</td>
-                    <td>{{ number_format($harvester['totals']['weight'], 2, ',', '') }} kg</td>
-                    <td>{{ $harvester['totals']['price_per_kg'] ?? '—' }}</td>
-                    <td class="text-right font-bold">{{ number_format($harvester['totals']['earnings'], 0, '', '') }}</td>
+                    <td>{{ $harvester['totals']['buckets'] }} kom</td>
+                    <td>{{ number_format($harvester['totals']['weight'], 0, '', '') }} kg</td>
+                    <td>
+                        @if ($harvester['totals']['price_per_kg'])
+                            {{ number_format($harvester['totals']['price_per_kg'], 0, '', '') }} <span class="text-sm">RSD</span>
+                        @else
+                            —
+                        @endif
+                    </td>
+                    <td class="text-right font-bold">{{ number_format($harvester['totals']['earnings'], 0, '', '') }} <span class="text-sm">RSD</span></td>
                 </tr>
             </table>
             @if (count($harvester['records']) > 0)
@@ -62,7 +68,8 @@
                                     <td class="text-right">{{ $company->name }}</td>
                                 </tr>
                                 <tr class="mt-2">
-                                    <td colspan="3" class="text-sm">{{ __('Period') }}: <strong>{{ Carbon\Carbon::parse($dateFrom)->format('d.m.Y') }} – {{ Carbon\Carbon::parse($dateTo)->format('d.m.Y') }}</strong>
+                                    <td colspan="3" class="text-sm">{{ __('Period') }}:
+                                        <strong>{{ Carbon\Carbon::parse($dateFrom)->format('d.m.Y') }} – {{ Carbon\Carbon::parse($dateTo)->format('d.m.Y') }}</strong>
                                     </td>
                                 </tr>
                             </table>

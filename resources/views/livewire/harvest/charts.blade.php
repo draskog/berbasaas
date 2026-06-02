@@ -532,13 +532,13 @@ class extends Component {
             @if ($dailyData !== null)
                 <flux:card class="p-4">
                     <flux:text size="sm" class="text-zinc-500">{{ __('Total harvest') }}</flux:text>
-                    <div class="mt-2 text-2xl font-semibold">{{ $this->dailyWeightDisplay['value'] }} {{ $this->dailyWeightDisplay['unit'] }}</div>
+                    <div class="mt-2 text-2xl font-semibold">{{ $this->dailyWeightDisplay['value'] }} <span class="text-gray-500 dark:text-zinc-400 text-sm">{{ $this->dailyWeightDisplay['unit'] }}</span></div>
                     <div class="text-xs text-zinc-400">{{ count($this->dailyData) }} {{ __('days') }}</div>
                 </flux:card>
 
                 <flux:card class="p-4">
                     <flux:text size="sm" class="text-zinc-500">{{ __('Total buckets') }}</flux:text>
-                    <div class="mt-2 text-2xl font-semibold">{{ $this->dailyTotals['buckets'] }}</div>
+                    <div class="mt-2 text-2xl font-semibold">{{ $this->dailyTotals['buckets'] }} <span class="text-gray-500 dark:text-zinc-400 text-sm">{{ __('kom') }}</span></div>
                 </flux:card>
             @endif
 
@@ -630,7 +630,7 @@ class extends Component {
                             <flux:chart.tooltip>
                                 <flux:chart.tooltip.heading field="date" />
                                 <flux:chart.tooltip.value field="total_weight" label="{{__('Total weight')}}" :format="['useGrouping' => true]" suffix=" kg" />
-                                <flux:chart.tooltip.value field="bucket_count" label="{{__('Buckets')}}" :format="['useGrouping' => true]" />
+                                <flux:chart.tooltip.value field="bucket_count" label="{{__('Buckets')}}" :format="['useGrouping' => true]" suffix=" kom"/>
                             </flux:chart.tooltip>
                         </flux:chart>
                     </flux:card>
@@ -662,7 +662,7 @@ class extends Component {
                             <flux:chart.tooltip>
                                 <flux:chart.tooltip.heading field="label" />
                                 <flux:chart.tooltip.value field="total_weight" label="{{__('Total weight')}}" :format="['useGrouping' => true]" suffix=" kg" />
-                                <flux:chart.tooltip.value field="bucket_count" label="{{__('Buckets')}}" :format="['useGrouping' => true]" />
+                                <flux:chart.tooltip.value field="bucket_count" label="{{__('Buckets')}}" :format="['useGrouping' => true]" suffix=" kom"/>
                             </flux:chart.tooltip>
                         </flux:chart>
                     </flux:card>

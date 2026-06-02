@@ -207,21 +207,21 @@ new class extends Component {
             <flux:card class="h-full p-3 hover:border-blue-300 transition-colors">
                 <flux:heading size="xs">{{ __('Total buckets') }}</flux:heading>
                 <flux:text class="text-lg font-bold mt-1">
-                    {{ $this->payslipTotals['buckets'] }}
+                    {{ $this->payslipTotals['buckets'] }} <span class="text-gray-500 dark:text-zinc-400 text-xs">{{ __('kom') }}</span>
                 </flux:text>
             </flux:card>
             <flux:card class="h-full p-3 hover:border-blue-300 transition-colors">
                 <flux:heading size="xs">{{ __('Total weight') }}</flux:heading>
                 <flux:text class="text-lg font-bold mt-1">
-                    {{ number_format($this->payslipTotals['weight'], 2, ',', '.') }}
+                    {{ number_format($this->payslipTotals['weight'], 2, ',', '.') }} <span class="text-gray-500 dark:text-zinc-400 text-xs">{{ __('kg') }}</span>
                 </flux:text>
-                <flux:text size="xs" class="text-gray-500 dark:text-zinc-400 mt-0.5">{{ __('kg') }}</flux:text>
+
             </flux:card>
             <flux:card class="h-full p-3 hover:border-blue-300 transition-colors">
                 <flux:heading size="xs">{{ __('Price per kg') }}</flux:heading>
                 <flux:text class="text-lg font-bold mt-1">
                     @if ($this->payslipTotals['price_per_kg'])
-                        {{ number_format($this->payslipTotals['price_per_kg'], 0, ',', '.') }}
+                        {{ number_format($this->payslipTotals['price_per_kg'], 0, '', '') }} <span class="text-gray-500 dark:text-zinc-400 text-xs">{{ __('RSD') }}</span>
                     @else
                         —
                     @endif
@@ -230,7 +230,7 @@ new class extends Component {
             <flux:card class="h-full p-3 hover:border-blue-300 transition-colors">
                 <flux:heading size="xs">{{ __('Total earnings') }}</flux:heading>
                 <flux:text class="text-lg font-bold mt-1">
-                    {{ number_format($this->payslipTotals['earnings'], 0, ',', '.') }}
+                    {{ number_format($this->payslipTotals['earnings'], 0, '', '') }} <span class="text-gray-500 dark:text-zinc-400 text-xs">{{ __('RSD') }}</span>
                 </flux:text>
             </flux:card>
         </div>

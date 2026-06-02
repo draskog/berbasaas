@@ -285,6 +285,7 @@ return [
         'work' => 'rad',
         'year' => 'godina',
         'selectedProductId' => 'proizvod',
+        'newProductId' => 'proizvod',
         'uploadedFile' => 'fajl',
         'newHarvesterName' => 'ime berača',
         'newNumber' => 'broj rasporeda',

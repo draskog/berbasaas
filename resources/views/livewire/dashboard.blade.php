@@ -128,7 +128,7 @@ class extends Component
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
                     <flux:heading size="sm">{{ __('Total harvest') }}</flux:heading>
                     <flux:text class="text-2xl font-bold mt-2">
-                        {{ $this->currentYearKgDisplay['value'] }} {{ $this->currentYearKgDisplay['unit'] }}
+                        {{ $this->currentYearKgDisplay['value'] }} <span class="text-gray-500 dark:text-zinc-400 text-sm">{{ $this->currentYearKgDisplay['unit'] }}</span>
                     </flux:text>
                     <flux:text size="sm" class="text-gray-500 mt-1">{{ __('This year') }}</flux:text>
                 </flux:card>
@@ -139,7 +139,7 @@ class extends Component
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
                     <flux:heading size="sm">{{ __('Total buckets') }}</flux:heading>
                     <flux:text class="text-2xl font-bold mt-2">
-                        {{ number_format($this->currentYearBuckets, 0, ',', '.') }}
+                        {{ number_format($this->currentYearBuckets, 0, '', '') }} <span class="text-gray-500 dark:text-zinc-400 text-sm">{{ __('kom') }}</span>
                     </flux:text>
                     <flux:text size="sm" class="text-gray-500 mt-1">{{ __('Weigh-ins this year') }}</flux:text>
                 </flux:card>

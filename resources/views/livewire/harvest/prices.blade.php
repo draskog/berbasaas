@@ -281,7 +281,7 @@ class extends Component {
                 @forelse($this->pricesForProduct as $price)
                     <flux:table.row>
                         <flux:table.cell>{{ $price->product->name }}</flux:table.cell>
-                        <flux:table.cell>{{ number_format($price->price_per_kg, 3, ',', '.') }}</flux:table.cell>
+                        <flux:table.cell>{{ number_format($price->price_per_kg, 0, ',', '.') }} <span class="text-sm">RSD</span></flux:table.cell>
                         <flux:table.cell>{{ $price->effective_from->format('d.m.Y') }}</flux:table.cell>
                         <flux:table.cell>{{ $price->effective_to?->format('d.m.Y') ?? __('Current') }}</flux:table.cell>
                         <flux:table.cell align="end" class="space-x-2">
@@ -298,7 +298,7 @@ class extends Component {
         </flux:table>
     </div>
 
-    <flux:modal name="create-price" wire:model="showCreatePriceModal">
+    <flux:modal name="create-price" wire:model="showCreatePriceModal" class="md:max-w-3xl! md:w-3xl!">
         <flux:heading>{{ __('Add Price') }}</flux:heading>
         <flux:subheading>{{ __('Set a new price for a product.') }}</flux:subheading>
 
@@ -315,19 +315,22 @@ class extends Component {
 
             <flux:field>
                 <flux:label>{{ __('Price per kg') }}</flux:label>
-                <flux:input type="number" step="0.0001" wire:model="newPricePerKg"/>
+                <flux:input type="number" step="10" wire:model="newPricePerKg"/>
                 <flux:error name="newPricePerKg"/>
             </flux:field>
 
             <flux:field>
                 <flux:label>{{ __('Effective Date Range') }}</flux:label>
+
                 <flux:calendar
-                    mode="range"
-                    week-numbers
-                    locale="{{ str_replace('_', '-', app()->getLocale()) }}"
-                    :min="$this->minPriceDate"
-                    :max="$this->maxPriceDate"
-                    wire:model.live="newEffectiveDateRange"
+                        mode="range"
+                        selectable-header
+                        week-numbers
+                        locale="{{ str_replace('_', '-', app()->getLocale()) }}"
+                        class="mt-4"
+                        :min="$this->minPriceDate"
+                        :max="$this->maxPriceDate"
+                        wire:model.live="newEffectiveDateRange"
                 />
                 <flux:error name="newEffectiveFrom"/>
                 <flux:error name="newEffectiveTo"/>
@@ -342,25 +345,27 @@ class extends Component {
         </div>
     </flux:modal>
 
-    <flux:modal name="edit-price" wire:model="showEditPriceModal">
+    <flux:modal name="edit-price" wire:model="showEditPriceModal" class="md:max-w-3xl! md:w-3xl!">
         <flux:heading>{{ __('Edit Price') }}</flux:heading>
 
         <div class="mt-6 space-y-4">
             <flux:field>
                 <flux:label>{{ __('Price per kg') }}</flux:label>
-                <flux:input type="number" step="0.0001" wire:model="editPricePerKg"/>
+                <flux:input type="number" step="10" wire:model="editPricePerKg"/>
                 <flux:error name="editPricePerKg"/>
             </flux:field>
 
             <flux:field>
                 <flux:label>{{ __('Effective Date Range') }}</flux:label>
                 <flux:calendar
-                    mode="range"
-                    week-numbers
-                    locale="{{ str_replace('_', '-', app()->getLocale()) }}"
-                    :min="$this->minPriceDate"
-                    :max="$this->maxPriceDate"
-                    wire:model.live="editEffectiveDateRange"
+                        mode="range"
+                        selectable-header
+                        week-numbers
+                        locale="{{ str_replace('_', '-', app()->getLocale()) }}"
+                        class="mt-4"
+                        :min="$this->minPriceDate"
+                        :max="$this->maxPriceDate"
+                        wire:model.live="editEffectiveDateRange"
                 />
                 <flux:error name="editEffectiveFrom"/>
                 <flux:error name="editEffectiveTo"/>
