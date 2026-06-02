@@ -711,7 +711,7 @@ class extends Component {
                 mode="range"
                 selectable-header
                 week-numbers
-                locale="{{ app()->getLocale() }}"
+                locale="{{ str_replace('_', '-', app()->getLocale()) }}"
                 :unavailable="$this->unavailableDates"
                 :min="$this->minDate"
                 :max="$this->maxDate"

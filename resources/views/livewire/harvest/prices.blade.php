@@ -324,7 +324,7 @@ class extends Component {
                 <flux:calendar
                     mode="range"
                     week-numbers
-                    locale="{{ app()->getLocale() }}"
+                    locale="{{ str_replace('_', '-', app()->getLocale()) }}"
                     :min="$this->minPriceDate"
                     :max="$this->maxPriceDate"
                     wire:model.live="newEffectiveDateRange"
@@ -357,7 +357,7 @@ class extends Component {
                 <flux:calendar
                     mode="range"
                     week-numbers
-                    locale="{{ app()->getLocale() }}"
+                    locale="{{ str_replace('_', '-', app()->getLocale()) }}"
                     :min="$this->minPriceDate"
                     :max="$this->maxPriceDate"
                     wire:model.live="editEffectiveDateRange"
