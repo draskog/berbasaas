@@ -14,7 +14,11 @@
 [data-id="controls"] {
     display: none
 }
-
+html{
+    font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
+    font-feature-settings: var(--default-font-feature-settings, normal);
+    font-variation-settings: var(--default-font-variation-settings, normal);
+}
 @media screen {
     body {
         background-color: whitesmoke
@@ -94,14 +98,9 @@ section:nth-child(1) h1 {
     string-set: booktitle content(text)
 }
 
-section {
-}
-
 body {
     font-size: 1em;
     line-height: 1.33em;
-    font-family: var(--font-serif);
-    font-variant-numeric: oldstyle-nums
 }
 
 p {
@@ -420,16 +419,6 @@ div.photo p {
     content: var(--string-booktitle)
 }
 
-.pagedjs_page {
-    --margin-top: 6mm;
-    --margin-right: 6mm;
-    --margin-left: 6mm;
-    --margin-bottom: 6mm;
-    --width: 210mm;
-    --height: 297mm;
-    width: 210mm;
-    height: 297mm
-}
 
 .pagedjs_page.pagedjs_named_page.pagedjs_cover_page .pagedjs_margin-top-center {
 }
@@ -451,8 +440,3 @@ div.photo p {
     --orientation: portrait;
 }
 
-@page {
-    size: 210mm 297mm;
-    margin: 0;
-    padding: 0
-}
