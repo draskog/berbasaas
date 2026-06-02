@@ -193,15 +193,20 @@ class extends Component
     </flux:header>
 
     <div class="p-6">
-        <flux:tab.group>
-            <flux:tabs wire:model.live="activeTab">
-                @if ($this->stagingRecordsCount > 0)
-                    <flux:tab name="staging" icon="inbox-stack">{{ __('Staging Records') }}</flux:tab>
-                @endif
-                @if ($this->harvestRecordsCount > 0)
-                    <flux:tab name="harvest" icon="check-circle">{{ __('Harvest Records') }}</flux:tab>
-                @endif
-            </flux:tabs>
+        @if ($this->stagingRecordsCount === 0 && $this->harvestRecordsCount === 0)
+            <flux:callout type="info" icon="information-circle" title="{{ __('Svi duplikati') }}">
+                {{ __('Svi zapisi iz ovog fajla su bili duplikati prethodno importovanih zapisa i preskaču tokom importa.') }}
+            </flux:callout>
+        @else
+            <flux:tab.group>
+                <flux:tabs wire:model.live="activeTab">
+                    @if ($this->stagingRecordsCount > 0)
+                        <flux:tab name="staging" icon="inbox-stack">{{ __('Staging Records') }}</flux:tab>
+                    @endif
+                    @if ($this->harvestRecordsCount > 0)
+                        <flux:tab name="harvest" icon="check-circle">{{ __('Harvest Records') }}</flux:tab>
+                    @endif
+                </flux:tabs>
 
             <flux:tab.panel name="staging">
                 <div class="space-y-6">
@@ -219,6 +224,7 @@ class extends Component
                                 <flux:radio value="all" label="{{ __('All') }}"/>
                                 <flux:radio value="harvester_not_found" label="{{ __('Harvester not found') }}"/>
                                 <flux:radio value="tare_out_of_range" label="{{ __('Tare out of range') }}"/>
+                                <flux:radio value="duplicate" label="{{ __('Duplicate') }}"/>
                             </flux:radio.group>
                         </div>
                         <div class="flex justify-between items-center">
@@ -376,6 +382,7 @@ class extends Component
                     </flux:table>
                 </div>
             </flux:tab.panel>
-        </flux:tab.group>
+            </flux:tab.group>
+        @endif
     </div>
 </flux:main>

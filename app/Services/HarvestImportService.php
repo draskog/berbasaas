@@ -110,8 +110,10 @@ class HarvestImportService
 
         // Filter out duplicates and track count
         $originalCount = count($records);
-        $records = $this->filterDuplicates($records, $companyId);
-        $skippedCount = $originalCount - count($records);
+        $filtered = $this->filterDuplicates($records, $companyId);
+        $records = $filtered['unique'];
+        $inFileDuplicates = $filtered['inFileDuplicates'];
+        $skippedCount = $originalCount - count($records) - count($inFileDuplicates);
 
         // Process records: validate and stage
         $validRecords = [];
@@ -174,16 +176,31 @@ class HarvestImportService
             HarvestRecordStaging::insert($chunk);
         }
 
+        // Insert in-file duplicates into staging
+        foreach (array_chunk($inFileDuplicates, 500) as $chunk) {
+            foreach ($chunk as &$record) {
+                $record['upload_id'] = $upload->id;
+                $record['status'] = 'invalid';
+                $record['validation_reason'] = json_encode(['duplicate']);
+                $record['duplicate_of_sequence'] = $record['_duplicate_of_sequence'];
+                unset($record['_duplicate_of_sequence']);
+            }
+            unset($record);
+            HarvestRecordStaging::insert($chunk);
+        }
+
         return [
             'upload' => $upload,
             'skippedCount' => $skippedCount,
+            'duplicateCount' => count($inFileDuplicates),
         ];
     }
 
     private function filterDuplicates(array $records, int $companyId): array
     {
-        $filtered = [];
-        $seenKeys = [];
+        $unique = [];
+        $inFileDuplicates = [];
+        $seenKeys = []; // key => sequence_number of first occurrence
 
         // Collect all unique keys from existing records in database
         $existingKeys = $this->getExistingRecordKeys($companyId);
@@ -191,16 +208,22 @@ class HarvestImportService
         foreach ($records as $record) {
             $key = $this->generateRecordKey($record);
 
-            // Skip if already seen in this import or exists in database
-            if (isset($seenKeys[$key]) || isset($existingKeys[$key])) {
+            if (isset($existingKeys[$key])) {
+                continue; // DB duplicate — silently skip
+            }
+
+            if (isset($seenKeys[$key])) {
+                $record['_duplicate_of_sequence'] = $seenKeys[$key];
+                $inFileDuplicates[] = $record;
+
                 continue;
             }
 
-            $seenKeys[$key] = true;
-            $filtered[] = $record;
+            $seenKeys[$key] = $record['sequence_number'];
+            $unique[] = $record;
         }
 
-        return $filtered;
+        return ['unique' => $unique, 'inFileDuplicates' => $inFileDuplicates];
     }
 
     private function getExistingRecordKeys(int $companyId): array
@@ -209,7 +232,7 @@ class HarvestImportService
 
         // Get keys from harvest_records
         HarvestRecord::where('company_id', $companyId)
-            ->select('product_id', 'harvester_number', 'weighed_at', 'sequence_number')
+            ->select('company_id', 'product_id', 'harvester_number', 'weighed_at')
             ->each(function ($record) use (&$keys) {
                 $key = $this->generateRecordKeyFromModel($record);
                 $keys[$key] = true;
@@ -217,7 +240,7 @@ class HarvestImportService
 
         // Get keys from harvest_record_staging
         HarvestRecordStaging::where('company_id', $companyId)
-            ->select('product_id', 'harvester_number', 'weighed_at', 'sequence_number')
+            ->select('company_id', 'product_id', 'harvester_number', 'weighed_at')
             ->each(function ($record) use (&$keys) {
                 $key = $this->generateRecordKeyFromModel($record);
                 $keys[$key] = true;
@@ -232,7 +255,7 @@ class HarvestImportService
             ? $record['weighed_at']->format('Y-m-d H:i:s')
             : $record['weighed_at'];
 
-        return "{$record['product_id']}|{$record['harvester_number']}|{$weighedAt}|{$record['sequence_number']}";
+        return "{$record['company_id']}|{$record['product_id']}|{$record['harvester_number']}|{$weighedAt}";
     }
 
     private function generateRecordKeyFromModel($record): string
@@ -241,7 +264,7 @@ class HarvestImportService
             ? $record->weighed_at->format('Y-m-d H:i:s')
             : $record->weighed_at;
 
-        return "{$record->product_id}|{$record->harvester_number}|{$weighedAt}|{$record->sequence_number}";
+        return "{$record->company_id}|{$record->product_id}|{$record->harvester_number}|{$weighedAt}";
     }
 
     private function detectTareVariation(array $records): bool

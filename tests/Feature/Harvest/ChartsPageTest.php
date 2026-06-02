@@ -81,10 +81,18 @@ describe('Charts Page', function () {
             ->for($harvester)
             ->create(['year' => $year, 'number' => 3]);
 
-        HarvestRecord::factory(3)
+        HarvestRecord::factory()
             ->for($this->company)
             ->for($product)
             ->create(['harvester_number' => 3, 'weight' => 20, 'weighed_at' => now()]);
+        HarvestRecord::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create(['harvester_number' => 3, 'weight' => 20, 'weighed_at' => now()->addSeconds(1)]);
+        HarvestRecord::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create(['harvester_number' => 3, 'weight' => 20, 'weighed_at' => now()->addSeconds(2)]);
 
         Livewire::test('harvest.charts')
             ->set('activeTab', 'harvesters')
@@ -114,10 +122,12 @@ describe('Charts Page', function () {
     it('calculates daily totals', function () {
         $product = Product::factory()->for($this->company)->create();
 
-        HarvestRecord::factory(4)
-            ->for($this->company)
-            ->for($product)
-            ->create(['weighed_at' => now(), 'weight' => 25]);
+        for ($i = 0; $i < 4; $i++) {
+            HarvestRecord::factory()
+                ->for($this->company)
+                ->for($product)
+                ->create(['harvester_number' => $i + 1, 'weighed_at' => now(), 'weight' => 25]);
+        }
 
         Livewire::test('harvest.charts')
             ->assertSee('100');

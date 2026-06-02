@@ -42,7 +42,7 @@
             </flux:button>
             @if (Route::has('register'))
                 <flux:button href="{{ route('register') }}" variant="ghost" class="w-full" wire:navigate>
-                    {{ __('Create Account') }}
+                    {{ __('Create account') }}
                 </flux:button>
             @endif
         @endauth

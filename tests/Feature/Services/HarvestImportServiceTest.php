@@ -45,7 +45,7 @@ it('imports valid records successfully', function () {
     expect($result['skippedCount'])->toBe(0);
 });
 
-it('skips duplicate records in same import', function () {
+it('stages duplicate records in same import', function () {
     $csv = createCsvFile([
         [1, 1, 3.175, 0, 3.175, '2026-01-15', '09:30:45'],
         [1, 1, 3.175, 0, 3.175, '2026-01-15', '09:30:45'], // Duplicate
@@ -59,13 +59,19 @@ it('skips duplicate records in same import', function () {
     );
 
     expect(HarvestRecord::count())->toBe(1);
-    expect($result['skippedCount'])->toBe(1);
+    expect(HarvestRecordStaging::count())->toBe(1);
+    expect($result['skippedCount'])->toBe(0);
+    expect($result['duplicateCount'])->toBe(1);
+
+    $staged = HarvestRecordStaging::first();
+    expect($staged->validation_reason)->toContain('duplicate');
+    expect($staged->duplicate_of_sequence)->toBe(1);
 });
 
-it('allows different sequence numbers with same timestamp', function () {
+it('stages duplicate when sequence numbers differ but timestamp same', function () {
     $csv = createCsvFile([
         [1, 1, 3.175, 0, 3.175, '2026-01-15', '09:30:45'],
-        [2, 1, 3.175, 0, 3.175, '2026-01-15', '09:30:45'], // Different sequence
+        [2, 1, 3.175, 0, 3.175, '2026-01-15', '09:30:45'], // Different sequence, same timestamp
     ]);
 
     $result = $this->service->parse(
@@ -75,8 +81,12 @@ it('allows different sequence numbers with same timestamp', function () {
         $this->user->id
     );
 
-    expect(HarvestRecord::count())->toBe(2);
-    expect($result['skippedCount'])->toBe(0);
+    expect(HarvestRecord::count())->toBe(1);
+    expect(HarvestRecordStaging::count())->toBe(1);
+    expect($result['duplicateCount'])->toBe(1);
+
+    $staged = HarvestRecordStaging::first();
+    expect($staged->duplicate_of_sequence)->toBe(1);
 });
 
 it('validates tare with import settings', function () {
@@ -86,10 +96,22 @@ it('validates tare with import settings', function () {
         'tare_max' => 5.0,
     ]);
 
+    HarvesterAssignment::factory()->create([
+        'company_id' => $this->company->id,
+        'year' => now()->year,
+        'number' => 2,
+    ]);
+
+    HarvesterAssignment::factory()->create([
+        'company_id' => $this->company->id,
+        'year' => now()->year,
+        'number' => 3,
+    ]);
+
     $csv = createCsvFile([
         [1, 1, 3.175, 0.5, 3.175, '2026-01-15', '09:30:45'], // Valid
-        [2, 1, 2.88, 0.05, 2.88, '2026-01-15', '09:31:00'],  // Below min
-        [3, 1, 4.0, 6.0, 4.0, '2026-01-15', '09:32:00'],     // Above max
+        [2, 2, 2.88, 0.05, 2.88, '2026-01-15', '09:31:00'],  // Below min
+        [3, 3, 4.0, 6.0, 4.0, '2026-01-15', '09:32:00'],     // Above max
     ]);
 
     $result = $this->service->parse(
@@ -111,9 +133,15 @@ it('validates tare with import settings', function () {
 });
 
 it('auto-detects tare variation and flags zero tare', function () {
+    HarvesterAssignment::factory()->create([
+        'company_id' => $this->company->id,
+        'year' => now()->year,
+        'number' => 2,
+    ]);
+
     $csv = createCsvFile([
         [1, 1, 3.175, 1.5, 3.175, '2026-01-15', '09:30:45'], // Non-zero
-        [2, 1, 2.88, 0, 2.88, '2026-01-15', '09:31:00'],     // Zero (flagged)
+        [2, 2, 2.88, 0, 2.88, '2026-01-15', '09:31:00'],     // Zero (flagged)
     ]);
 
     $result = $this->service->parse(
@@ -131,9 +159,15 @@ it('auto-detects tare variation and flags zero tare', function () {
 });
 
 it('allows all zero tare when no variation', function () {
+    HarvesterAssignment::factory()->create([
+        'company_id' => $this->company->id,
+        'year' => now()->year,
+        'number' => 2,
+    ]);
+
     $csv = createCsvFile([
         [1, 1, 3.175, 0, 3.175, '2026-01-15', '09:30:45'],
-        [2, 1, 2.88, 0, 2.88, '2026-01-15', '09:31:00'],
+        [2, 2, 2.88, 0, 2.88, '2026-01-15', '09:31:00'],
     ]);
 
     $result = $this->service->parse(
@@ -196,7 +230,7 @@ it('records multiple validation reasons', function () {
 it('stores sequence number from csv', function () {
     $csv = createCsvFile([
         [1, 1, 3.175, 0, 3.175, '2026-01-15', '09:30:45'],
-        [2, 1, 2.88, 0, 2.88, '2026-01-15', '09:31:00'],
+        [2, 1, 2.88, 0, 2.88, '2026-01-16', '09:31:00'],
     ]);
 
     $this->service->parse(
@@ -212,7 +246,7 @@ it('stores sequence number from csv', function () {
     expect($records[1]->sequence_number)->toBe(2);
 });
 
-it('handles multiple different sequence numbers with same data', function () {
+it('stages multiple duplicates for same harvester and timestamp', function () {
     $csv = createCsvFile([
         [1, 1, 3.175, 0, 3.175, '2026-01-15', '09:30:45'],
         [2, 1, 3.175, 0, 3.175, '2026-01-15', '09:30:45'],
@@ -226,14 +260,13 @@ it('handles multiple different sequence numbers with same data', function () {
         $this->user->id
     );
 
-    // All three should be imported since they have different sequence numbers
-    expect(HarvestRecord::count())->toBe(3);
-    expect($result['skippedCount'])->toBe(0);
+    expect(HarvestRecord::count())->toBe(1);
+    expect(HarvestRecordStaging::count())->toBe(2);
+    expect($result['duplicateCount'])->toBe(2);
 
-    $records = HarvestRecord::orderBy('sequence_number')->get();
-    expect($records[0]->sequence_number)->toBe(1);
-    expect($records[1]->sequence_number)->toBe(2);
-    expect($records[2]->sequence_number)->toBe(3);
+    $staged = HarvestRecordStaging::orderBy('sequence_number')->get();
+    expect($staged[0]->duplicate_of_sequence)->toBe(1);
+    expect($staged[1]->duplicate_of_sequence)->toBe(1);
 });
 
 it('calculates correct date range', function () {

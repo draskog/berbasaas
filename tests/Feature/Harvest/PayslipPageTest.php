@@ -114,10 +114,18 @@ describe('Payslip Page', function () {
             ->for($harvester)
             ->create(['year' => $year, 'number' => 10]);
 
-        HarvestRecord::factory(3)
+        HarvestRecord::factory()
             ->for($this->company)
             ->for($product)
             ->create(['harvester_number' => 10, 'weight' => 25, 'weighed_at' => now()]);
+        HarvestRecord::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create(['harvester_number' => 10, 'weight' => 25, 'weighed_at' => now()->addSeconds(1)]);
+        HarvestRecord::factory()
+            ->for($this->company)
+            ->for($product)
+            ->create(['harvester_number' => 10, 'weight' => 25, 'weighed_at' => now()->addSeconds(2)]);
 
         Livewire::test('harvest.payslip')
             ->set('selectedYear', $year)
@@ -193,10 +201,12 @@ describe('Payslip Page', function () {
             ->for($harvester)
             ->create(['year' => $year, 'number' => 12]);
 
-        HarvestRecord::factory(5)
-            ->for($this->company)
-            ->for($product)
-            ->create(['harvester_number' => 12, 'weighed_at' => now()]);
+        for ($i = 0; $i < 5; $i++) {
+            HarvestRecord::factory()
+                ->for($this->company)
+                ->for($product)
+                ->create(['harvester_number' => 12, 'weighed_at' => now()->addSeconds($i)]);
+        }
 
         Livewire::test('harvest.payslip')
             ->set('selectedYear', $year)

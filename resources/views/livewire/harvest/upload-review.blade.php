@@ -189,6 +189,30 @@ class extends Component
             ->exists();
     }
 
+    #[Computed]
+    public function hasResolvableRecords(): bool
+    {
+        return HarvestRecordStaging::where('upload_id', $this->upload->id)
+            ->where('status', 'invalid')
+            ->where('validation_reason', 'not like', '%duplicate%')
+            ->exists();
+    }
+
+    #[Computed]
+    public function duplicateOnlyRecords(): bool
+    {
+        $invalid = HarvestRecordStaging::where('upload_id', $this->upload->id)
+            ->where('status', 'invalid')
+            ->count();
+
+        $duplicates = HarvestRecordStaging::where('upload_id', $this->upload->id)
+            ->where('status', 'invalid')
+            ->where('validation_reason', 'like', '%duplicate%')
+            ->count();
+
+        return $invalid > 0 && $invalid === $duplicates;
+    }
+
     public function mount(): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
@@ -353,6 +377,12 @@ class extends Component
 
         foreach ($records as $stagingRecord) {
             $reasons = (array) $stagingRecord->validation_reason;
+
+            if (in_array('duplicate', $reasons, true)) {
+                $skipped++;
+                continue;
+            }
+
             $harvesterNumber = $stagingRecord->harvester_number;
             $tare = $stagingRecord->tare;
             $weight = $stagingRecord->weight;
@@ -437,6 +467,45 @@ class extends Component
 
         Flux::toast(text: $message, variant: $skipped > 0 ? 'warning' : 'success');
     }
+
+    public function delete(int $recordId): void
+    {
+        $stagingRecord = HarvestRecordStaging::findOrFail($recordId);
+
+        if ($stagingRecord->upload_id !== $this->upload->id || $stagingRecord->company_id !== auth()->user()->company_id) {
+            Flux::toast(text: __('Unauthorized access.'), variant: 'danger');
+
+            return;
+        }
+
+        $stagingRecord->delete();
+        $this->dispatch('$refresh');
+        Flux::toast(text: __('Record deleted.'), variant: 'success');
+    }
+
+    public function deleteSelected(): void
+    {
+        if (empty($this->selectedIds)) {
+            return;
+        }
+
+        HarvestRecordStaging::whereIn('id', $this->selectedIds)
+            ->where('company_id', auth()->user()->company_id)
+            ->where('upload_id', $this->upload->id)
+            ->delete();
+
+        $this->selectedIds = [];
+        $this->selectAll = false;
+        $this->dispatch('$refresh');
+        Flux::toast(text: __('Record(s) deleted.'), variant: 'success');
+    }
+
+    public function skipDuplicate(int $recordId): void
+    {
+        // Mark a duplicate as skipped without deleting it
+        // This is handled via filtering in the UI, but included for completeness
+        $this->dispatch('$refresh');
+    }
 }; ?>
 
 <flux:main>
@@ -452,12 +521,26 @@ class extends Component
             <flux:callout type="success" icon="check-circle" title="{{ __('All Clear') }}">
                 {{ __('All records have been corrected.') }}
             </flux:callout>
+        @elseif($this->duplicateOnlyRecords)
+            <flux:callout type="warning" icon="exclamation-circle" title="{{ __('Svi duplikati') }}">
+                <div class="space-y-2">
+                    <div>{{ __('Svi zapisi u ovom uploadu su duplikati prethodno importovanih zapisa.') }}</div>
+                    <div class="text-sm text-gray-300">
+                        {{ __('Možete:') }}
+                        <ul class="list-disc list-inside mt-1">
+                            <li>{{ __('Obrisati sve duplikate ispod') }}</li>
+                            <li>{{ __('Ili ih zadržati kao referencu') }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </flux:callout>
         @else
             <div>
                 <flux:radio.group wire:model.live="selectedReason" label="{{ __('Reason') }}" variant="pills">
                     <flux:radio value="all" label="{{ __('All') }}"/>
                     <flux:radio value="harvester_not_found" label="{{ __('Harvester not found') }}"/>
                     <flux:radio value="tare_out_of_range" label="{{ __('Tare out of range') }}"/>
+                    <flux:radio value="duplicate" label="{{ __('Duplicate') }}"/>
                 </flux:radio.group>
             </div>
             <div>
@@ -629,58 +712,77 @@ class extends Component
                                 @endif
                             </flux:table.cell>
                             <flux:table.cell>
-                                @if(in_array('harvester_not_found', $reasons, true))
-                                    <flux:tooltip>
-                                        <flux:input
-                                            wire:model="corrections.{{ $record->id }}"
-                                            type="number"
-                                            min="1"
-                                            max="200"
-                                            placeholder="#"
-                                            size="sm"
-                                            class="w-24"
-                                        />
-                                        <flux:tooltip.content>
-                                            <div x-data="{ search: '' }" class="min-w-48">
-                                                <input x-model="search" type="text" placeholder="{{ __('Search...') }}"
-                                                       class="w-full text-xs px-2 py-1 mb-1 bg-transparent border-b border-white/20 outline-none"/>
-                                                @foreach($this->validNumbers as $assignment)
-                                                    <div
-                                                        x-show="search === '' || '{{ $assignment->number }} {{ $assignment->harvester?->name }}'.toLowerCase().includes(search.toLowerCase())"
-                                                        wire:click="applyHarvesterNumber({{ $record->id }}, {{ $assignment->number }})"
-                                                        class="cursor-pointer hover:opacity-80 px-1 py-0.5 rounded"
-                                                    >
-                                                        {{ $assignment->number }}# - {{ $assignment->harvester?->name }}
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </flux:tooltip.content>
-                                    </flux:tooltip>
-                                    @error('corrections.' . $record->id)
-                                    <flux:error>{{ $message }}</flux:error>
-                                    @enderror
+                                @if(!in_array('duplicate', $reasons, true))
+                                    @if(in_array('harvester_not_found', $reasons, true))
+                                        <flux:tooltip>
+                                            <flux:input
+                                                wire:model="corrections.{{ $record->id }}"
+                                                type="number"
+                                                min="1"
+                                                max="200"
+                                                placeholder="#"
+                                                size="sm"
+                                                class="w-24"
+                                            />
+                                            <flux:tooltip.content>
+                                                <div x-data="{ search: '' }" class="min-w-48">
+                                                    <input x-model="search" type="text" placeholder="{{ __('Search...') }}"
+                                                           class="w-full text-xs px-2 py-1 mb-1 bg-transparent border-b border-white/20 outline-none"/>
+                                                    @foreach($this->validNumbers as $assignment)
+                                                        <div
+                                                            x-show="search === '' || '{{ $assignment->number }} {{ $assignment->harvester?->name }}'.toLowerCase().includes(search.toLowerCase())"
+                                                            wire:click="applyHarvesterNumber({{ $record->id }}, {{ $assignment->number }})"
+                                                            class="cursor-pointer hover:opacity-80 px-1 py-0.5 rounded"
+                                                        >
+                                                            {{ $assignment->number }}# - {{ $assignment->harvester?->name }}
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </flux:tooltip.content>
+                                        </flux:tooltip>
+                                        @error('corrections.' . $record->id)
+                                        <flux:error>{{ $message }}</flux:error>
+                                        @enderror
+                                    @endif
                                 @endif
                             </flux:table.cell>
                             <flux:table.cell>
-                                @foreach($reasons as $reason)
-                                    @if($reason === 'harvester_not_found')
-                                        <flux:badge variant="warning" size="sm">{{ __('Harvester not found') }}</flux:badge>
-                                    @elseif($reason === 'tare_out_of_range')
-                                        <flux:badge variant="danger" size="sm">{{ __('Tare out of range') }}</flux:badge>
-                                    @else
-                                        <flux:badge variant="zinc" size="sm">{{ $reason }}</flux:badge>
-                                    @endif
-                                @endforeach
+                                @if(in_array('duplicate', $reasons, true))
+                                    <span class="text-sm">
+                                        {{ __('Duplikat reda #:num', ['num' => $record->duplicate_of_sequence]) }}
+                                    </span>
+                                @else
+                                    @foreach($reasons as $reason)
+                                        @if($reason === 'harvester_not_found')
+                                            <flux:badge variant="warning" size="sm">{{ __('Harvester not found') }}</flux:badge>
+                                        @elseif($reason === 'tare_out_of_range')
+                                            <flux:badge variant="danger" size="sm">{{ __('Tare out of range') }}</flux:badge>
+                                        @else
+                                            <flux:badge variant="zinc" size="sm">{{ $reason }}</flux:badge>
+                                        @endif
+                                    @endforeach
+                                @endif
                             </flux:table.cell>
                             <flux:table.cell>
-                                <flux:button
-                                    size="sm"
-                                    variant="primary"
-                                    wire:click="resolve({{ $record->id }})"
-                                    wire:loading.attr="disabled"
-                                >
-                                    {{ __('Save') }}
-                                </flux:button>
+                                @if(in_array('duplicate', $reasons, true))
+                                    <flux:button
+                                        size="sm"
+                                        variant="danger"
+                                        wire:click="delete({{ $record->id }})"
+                                        wire:loading.attr="disabled"
+                                    >
+                                        {{ __('Delete') }}
+                                    </flux:button>
+                                @else
+                                    <flux:button
+                                        size="sm"
+                                        variant="primary"
+                                        wire:click="resolve({{ $record->id }})"
+                                        wire:loading.attr="disabled"
+                                    >
+                                        {{ __('Save') }}
+                                    </flux:button>
+                                @endif
                             </flux:table.cell>
                         </flux:table.row>
                     @endforeach

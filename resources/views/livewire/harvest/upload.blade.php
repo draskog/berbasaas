@@ -212,6 +212,7 @@ class extends Component
 
         $upload = $result['upload'];
         $skippedCount = $result['skippedCount'];
+        $duplicateCount = $result['duplicateCount'];
 
         $this->uploadedFile = null;
         $this->showUploadModal = false;
@@ -219,9 +220,11 @@ class extends Component
         // Reload to get counts
         $upload->loadCount('harvestRecords as valid_count');
         $upload->loadCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
+        $upload->loadCount(['stagingRecords as resolvable_count' => fn ($q) => $q->where('status', 'invalid')->whereRaw("validation_reason NOT LIKE '%duplicate%'")]);
 
         $validCount = $upload->valid_count;
         $invalidCount = $upload->invalid_count;
+        $resolvableCount = $upload->resolvable_count;
 
         if ($validCount === 0 && $skippedCount === $upload->record_count) {
             $message = __('All :count records from :filename were duplicates and skipped', [
@@ -241,8 +244,12 @@ class extends Component
                 $message .= ' '.__('(:skipped duplicate record(s) skipped)', ['skipped' => $skippedCount]);
             }
 
-            if ($invalidCount > 0) {
-                $message .= ' '.__('(:invalid invalid record(s) require review)', ['invalid' => $invalidCount]);
+            if ($duplicateCount > 0) {
+                $message .= ' '.__('(:duplicate duplicate record(s) staged for review)', ['duplicate' => $duplicateCount]);
+            }
+
+            if ($resolvableCount > 0) {
+                $message .= ' '.__('(:resolvable invalid record(s) require review)', ['resolvable' => $resolvableCount]);
             }
 
             $variant = 'success';
@@ -517,7 +524,13 @@ class extends Component
                             <a href="{{ route('harvest.upload.view', $upload) }}" wire:navigate>
                                 <flux:button size="sm" variant="ghost">{{ __('View') }}</flux:button>
                             </a>
-                            @if($upload->invalid_count > 0)
+                            @php
+                                $resolvableCount = HarvestRecordStaging::where('upload_id', $upload->id)
+                                    ->where('status', 'invalid')
+                                    ->whereRaw("validation_reason NOT LIKE '%duplicate%'")
+                                    ->count();
+                            @endphp
+                            @if($resolvableCount > 0)
                                 <flux:button size="sm" variant="primary" wire:click="confirmResolveUpload({{ $upload->id }})">
                                     {{ __('Resolve') }}
                                 </flux:button>
