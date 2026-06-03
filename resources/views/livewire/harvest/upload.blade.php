@@ -663,11 +663,11 @@ class extends Component
 
             <flux:callout type="info" icon="information-circle" class="mt-6 mb-6">
                 <div class="font-semibold mb-2">{{ __('Auto-Resolve Logic') }}</div>
-                <ul class="text-sm space-y-1">
+                <ul class="text-sm space-y-2">
                     <li>{{ __('Tare out of range: uses the tare value from the next sequential record (★ suggestion)') }}</li>
                     <li>{{ __('Duplicates (database or in-file): automatically deleted from staging') }}</li>
                 </ul>
-                <div class="text-sm mt-2">{{ __('Records that cannot be resolved are skipped and remain for manual review.') }}</div>
+                <div class="text-sm mt-3">{{ __('Records that cannot be resolved are skipped and remain for manual review.') }}</div>
             </flux:callout>
 
             <div class="mt-6 flex flex-col gap-3">
