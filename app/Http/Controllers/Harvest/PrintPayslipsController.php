@@ -83,11 +83,13 @@ class PrintPayslipsController extends Controller
             foreach ($records as $record) {
                 // Find price valid on this record's weighed_at date
                 $priceModel = $allPrices->first(function ($p) use ($record) {
-                    $recordDate = $record->weighed_at->format('Y-m-d');
+                    $recordDate = $record->weighed_at->startOfDay();
+                    $effectiveFrom = Carbon::parse($p->effective_from)->startOfDay();
+                    $effectiveTo = $p->effective_to ? Carbon::parse($p->effective_to)->startOfDay() : null;
 
                     return $p->product_id === $record->product_id
-                        && $p->effective_from <= $recordDate
-                        && ($p->effective_to === null || $p->effective_to >= $recordDate);
+                        && $effectiveFrom <= $recordDate
+                        && ($effectiveTo === null || $effectiveTo >= $recordDate);
                 });
 
                 $pricePerKg = $priceModel?->price_per_kg;
