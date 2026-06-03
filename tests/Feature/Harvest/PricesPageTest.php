@@ -179,6 +179,7 @@ describe('Prices Page', function () {
             ->call('editPrice', $price->id)
             ->set('editPricePerKg', '3.99')
             ->set('editEffectiveFrom', '2026-06-01')
+            ->set('editEffectiveDateRange', null)
             ->set('editEffectiveTo', null)
             ->call('updatePrice')
             ->assertHasNoErrors();
