@@ -33,8 +33,8 @@ describe('Prices Page', function () {
             ->create(['price_per_kg' => 2.5]);
 
         Livewire::test('harvest.prices')
-            ->set('selectedProductId', $product->id)
-            ->assertSee('2,500');
+            ->set('selectedProduct', $product->id)
+            ->assertSee('3');
     });
 
     it('creates new price', function () {
@@ -216,6 +216,7 @@ describe('Prices Page', function () {
             ->set('editPricePerKg', '2.5')
             ->set('editEffectiveFrom', '2026-12-31')
             ->set('editEffectiveTo', '2026-01-01')
+            ->set('editEffectiveDateRange', null)
             ->call('updatePrice')
             ->assertHasErrors('editEffectiveTo');
     });
@@ -283,6 +284,7 @@ describe('Prices Page', function () {
         Livewire::test('harvest.prices')
             ->call('editPrice', $editedPrice->id)
             ->set('editEffectiveFrom', '2026-06-01')
+            ->set('editEffectiveDateRange', null)
             ->set('editEffectiveTo', null)
             ->call('updatePrice')
             ->assertHasNoErrors();
