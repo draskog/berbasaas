@@ -61,10 +61,10 @@ it('stages duplicate records in same import', function () {
     expect(HarvestRecord::count())->toBe(1);
     expect(HarvestRecordStaging::count())->toBe(1);
     expect($result['skippedCount'])->toBe(0);
-    expect($result['duplicateCount'])->toBe(1);
+    expect($result['inFileDuplicateCount'])->toBe(1);
 
     $staged = HarvestRecordStaging::first();
-    expect($staged->validation_reason)->toContain('duplicate');
+    expect($staged->validation_reason)->toContain('in_file_duplicate');
     expect($staged->duplicate_of_sequence)->toBe(1);
 });
 
@@ -83,7 +83,7 @@ it('stages duplicate when sequence numbers differ but timestamp same', function 
 
     expect(HarvestRecord::count())->toBe(1);
     expect(HarvestRecordStaging::count())->toBe(1);
-    expect($result['duplicateCount'])->toBe(1);
+    expect($result['inFileDuplicateCount'])->toBe(1);
 
     $staged = HarvestRecordStaging::first();
     expect($staged->duplicate_of_sequence)->toBe(1);
@@ -262,7 +262,7 @@ it('stages multiple duplicates for same harvester and timestamp', function () {
 
     expect(HarvestRecord::count())->toBe(1);
     expect(HarvestRecordStaging::count())->toBe(2);
-    expect($result['duplicateCount'])->toBe(2);
+    expect($result['inFileDuplicateCount'])->toBe(2);
 
     $staged = HarvestRecordStaging::orderBy('sequence_number')->get();
     expect($staged[0]->duplicate_of_sequence)->toBe(1);
