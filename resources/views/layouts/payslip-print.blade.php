@@ -22,7 +22,7 @@
             <table class="border-collapse m-0 w-full">
                 <tr>
                     <td colspan="2" class="text-lg">
-                        {{ __('Harvester #') }} {{ $harvester['number'] }} <span class="ml-2 font-bold">{{ $harvester['name'] }}</span>
+                        {{ __('Harvester #') }} <span class="ml-2 font-bold">{{ $harvester['number'] }}</span> <span class="ml-2 font-bold">{{ $harvester['name'] }}</span>
                     </td>
                     <td class="text-right">{{ $company->name }}</td>
                 </tr>
@@ -31,32 +31,33 @@
                     </td>
                 </tr>
             </table>
-            <table class="mt-8 border-collapse m-0 w-full">
+            <div class="mt-2 -mx-8 border border-b-black border-dashed"></div>
+            <table class="mt-6 border-collapse m-0 w-full">
                 <tr>
                     <td>{{ __('Total buckets') }}</td>
                     <td>{{ __('Total weight') }}</td>
+                    @if(count($harvester['price_periods']) === 1)
+                        <td class="text-right">{{ __('Price per kg') }}</td>
+                    @endif
                     <td class="text-right font-semibold">{{ __('Total earnings') }}</td>
                 </tr>
                 <tr class="mt-2">
                     <td>{{ $harvester['totals']['buckets'] }} kom</td>
                     <td>{{ number_format($harvester['totals']['weight'], 2, ',', '') }} kg</td>
+                    @if(count($harvester['price_periods']) === 1)
+                        <td class="text-right">
+                            @php $periods = $harvester['price_periods'][0]; @endphp
+                            {{ number_format($periods['price_per_kg'], 0, '', '') }} <span class="text-sm">RSD</span>
+                        </td>
+                    @endif
                     <td class="text-right font-bold">{{ number_format($harvester['totals']['earnings'], 0, '', '') }} <span class="text-sm">RSD</span></td>
                 </tr>
             </table>
 
             <!-- Price breakdown -->
-            @if (count($harvester['price_periods']) === 1)
-                <!-- Single price period -->
-                @php $period = $harvester['price_periods'][0]; @endphp
-                <table class="mt-4 border-collapse m-0 w-full">
-                    <tr>
-                        <td class="text-sm font-semibold">{{ __('Price per kg') }}:</td>
-                        <td class="text-sm">{{ number_format($period['price_per_kg'], 0, '', '') }} RSD</td>
-                    </tr>
-                </table>
-            @elseif (count($harvester['price_periods']) > 1)
+            @if (count($harvester['price_periods']) > 1)
                 <!-- Multiple price periods -->
-                <p class="mt-6 mb-2 text-sm font-semibold">{{ __('Price breakdown') }}:</p>
+                <p class="mt-6 mb-2 text-sm">{{ __('Price breakdown') }}:</p>
                 <table class="border-collapse m-0 w-full text-sm">
                     <tr>
                         <td>{{ __('Period') }}</td>
@@ -82,10 +83,16 @@
                     @endforeach
                 </table>
             @endif
+            @if(count($harvester['price_periods']) > 1)
+                @php $recordsPerColumn = 35; @endphp
+            @else
+                @php $recordsPerColumn = 40; @endphp
+            @endif
             @if (count($harvester['records']) > 0)
                 @php
                     $records = $harvester['records'];
-                    $recordsPerPage = 40*4;
+
+                    $recordsPerPage = $recordsPerColumn*4;
                     $pageChunks = array_chunk($records, $recordsPerPage);
                 @endphp
                 @foreach ($pageChunks as $pageIndex => $pageRecords)
@@ -94,7 +101,7 @@
                             <table class="border-collapse m-0 w-full">
                                 <tr>
                                     <td colspan="2" class="text-lg">
-                                        {{ __('Harvester #') }} {{ $harvester['number'] }} <span class="ml-2 font-bold">{{ $harvester['name'] }}</span>
+                                        {{ __('Harvester #') }} <span class="ml-2 font-bold">{{ $harvester['number'] }}</span> <span class="ml-2 font-bold">{{ $harvester['name'] }}</span>
                                     </td>
                                     <td class="text-right">{{ $company->name }}</td>
                                 </tr>
@@ -111,7 +118,6 @@
                                     @endif
                                     <div class="text-sm grid grid-cols-4 gap-2">
                                         @php
-                                            $recordsPerColumn = 40;
                                             $columns = array_chunk($pageRecords, $recordsPerColumn);
                                         @endphp
                                         @foreach ($columns as $column)
