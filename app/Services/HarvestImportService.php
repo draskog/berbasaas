@@ -113,7 +113,8 @@ class HarvestImportService
         $filtered = $this->filterDuplicates($records, $companyId);
         $records = $filtered['unique'];
         $inFileDuplicates = $filtered['inFileDuplicates'];
-        $skippedCount = $originalCount - count($records) - count($inFileDuplicates);
+        $dbDuplicates = $filtered['dbDuplicates'];
+        $skippedCount = $originalCount - count($records) - count($inFileDuplicates) - count($dbDuplicates);
 
         // Process records: validate and stage
         $validRecords = [];
@@ -181,7 +182,7 @@ class HarvestImportService
             foreach ($chunk as &$record) {
                 $record['upload_id'] = $upload->id;
                 $record['status'] = 'invalid';
-                $record['validation_reason'] = json_encode(['duplicate']);
+                $record['validation_reason'] = json_encode(['in_file_duplicate']);
                 $record['duplicate_of_sequence'] = $record['_duplicate_of_sequence'];
                 unset($record['_duplicate_of_sequence']);
             }
@@ -192,7 +193,8 @@ class HarvestImportService
         return [
             'upload' => $upload,
             'skippedCount' => $skippedCount,
-            'duplicateCount' => count($inFileDuplicates),
+            'inFileDuplicateCount' => count($inFileDuplicates),
+            'dbDuplicateCount' => count($dbDuplicates),
         ];
     }
 
@@ -200,6 +202,7 @@ class HarvestImportService
     {
         $unique = [];
         $inFileDuplicates = [];
+        $dbDuplicates = [];
         $seenKeys = []; // key => sequence_number of first occurrence
 
         // Collect all unique keys from existing records in database
@@ -209,7 +212,9 @@ class HarvestImportService
             $key = $this->generateRecordKey($record);
 
             if (isset($existingKeys[$key])) {
-                continue; // DB duplicate — silently skip
+                $dbDuplicates[] = $record;
+
+                continue;
             }
 
             if (isset($seenKeys[$key])) {
@@ -223,7 +228,7 @@ class HarvestImportService
             $unique[] = $record;
         }
 
-        return ['unique' => $unique, 'inFileDuplicates' => $inFileDuplicates];
+        return ['unique' => $unique, 'inFileDuplicates' => $inFileDuplicates, 'dbDuplicates' => $dbDuplicates];
     }
 
     private function getExistingRecordKeys(int $companyId): array

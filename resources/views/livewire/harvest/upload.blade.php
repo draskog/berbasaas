@@ -285,8 +285,8 @@ class extends Component
         );
 
         $upload = $result['upload'];
-        $inFileDuplicateCount = $result['inFileDuplicateCount'];
-        $dbDuplicateCount = $result['dbDuplicateCount'];
+        $inFileDuplicateCount = $result['inFileDuplicateCount'] ?? 0;
+        $dbDuplicateCount = $result['dbDuplicateCount'] ?? 0;
 
         $this->uploadedFile = null;
         $this->showUploadModal = false;
