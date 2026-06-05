@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\Company;
+use App\Models\HarvestRecord;
+use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
 use App\Models\Product;
 use App\Models\User;
@@ -81,6 +83,51 @@ describe('Upload Page', function () {
         Livewire::test('harvest.upload')
             ->call('confirmDeleteUpload', $upload->id)
             ->assertSet('deletingUploadId', $upload->id);
+    });
+
+    it('archives harvest upload', function () {
+        $product = Product::factory()->for($this->company)->create();
+        $upload = HarvestUpload::factory()
+            ->for($this->company)
+            ->for($product)
+            ->for($this->user, 'uploadedBy')
+            ->create();
+        $record = HarvestRecord::factory()
+            ->state(['upload_id' => $upload->id, 'company_id' => $this->company->id, 'product_id' => $product->id])
+            ->create();
+        $staging = HarvestRecordStaging::create([
+            'upload_id' => $upload->id,
+            'company_id' => $this->company->id,
+            'product_id' => $product->id,
+            'harvester_number' => 1,
+            'weight' => 50,
+            'tare' => 5,
+            'gross' => 55,
+            'weighed_at' => now(),
+            'status' => 'invalid',
+        ]);
+
+        Livewire::test('harvest.upload')
+            ->call('confirmArchiveUpload', $upload->id)
+            ->call('archiveUpload')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseMissing('harvest_uploads', ['id' => $upload->id]);
+        $this->assertDatabaseMissing('harvest_record_staging', ['id' => $staging->id]);
+        $this->assertDatabaseHas('harvest_records', ['id' => $record->id, 'upload_id' => null]);
+    });
+
+    it('confirms before archiving upload', function () {
+        $product = Product::factory()->for($this->company)->create();
+        $upload = HarvestUpload::factory()
+            ->for($this->company)
+            ->for($product)
+            ->for($this->user, 'uploadedBy')
+            ->create();
+
+        Livewire::test('harvest.upload')
+            ->call('confirmArchiveUpload', $upload->id)
+            ->assertSet('archivingUploadId', $upload->id);
     });
 
     it('only shows uploads for company', function () {

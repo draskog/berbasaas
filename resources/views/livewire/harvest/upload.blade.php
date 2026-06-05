@@ -35,6 +35,10 @@ class extends Component
 
     public bool $showDeleteModal = false;
 
+    public ?int $archivingUploadId = null;
+
+    public bool $showArchiveModal = false;
+
     public ?int $resolvingUploadId = null;
 
     public bool $showResolveModal = false;
@@ -352,6 +356,26 @@ class extends Component
         Flux::toast(text: __('Upload deleted.'), variant: 'warning');
     }
 
+    public function confirmArchiveUpload(int $id): void
+    {
+        $this->archivingUploadId = $id;
+        $this->showArchiveModal = true;
+    }
+
+    public function archiveUpload(): void
+    {
+        $upload = HarvestUpload::find($this->archivingUploadId);
+        if ($upload) {
+            HarvestRecord::where('upload_id', $upload->id)->update(['upload_id' => null]);
+            $upload->stagingRecords()->delete();
+            $upload->delete();
+        }
+        $this->archivingUploadId = null;
+        $this->showArchiveModal = false;
+        $this->dispatch('$refresh');
+        Flux::toast(text: __('Upload archived.'), variant: 'success');
+    }
+
     public function autoResolve(int $uploadId): void
     {
         $upload = HarvestUpload::findOrFail($uploadId);
@@ -637,6 +661,11 @@ class extends Component
                                     {{ __('Resolve') }}
                                 </flux:button>
                             @endif
+                            @if($upload->valid_count > 0)
+                                <flux:button size="sm" variant="filled" wire:click="confirmArchiveUpload({{ $upload->id }})">
+                                    {{ __('Archive') }}
+                                </flux:button>
+                            @endif
 
                             <flux:button variant="danger" size="sm" wire:click="confirmDeleteUpload({{ $upload->id }})">{{ __('Delete') }}</flux:button>
                         </flux:table.cell>
@@ -693,6 +722,16 @@ class extends Component
         <div class="mt-6 flex gap-2 justify-end">
             <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">{{ __('Cancel') }}</flux:button>
             <flux:button variant="danger" wire:click="deleteUpload">{{ __('Delete') }}</flux:button>
+        </div>
+    </flux:modal>
+
+    <flux:modal name="confirm-archive-upload" :dismissible="false" wire:model="showArchiveModal">
+        <flux:heading>{{ __('Archive Upload') }}</flux:heading>
+        <flux:text>{{ __('This will keep all valid harvest records but remove the upload and staging records. This cannot be undone.') }}</flux:text>
+
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:button variant="ghost" wire:click="$set('showArchiveModal', false)">{{ __('Cancel') }}</flux:button>
+            <flux:button variant="primary" wire:click="archiveUpload">{{ __('Archive') }}</flux:button>
         </div>
     </flux:modal>
 
