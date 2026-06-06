@@ -359,11 +359,11 @@ class extends Component
                                     </flux:table.cell>
                                     <flux:table.cell>
                                         @if($record->status === 'pending')
-                                            <flux:badge color="zinc" size="sm">{{ __('Pending') }}</flux:badge>
+                                            <flux:badge color="zinc" size="sm" variant="solid">{{ __('Pending') }}</flux:badge>
                                         @elseif($record->status === 'valid')
-                                            <flux:badge color="green" size="sm">{{ __('Valid') }}</flux:badge>
+                                            <flux:badge color="green" size="sm" variant="solid">{{ __('Valid') }}</flux:badge>
                                         @elseif($record->status === 'invalid')
-                                            <flux:badge color="danger" size="sm">{{ __('Invalid') }}</flux:badge>
+                                            <flux:badge color="red" size="sm" variant="solid">{{ __('Invalid') }}</flux:badge>
                                         @endif
                                     </flux:table.cell>
                                     <flux:table.cell>
