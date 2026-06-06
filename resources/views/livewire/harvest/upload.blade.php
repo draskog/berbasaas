@@ -98,7 +98,7 @@ class extends Component
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
             ->withCount('harvestRecords as valid_count')
-            ->withCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
+            ->withCount('stagingRecords as invalid_count');
 
         if ($this->selectedYear > 0) {
             $query->whereYear('date_from', $this->selectedYear);
@@ -129,7 +129,7 @@ class extends Component
     public function availableResolved(): array
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
-            ->withCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
+            ->withCount('stagingRecords as invalid_count');
 
         if ($this->selectedYear > 0) {
             $query->whereYear('date_from', $this->selectedYear);
@@ -176,7 +176,7 @@ class extends Component
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
             ->withCount('harvestRecords as valid_count')
-            ->withCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
+            ->withCount('stagingRecords as invalid_count');
 
         if ($this->selectedYear > 0) {
             $query->whereYear('date_from', $this->selectedYear);
