@@ -14,15 +14,15 @@ uses(TestCase::class)->in('Feature');
 
 uses(RefreshDatabase::class)->in('Feature');
 
-function createCsvFile(array $rows, ?array $header = null): UploadedFile
+function createCsvFile(array $rows, ?array $header = null, string $delimiter = ','): UploadedFile
 {
     if ($header === null) {
         $header = ['No', 'Product', 'weight', 'tare', 'Gross', 'date', 'time'];
     }
 
-    $content = implode(',', $header)."\n";
+    $content = implode($delimiter, $header)."\n";
     foreach ($rows as $row) {
-        $content .= implode(',', $row)."\n";
+        $content .= implode($delimiter, $row)."\n";
     }
 
     $path = tempnam(sys_get_temp_dir(), 'csv');

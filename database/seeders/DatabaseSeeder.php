@@ -18,6 +18,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ProductSeeder::class);
         $this->call(HarvesterAssignmentSeeder::class);
         $this->call(HarvestImportSettingsSeeder::class);
-        //$this->call(HarvestRecordSeeder::class);
+        // $this->call(HarvestRecordSeeder::class);
     }
 }

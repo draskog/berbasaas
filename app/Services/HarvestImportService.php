@@ -14,11 +14,15 @@ class HarvestImportService
 {
     public function parse(UploadedFile $file, int $companyId, int $productId, int $userId): array
     {
+        // Load import settings for CSV delimiter
+        $settings = HarvestImportSettings::where('company_id', $companyId)->first();
+        $delimiter = $settings?->csv_delimiter ?? ',';
+
         $path = $file->getRealPath();
         $handle = fopen($path, 'rb');
 
         // Read header
-        $header = fgetcsv($handle, null, ',', '"');
+        $header = fgetcsv($handle, null, $delimiter, '"');
         $columnCount = count($header);
 
         // Determine schema: full (≥90 cols) or simple (7 cols)
@@ -41,7 +45,7 @@ class HarvestImportService
         $skippedEmpty = 0;
         $skippedInvalidDate = 0;
 
-        while (($row = fgetcsv($handle, null, ',', '"')) !== false) {
+        while (($row = fgetcsv($handle, null, $delimiter, '"')) !== false) {
             if (empty($row) || ! isset($row[$productCol])) {
                 $skippedEmpty++;
 
@@ -107,9 +111,6 @@ class HarvestImportService
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
         ]);
-
-        // Load import settings for validation
-        $settings = HarvestImportSettings::where('company_id', $companyId)->first();
 
         // Auto-detect tare variation if no settings configured
         $tareVariation = null;

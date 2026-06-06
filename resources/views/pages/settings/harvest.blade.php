@@ -4,6 +4,7 @@ use App\Models\HarvestImportSettings;
 use App\Models\UserSettings;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -11,6 +12,8 @@ new
 #[Title('Harvest settings')]
 class extends Component {
     public int $default_per_page = 25;
+
+    public string $csv_delimiter = ',';
 
     public ?string $tare_min = null;
 
@@ -22,6 +25,7 @@ class extends Component {
 
         $settings = HarvestImportSettings::where('company_id', Auth::user()->company_id)->first();
         if ($settings) {
+            $this->csv_delimiter = $settings->csv_delimiter ?? ',';
             $this->tare_min = $settings->tare_min;
             $this->tare_max = $settings->tare_max;
         }
@@ -31,6 +35,7 @@ class extends Component {
     {
         $this->validate([
             'default_per_page' => 'required|integer|in:25,50,100,0',
+            'csv_delimiter' => ['required', Rule::in([',', ';', "\t", '|'])],
             'tare_min' => 'nullable|numeric|min:0',
             'tare_max' => 'nullable|numeric|min:0',
         ]);
@@ -49,6 +54,7 @@ class extends Component {
         HarvestImportSettings::updateOrCreate(
             ['company_id' => Auth::user()->company_id],
             [
+                'csv_delimiter' => $this->csv_delimiter,
                 'tare_min' => $this->tare_min ?: null,
                 'tare_max' => $this->tare_max ?: null,
             ]
@@ -79,6 +85,21 @@ class extends Component {
                         <flux:select.option value="0">{{ __('All') }}</flux:select.option>
                     </flux:select>
                     <flux:error name="default_per_page"/>
+                </div>
+
+                <div class="my-8 border-t border-zinc-200 pt-6 dark:border-zinc-700">
+                    <flux:label class="mb-2 block">{{ __('CSV Delimiter') }}</flux:label>
+                    <flux:text class="mb-4 text-sm text-gray-600 dark:text-zinc-400">
+                        {{ __('Choose the delimiter character used when importing CSV files.') }}
+                    </flux:text>
+
+                    <flux:select wire:model="csv_delimiter">
+                        <flux:select.option value=",">, — {{ __('Comma') }}</flux:select.option>
+                        <flux:select.option value=";">; — {{ __('Semicolon') }}</flux:select.option>
+                        <flux:select.option value="|">| — {{ __('Pipe') }}</flux:select.option>
+                        <flux:select.option value="{{ "\t" }}">{{ __('Tab') }}</flux:select.option>
+                    </flux:select>
+                    <flux:error name="csv_delimiter"/>
                 </div>
 
                 <div class="my-8 border-t border-zinc-200 pt-6 dark:border-zinc-700">

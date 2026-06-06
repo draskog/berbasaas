@@ -287,3 +287,42 @@ it('calculates correct date range', function () {
     expect($upload->date_from->format('Y-m-d'))->toBe('2026-01-10');
     expect($upload->date_to->format('Y-m-d'))->toBe('2026-01-20');
 });
+
+it('uses semicolon delimiter from settings', function () {
+    HarvestImportSettings::create([
+        'company_id' => $this->company->id,
+        'csv_delimiter' => ';',
+    ]);
+
+    $csv = createCsvFile([
+        [1, 1, 3.175, 0, 3.175, '2026-01-15', '09:30:45'],
+        [2, 1, 2.88, 0, 2.88, '2026-01-15', '09:31:00'],
+    ], null, ';');
+
+    $result = $this->service->parse(
+        $csv,
+        $this->company->id,
+        $this->product->id,
+        $this->user->id
+    );
+
+    expect(HarvestRecord::count())->toBe(2);
+    expect($result['upload']->record_count)->toBe(2);
+});
+
+it('uses default comma delimiter when no settings configured', function () {
+    $csv = createCsvFile([
+        [1, 1, 3.175, 0, 3.175, '2026-01-15', '09:30:45'],
+        [2, 1, 2.88, 0, 2.88, '2026-01-15', '09:31:00'],
+    ]);
+
+    $result = $this->service->parse(
+        $csv,
+        $this->company->id,
+        $this->product->id,
+        $this->user->id
+    );
+
+    expect(HarvestRecord::count())->toBe(2);
+    expect($result['upload']->record_count)->toBe(2);
+});
