@@ -42,10 +42,10 @@ it('status is duplikat when all records are skipped as duplicates', function () 
 
     // Reload with counts
     $upload2->loadCount('harvestRecords as valid_count');
-    $upload2->loadCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
+    $upload2->loadCount('stagingRecords as invalid_count');
 
     expect($upload2->valid_count)->toBe(0);
-    expect($upload2->invalid_count)->toBe(0);
+    expect($upload2->invalid_count)->toBe(1); // Now duplicates are staged as invalid
     expect($upload2->record_count)->toBe(1);
 });
 

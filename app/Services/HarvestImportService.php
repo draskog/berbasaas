@@ -199,6 +199,17 @@ class HarvestImportService
             HarvestRecordStaging::insert($chunk);
         }
 
+        // Insert database duplicates into staging
+        foreach (array_chunk($dbDuplicates, 500) as $chunk) {
+            foreach ($chunk as &$record) {
+                $record['upload_id'] = $upload->id;
+                $record['status'] = 'invalid';
+                $record['validation_reason'] = json_encode(['db_duplicate']);
+            }
+            unset($record);
+            HarvestRecordStaging::insert($chunk);
+        }
+
         return [
             'upload' => $upload,
             'skippedCount' => $skippedCount,
