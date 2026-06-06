@@ -370,9 +370,9 @@ class extends Component
                                         @php $reasons = (array) $record->validation_reason; @endphp
                                         @foreach($reasons as $reason)
                                             @if($reason === 'harvester_not_found')
-                                                <flux:badge color="warning" size="sm">{{ __('Harvester not found') }}</flux:badge>
+                                                <flux:badge color="amber" size="sm">{{ __('Harvester not found') }}</flux:badge>
                                             @elseif($reason === 'tare_out_of_range')
-                                                <flux:badge color="warning" size="sm">{{ __('Tare out of range') }}</flux:badge>
+                                                <flux:badge color="amber" size="sm">{{ __('Tare out of range') }}</flux:badge>
                                             @elseif($reason === 'in_file_duplicate')
                                                 <flux:badge color="orange" size="sm">{{ __('In-file Duplicate') }}</flux:badge>
                                             @elseif($reason === 'db_duplicate')
