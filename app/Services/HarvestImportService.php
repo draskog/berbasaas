@@ -38,9 +38,13 @@ class HarvestImportService
         $dateFrom = null;
         $dateTo = null;
         $rowCount = 0;
+        $skippedEmpty = 0;
+        $skippedInvalidDate = 0;
 
         while (($row = fgetcsv($handle, null, ',', '"')) !== false) {
             if (empty($row) || ! isset($row[$productCol])) {
+                $skippedEmpty++;
+
                 continue;
             }
 
@@ -58,6 +62,8 @@ class HarvestImportService
             $datetime = $this->parseDateTime($dateStr, $timeStr);
 
             if (! $datetime) {
+                $skippedInvalidDate++;
+
                 continue;
             }
 
@@ -88,13 +94,16 @@ class HarvestImportService
 
         fclose($handle);
 
+        // Total records from CSV = successfully parsed + skipped
+        $totalRecords = $rowCount + $skippedEmpty + $skippedInvalidDate;
+
         // Create upload record
         $upload = HarvestUpload::create([
             'company_id' => $companyId,
             'product_id' => $productId,
             'uploaded_by' => $userId,
             'original_filename' => $file->getClientOriginalName(),
-            'record_count' => $rowCount,
+            'record_count' => $totalRecords,
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
         ]);
@@ -302,7 +311,14 @@ class HarvestImportService
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateStr)) {
             try {
                 return Carbon::createFromFormat('Y-m-d H:i:s', "{$dateStr} {$timeStr}");
-            } catch (\Exception) {
+            } catch (\Exception $e) {
+                \Log::warning('Failed to parse datetime', [
+                    'date' => $dateStr,
+                    'time' => $timeStr,
+                    'format' => 'Y-m-d H:i:s',
+                    'error' => $e->getMessage(),
+                ]);
+
                 return null;
             }
         }
@@ -311,7 +327,14 @@ class HarvestImportService
         if (preg_match('/^\d{2}-\d{2}-\d{2}$/', $dateStr)) {
             try {
                 return Carbon::createFromFormat('d-m-y H:i:s', "{$dateStr} {$timeStr}");
-            } catch (\Exception) {
+            } catch (\Exception $e) {
+                \Log::warning('Failed to parse datetime', [
+                    'date' => $dateStr,
+                    'time' => $timeStr,
+                    'format' => 'd-m-y H:i:s',
+                    'error' => $e->getMessage(),
+                ]);
+
                 return null;
             }
         }
