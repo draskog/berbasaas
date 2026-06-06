@@ -176,7 +176,8 @@ class extends Component
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
             ->withCount('harvestRecords as valid_count')
-            ->withCount('stagingRecords as invalid_count');
+            ->withCount('stagingRecords as invalid_count')
+            ->withCount(['stagingRecords as db_duplicate_count' => fn ($q) => $q->where('validation_reason', 'like', '%db_duplicate%')]);
 
         if ($this->selectedYear > 0) {
             $query->whereYear('date_from', $this->selectedYear);
@@ -608,6 +609,7 @@ class extends Component
                 <flux:table.column>{{ __('Product') }}</flux:table.column>
                 <flux:table.column>{{ __('Total') }}</flux:table.column>
                 <flux:table.column>{{ __('Valid') }}</flux:table.column>
+                <flux:table.column>{{ __('Duplicates') }}</flux:table.column>
                 <flux:table.column>{{ __('Invalid') }}</flux:table.column>
                 <flux:table.column>{{ __('Status') }}</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">{{ __('Date Range') }}</flux:table.column>
@@ -623,6 +625,13 @@ class extends Component
                         <flux:table.cell>{{ $upload->product->name }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->record_count }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->valid_count }}</flux:table.cell>
+                        <flux:table.cell>
+                            @if($upload->db_duplicate_count > 0)
+                                <flux:badge color="yellow">{{ $upload->db_duplicate_count }}</flux:badge>
+                            @else
+                                {{ $upload->db_duplicate_count }}
+                            @endif
+                        </flux:table.cell>
                         <flux:table.cell>
                             @if($upload->valid_count === 0 && $upload->invalid_count === 0 && $upload->record_count > 0)
                                 <flux:badge color="zinc">{{ $upload->record_count }}</flux:badge>

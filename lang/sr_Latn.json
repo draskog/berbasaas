@@ -176,6 +176,7 @@
     "Download Harvesters": "Preuzmi berače",
     "Duplicate": "Duplikat",
     "Duplicate :name": "Duplikat :name",
+    "Duplicates": "Duplikati",
     "Duplicate explanation": "Ovi zapisi su pronađeni kao duplikati prethodno uvezenih zapisa i nisu ponovo uvezeni. Mogu biti obrisani ili čuvani kao referenca.",
     "Duplicates cannot be resolved, only deleted.": "Duplikati ne mogu biti rešeni, samo izbrisani.",
     "Each recovery code can be used once to access your account and will be removed after use. If you need more, click Regenerate codes above.": "Svaki kod za oporavak može se koristiti jednom za pristup vašem nalogu i biće uklonjen nakon upotrebe. Ako vam treba više, kliknite na Regeneriši kodove iznad.",
