@@ -548,8 +548,8 @@ class extends Component
         $stagingRecord->delete();
         $this->markUploadResolvedIfAllInvalidRecordsGone();
         $this->deleteConfirmRecordId = null;
+        $this->resetPage();
 
-        $this->dispatch('$refresh');
         Flux::toast(text: __('Record deleted.'), variant: 'success');
     }
 
@@ -573,7 +573,7 @@ class extends Component
 
         $this->selectedIds = [];
         $this->selectAll = false;
-        $this->dispatch('$refresh');
+        $this->resetPage();
         Flux::toast(text: __('Record(s) deleted.'), variant: 'success');
     }
 
