@@ -886,6 +886,14 @@ class extends Component
                                         >
                                             {{ __('Save') }}
                                         </flux:button>
+                                        <flux:button
+                                            size="sm"
+                                            variant="danger"
+                                            wire:click="delete({{ $record->id }})"
+                                            wire:loading.attr="disabled"
+                                        >
+                                            {{ __('Delete') }}
+                                        </flux:button>
                                     @endif
                                 </div>
                             </flux:table.cell>
