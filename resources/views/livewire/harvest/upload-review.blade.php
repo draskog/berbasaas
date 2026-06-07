@@ -590,9 +590,7 @@ class extends Component
     public function findMatchingHarvestRecord(HarvestRecordStaging $stagingRecord): ?HarvestRecord
     {
         return HarvestRecord::where('upload_id', $this->upload->id)
-            ->where('weighed_at', $stagingRecord->weighed_at)
-            ->where('weight', $stagingRecord->weight)
-            ->where('tare', $stagingRecord->tare)
+            ->where('sequence_number', $stagingRecord->sequence_number)
             ->first();
     }
 }; ?>
