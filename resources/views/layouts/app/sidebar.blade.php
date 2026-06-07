@@ -14,14 +14,14 @@
         <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
             {{ __('Dashboard') }}
         </flux:sidebar.item>
+        <flux:sidebar.item icon="users" :href="route('harvesters.index')" :current="request()->routeIs('harvesters.index')" wire:navigate>
+            {{ __('Harvesters') }}
+        </flux:sidebar.item>
         <flux:sidebar.item icon="arrow-up-tray" :href="route('harvest.upload')" :current="request()->routeIs('harvest.upload', 'harvest.upload.*')" wire:navigate>
             {{ __('Harvest Records') }}
         </flux:sidebar.item>
         <flux:sidebar.item icon="printer" :href="route('harvest.payslip')" :current="request()->routeIs('harvest.payslip')" wire:navigate>
             {{ __('Payslip') }}
-        </flux:sidebar.item>
-        <flux:sidebar.item icon="users" :href="route('harvesters.index')" :current="request()->routeIs('harvesters.index')" wire:navigate>
-            {{ __('Harvesters') }}
         </flux:sidebar.item>
         <flux:sidebar.item icon="chart-bar" :href="route('harvest.charts')" :current="request()->routeIs('harvest.charts')" wire:navigate>
             {{ __('Charts') }}
