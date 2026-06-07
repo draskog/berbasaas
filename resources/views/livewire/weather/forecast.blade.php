@@ -38,7 +38,7 @@ new class extends Component {
     public function weatherDays(): Collection
     {
         return WeatherRecord::where('company_id', auth()->user()->company_id)
-            ->whereBetween('date', [now()->toDateString(), now()->addDays(6)->toDateString()])
+            ->whereBetween('date', [now()->toDateString(), now()->addDays(5)->toDateString()])
             ->orderBy('date')
             ->get();
     }
@@ -46,7 +46,7 @@ new class extends Component {
     #[Computed]
     public function religiousHolidays(): array
     {
-        return ReligiousHoliday::whereBetween('date', [now()->toDateString(), now()->addDays(6)->toDateString()])
+        return ReligiousHoliday::whereBetween('date', [now()->toDateString(), now()->addDays(5)->toDateString()])
             ->get()
             ->mapWithKeys(fn ($holiday) => [$holiday->date->toDateString() => $holiday->description])
             ->toArray();
