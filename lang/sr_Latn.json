@@ -769,5 +769,10 @@
     "Error: :message": "Greška: :message",
     "Tip uvoza": "Tip uvoza",
     "Iz vage": "Iz vage",
-    "Ručni": "Ručni"
+    "Ručni": "Ručni",
+    "Import CSV from scale": "Uvezi CSV fajl iz vage",
+    "Import manual CSV": "Uvezi ručni CSV",
+    "Download template": "Preuzmi primer",
+    "Import Type": "Tip uvoza",
+    "Harvest Date": "Datum berbe"
 }

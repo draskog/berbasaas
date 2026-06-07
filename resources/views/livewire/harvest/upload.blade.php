@@ -717,13 +717,13 @@ class extends Component
     <flux:header :heading="__('Recent Upload Harvest Records')">
         <flux:spacer/>
         <flux:button variant="primary" size="sm" icon="arrow-up-tray" wire:click="$set('showUploadModal', true)">
-            {{ __('Uvezi CSV fajl iz vage') }}
+            {{ __('Import CSV from scale') }}
         </flux:button>
         <flux:button variant="ghost" size="sm" icon="pencil-square" wire:click="$set('showManualUploadModal', true)">
-            {{ __('Uvezi ručni CSV') }}
+            {{ __('Import manual CSV') }}
         </flux:button>
         <flux:button variant="ghost" size="sm" icon="arrow-down-tray" wire:click="downloadManualCsvTemplate">
-            {{ __('Preuzmi primer') }}
+            {{ __('Download template') }}
         </flux:button>
     </flux:header>
 
@@ -775,7 +775,7 @@ class extends Component
             </div>
             @if(count($this->availableImportTypes) > 0)
                 <div>
-                    <flux:radio.group wire:model.live="selectedImportType" :label="__('Tip uvoza')" variant="pills">
+                    <flux:radio.group wire:model.live="selectedImportType" :label="__('Import Type')" variant="pills">
                         <flux:radio value="all" :label="__('All')"/>
                         @foreach($this->availableImportTypes as $type)
                             @php
@@ -995,7 +995,7 @@ class extends Component
     </flux:modal>
 
     <flux:modal name="manual-upload-csv" :dismissible="true" wire:model="showManualUploadModal">
-        <flux:heading>{{ __('Uvezi ručni CSV') }}</flux:heading>
+        <flux:heading>{{ __('Import manual CSV') }}</flux:heading>
 
         <div class="mt-6 space-y-4">
             <flux:field>
@@ -1009,7 +1009,7 @@ class extends Component
             </flux:field>
 
             <flux:field>
-                <flux:label>{{ __('Datum berbe') }}</flux:label>
+                <flux:label>{{ __('Harvest Date') }}</flux:label>
                 <flux:input type="date" wire:model="manualHarvestDate"/>
                 <flux:error name="manualHarvestDate"/>
             </flux:field>
