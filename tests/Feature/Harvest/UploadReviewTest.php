@@ -65,6 +65,106 @@ test('HarvestRecord includes sequence_number when created from staging', functio
     expect($record->sequence_number)->toBe(5);
 });
 
+test('findPreviousHarvestRecord finds record with sequence_number - 1', function () {
+    $baseTime = now();
+
+    // Create valid records for sequence 3 and 5
+    HarvestRecord::create([
+        'company_id' => $this->company->id,
+        'upload_id' => $this->upload->id,
+        'product_id' => $this->product->id,
+        'harvester_number' => 1,
+        'weight' => 2.0,
+        'tare' => 0.200,
+        'gross' => 2.2,
+        'weighed_at' => $baseTime,
+        'sequence_number' => 3,
+    ]);
+
+    // Create invalid staging record for sequence 4
+    $staging = HarvestRecordStaging::create([
+        'company_id' => $this->company->id,
+        'upload_id' => $this->upload->id,
+        'product_id' => $this->product->id,
+        'harvester_number' => 999,
+        'weight' => 2.5,
+        'tare' => 0.300,
+        'gross' => 2.8,
+        'weighed_at' => $baseTime->copy()->addMinute(),
+        'sequence_number' => 4,
+        'status' => 'invalid',
+        'validation_reason' => json_encode(['harvester_not_found']),
+    ]);
+
+    HarvestRecord::create([
+        'company_id' => $this->company->id,
+        'upload_id' => $this->upload->id,
+        'product_id' => $this->product->id,
+        'harvester_number' => 1,
+        'weight' => 3.0,
+        'tare' => 0.200,
+        'gross' => 3.2,
+        'weighed_at' => $baseTime->copy()->addMinutes(2),
+        'sequence_number' => 5,
+    ]);
+
+    $component = Livewire::test('harvest.upload-review', ['upload' => $this->upload]);
+    $prevRecord = $component->instance()->findPreviousHarvestRecord($staging);
+
+    expect($prevRecord)->not->toBeNull();
+    expect($prevRecord->sequence_number)->toBe(3);
+});
+
+test('findNextHarvestRecord finds record with sequence_number + 1', function () {
+    $baseTime = now();
+
+    // Create valid records for sequence 3 and 5
+    HarvestRecord::create([
+        'company_id' => $this->company->id,
+        'upload_id' => $this->upload->id,
+        'product_id' => $this->product->id,
+        'harvester_number' => 1,
+        'weight' => 2.0,
+        'tare' => 0.200,
+        'gross' => 2.2,
+        'weighed_at' => $baseTime,
+        'sequence_number' => 3,
+    ]);
+
+    // Create invalid staging record for sequence 4
+    $staging = HarvestRecordStaging::create([
+        'company_id' => $this->company->id,
+        'upload_id' => $this->upload->id,
+        'product_id' => $this->product->id,
+        'harvester_number' => 999,
+        'weight' => 2.5,
+        'tare' => 0.300,
+        'gross' => 2.8,
+        'weighed_at' => $baseTime->copy()->addMinute(),
+        'sequence_number' => 4,
+        'status' => 'invalid',
+        'validation_reason' => json_encode(['harvester_not_found']),
+    ]);
+
+    HarvestRecord::create([
+        'company_id' => $this->company->id,
+        'upload_id' => $this->upload->id,
+        'product_id' => $this->product->id,
+        'harvester_number' => 1,
+        'weight' => 3.0,
+        'tare' => 0.200,
+        'gross' => 3.2,
+        'weighed_at' => $baseTime->copy()->addMinutes(2),
+        'sequence_number' => 5,
+    ]);
+
+    $component = Livewire::test('harvest.upload-review', ['upload' => $this->upload]);
+    $nextRecord = $component->instance()->findNextHarvestRecord($staging);
+
+    expect($nextRecord)->not->toBeNull();
+    expect($nextRecord->sequence_number)->toBe(5);
+});
+
 test('weight calculation is gross minus tare', function () {
     $gross = 3.2;
     $tare = 0.300;
