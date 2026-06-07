@@ -2,6 +2,7 @@
 
 use App\Models\Company;
 use App\Models\Harvester;
+use App\Models\HarvestImportSettings;
 use App\Models\HarvesterAssignment;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -11,6 +12,12 @@ beforeEach(function () {
     $this->company = Company::factory()->create();
     $this->user = User::factory()->for($this->company)->create();
     $this->actingAs($this->user);
+
+    // Create harvest import settings with semicolon delimiter for tests
+    HarvestImportSettings::create([
+        'company_id' => $this->company->id,
+        'csv_delimiter' => ';',
+    ]);
 });
 
 describe('Harvesters Import/Export', function () {
@@ -212,6 +219,12 @@ describe('Harvesters Import/Export', function () {
     it('isolates imports by company', function () {
         $otherCompany = Company::factory()->create();
         $otherUser = User::factory()->for($otherCompany)->create();
+
+        // Create harvest import settings for other company
+        HarvestImportSettings::create([
+            'company_id' => $otherCompany->id,
+            'csv_delimiter' => ';',
+        ]);
 
         $csv = "Redni broj;Ime i prezime berača;Prefiks\n1;John Doe;A\n";
         $file = UploadedFile::fake()->createWithContent('harvesters.csv', $csv);

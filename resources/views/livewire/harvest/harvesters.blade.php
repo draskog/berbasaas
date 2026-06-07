@@ -371,7 +371,7 @@ class extends Component
             fgets($file);
 
             $settings = HarvestImportSettings::where('company_id', $companyId)->first();
-            $delimiter = $settings?->csv_delimiter ?? ';';
+            $delimiter = $settings?->csv_delimiter ?? ',';
 
             $createdCount = 0;
             $line = 0;

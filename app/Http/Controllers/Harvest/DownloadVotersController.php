@@ -29,7 +29,7 @@ class DownloadVotersController extends Controller
 
         $callback = function () use ($assignments) {
             $settings = HarvestImportSettings::where('company_id', auth()->user()->company_id)->first();
-            $delimiter = $settings?->csv_delimiter ?? ';';
+            $delimiter = $settings?->csv_delimiter ?? ',';
 
             $handle = fopen('php://output', 'wb');
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));

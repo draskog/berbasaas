@@ -28,7 +28,7 @@ class HarvesterAssignmentSeeder extends Seeder
         }
 
         $settings = HarvestImportSettings::where('company_id', $company->id)->first();
-        $delimiter = $settings?->csv_delimiter ?? ';';
+        $delimiter = $settings?->csv_delimiter ?? ',';
 
         $harvesters = [];
         if (($handle = fopen($csvPath, 'rb')) !== false) {
