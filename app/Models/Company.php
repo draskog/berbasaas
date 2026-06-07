@@ -8,10 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['name', 'address', 'tax_number', 'phone', 'email'])]
+#[Fillable(['name', 'address', 'tax_number', 'phone', 'email', 'latitude', 'longitude'])]
 class Company extends Model
 {
     use HasFactory;
+
+    protected $casts = [
+        'latitude' => 'float',
+        'longitude' => 'float',
+    ];
 
     public function users(): HasMany
     {
@@ -51,5 +56,10 @@ class Company extends Model
     public function importSettings(): HasOne
     {
         return $this->hasOne(HarvestImportSettings::class);
+    }
+
+    public function weatherRecords(): HasMany
+    {
+        return $this->hasMany(WeatherRecord::class);
     }
 }

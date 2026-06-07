@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Artisan;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -18,6 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call(ProductSeeder::class);
         $this->call(HarvestImportSettingsSeeder::class);
         $this->call(HarvesterAssignmentSeeder::class);
+        Artisan::call('holidays:import');
         // $this->call(HarvestRecordSeeder::class);
     }
 }

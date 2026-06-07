@@ -220,5 +220,8 @@ class extends Component
                     </flux:card>
                 </a>
             </div>
+
+        <!-- Weather Forecast Widget -->
+        <livewire:weather.forecast />
         </div>
     </flux:main>

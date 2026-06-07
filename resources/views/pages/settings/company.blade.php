@@ -19,6 +19,14 @@ class extends Component {
 
     public ?string $email = null;
 
+    public ?float $latitude = null;
+
+    public ?float $longitude = null;
+
+    public string $geocodeSearch = '';
+
+    public array $geocodeSuggestions = [];
+
     public function mount (): void
     {
         $company = Auth::user()->company;
@@ -28,7 +36,63 @@ class extends Component {
             $this->tax_number = $company->tax_number;
             $this->phone = $company->phone;
             $this->email = $company->email;
+            $this->latitude = $company->latitude;
+            $this->longitude = $company->longitude;
         }
+    }
+
+    public function updatedGeocodeSearch(): void
+    {
+        $this->geocodeSuggestions = [];
+
+        if (strlen($this->geocodeSearch) < 2) {
+            return;
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::get('https://photon.komoot.io/api', [
+                'q' => $this->geocodeSearch,
+                'limit' => 5,
+                'lang' => 'sr',
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $this->geocodeSuggestions = collect($data['features'] ?? [])
+                    ->map(fn ($feature) => [
+                        'lat' => $feature['geometry']['coordinates'][1],
+                        'lon' => $feature['geometry']['coordinates'][0],
+                        'label' => $this->buildLabel($feature['properties']),
+                    ])
+                    ->toArray();
+            }
+        } catch (\Exception) {
+            $this->geocodeSuggestions = [];
+        }
+    }
+
+    public function selectLocation(float $lat, float $lon): void
+    {
+        $this->latitude = $lat;
+        $this->longitude = $lon;
+        $this->geocodeSearch = '';
+        $this->geocodeSuggestions = [];
+    }
+
+    private function buildLabel(array $properties): string
+    {
+        $parts = [];
+        if (isset($properties['name'])) {
+            $parts[] = $properties['name'];
+        }
+        if (isset($properties['city'])) {
+            $parts[] = $properties['city'];
+        }
+        if (isset($properties['country'])) {
+            $parts[] = $properties['country'];
+        }
+
+        return implode(', ', $parts);
     }
 
     public function updateCompanyInformation (): void
@@ -39,6 +103,8 @@ class extends Component {
             'tax_number' => 'nullable|string|max:100',
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
         Auth::user()->company->update($validated);
@@ -64,6 +130,55 @@ class extends Component {
                 <flux:input wire:model="phone" :label="__('Phone')" type="tel"/>
 
                 <flux:input wire:model="email" :label="__('Email')" type="email"/>
+
+                <!-- Location Geocoding -->
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium text-zinc-900 dark:text-white">
+                        {{ __('Location for weather forecast') }}
+                    </label>
+
+                    <div class="relative">
+                        <flux:input
+                            wire:model.live="geocodeSearch"
+                            :placeholder="__('Search address (e.g., city name)...')"
+                            type="text"
+                            autocomplete="off"
+                        />
+
+                        @if (count($geocodeSuggestions) > 0)
+                            <div class="absolute z-10 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                                @foreach ($geocodeSuggestions as $suggestion)
+                                    <button
+                                        wire:click="selectLocation({{ $suggestion['lat'] }}, {{ $suggestion['lon'] }})"
+                                        type="button"
+                                        class="w-full text-left px-4 py-2 hover:bg-blue-50 dark:hover:bg-zinc-700 text-sm text-zinc-700 dark:text-zinc-300"
+                                    >
+                                        {{ $suggestion['label'] }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    @if ($latitude && $longitude)
+                        <div class="flex items-center justify-between bg-blue-50 dark:bg-blue-900/30 px-4 py-3 rounded-md border border-blue-200 dark:border-blue-800">
+                            <div class="text-sm text-zinc-700 dark:text-zinc-300">
+                                <span class="font-medium">{{ __('Location set:') }}</span>
+                                {{ number_format($latitude, 4) }}°, {{ number_format($longitude, 4) }}°
+                            </div>
+                            <button
+                                wire:click="$set('latitude', null); $set('longitude', null)"
+                                type="button"
+                                class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                            >
+                                {{ __('Clear') }}
+                            </button>
+                        </div>
+                    @endif
+
+                    <input type="hidden" wire:model="latitude"/>
+                    <input type="hidden" wire:model="longitude"/>
+                </div>
 
                 <div class="flex items-center gap-4">
                     <div class="flex items-center justify-end">
