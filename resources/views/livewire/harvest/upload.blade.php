@@ -806,6 +806,7 @@ class extends Component
                 <flux:table.column>{{ __('Duplicates') }}</flux:table.column>
                 <flux:table.column>{{ __('Invalid') }}</flux:table.column>
                 <flux:table.column>{{ __('Status') }}</flux:table.column>
+                <flux:table.column>{{ __('Tip uvoza') }}</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">{{ __('Date Range') }}</flux:table.column>
                 <flux:table.column>{{ __('Imported At') }}</flux:table.column>
                 <flux:table.column>{{ __('Uploaded By') }}</flux:table.column>
@@ -847,6 +848,27 @@ class extends Component
                             @endif
                         </flux:table.cell>
                         <flux:table.cell>
+                            @if($upload->import_type)
+                                @php
+                                    $icons = [
+                                        'scale_csv' => 'bars-3',
+                                        'manual_csv' => 'pencil-square',
+                                    ];
+                                    $labels = [
+                                        'scale_csv' => __('Iz vage'),
+                                        'manual_csv' => __('Ručni'),
+                                    ];
+                                    $typeValue = $upload->import_type instanceof \App\Enums\ImportType ? $upload->import_type->value : $upload->import_type;
+                                    $icon = $icons[$typeValue] ?? 'document';
+                                    $label = $labels[$typeValue] ?? $typeValue;
+                                @endphp
+                                <div class="flex items-center gap-2">
+                                    <flux:icon :name="$icon" class="w-4 h-4"/>
+                                    {{ $label }}
+                                </div>
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell>
                             @if($upload->date_from->isSameDay($upload->date_to))
                                 {{ $upload->date_from->format('d.m.Y') }}
                             @else
@@ -875,7 +897,7 @@ class extends Component
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="8" class="text-center text-gray-500">{{ __('No uploads yet') }}</flux:table.cell>
+                        <flux:table.cell colspan="12" class="text-center text-gray-500">{{ __('No uploads yet') }}</flux:table.cell>
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>
