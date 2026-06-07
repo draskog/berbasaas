@@ -776,5 +776,8 @@
     "Import manual CSV": "Uvezi ručni CSV",
     "Download template": "Preuzmi primer",
     "Import Type": "Tip uvoza",
-    "Harvest Date": "Datum berbe"
+    "Harvest Date": "Datum berbe",
+    "Before": "Pre",
+    "After": "Posle",
+    "Net Weight (kg)": "Neto težina (kg)"
 }
