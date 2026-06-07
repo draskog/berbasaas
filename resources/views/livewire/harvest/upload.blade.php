@@ -415,6 +415,24 @@ class extends Component
         }
     }
 
+    public function downloadManualCsvTemplate()
+    {
+        $header = "number,gross\n";
+        $example = "1,45.230\n2,44.800\n3,43.500\n";
+
+        $content = $header.$example;
+
+        return response()
+            ->streamDownload(
+                fn () => print $content,
+                'manual-harvest-template.csv',
+                [
+                    'Content-Type' => 'text/csv',
+                    'Content-Disposition' => 'attachment; filename="manual-harvest-template.csv"',
+                ]
+            );
+    }
+
     public function confirmResolveUpload(int $id): void
     {
         $this->resolvingUploadId = $id;
@@ -625,6 +643,9 @@ class extends Component
         </flux:button>
         <flux:button variant="ghost" size="sm" icon="pencil-square" wire:click="$set('showManualUploadModal', true)">
             {{ __('Uvezi ručni CSV') }}
+        </flux:button>
+        <flux:button variant="ghost" size="sm" icon="arrow-down-tray" wire:click="downloadManualCsvTemplate">
+            {{ __('Preuzmi primer') }}
         </flux:button>
     </flux:header>
 
