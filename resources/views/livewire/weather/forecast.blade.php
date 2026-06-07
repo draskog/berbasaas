@@ -99,7 +99,7 @@ new class extends Component {
 <div class="space-y-6 mt-6">
     <div>
         <h3 class="text-zinc-900 dark:text-white mb-4">
-            {{ __('Vremenska prognoza - narednih 7 dana') }}
+            {{ __('Vremenska prognoza - narednih 6 dana') }}
         </h3>
 
         @if ($this->weatherDays->isEmpty())
@@ -133,8 +133,9 @@ new class extends Component {
                                     <div class="text-sm font-semibold text-red-400 dark:text-red-400">
                                         {{ $dayName }}
                                     </div>
-                                    <flux:tooltip size="sm">
+                                    <flux:tooltip size="sm" class="inline-flex items-center gap-1">
                                         <span class="text-lg font-bold text-red-400 dark:text-red-400">{{ $dayOfMonth }}</span>
+                                        <flux:icon.bell class="size-5 cursor-help text-red-400 dark:text-red-600"/>
                                         <flux:tooltip.content class="max-w-[20rem] space-y-2">
                                             <p>{{ $holidayName }}</p>
                                         </flux:tooltip.content>
