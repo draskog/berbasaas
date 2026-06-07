@@ -485,10 +485,10 @@ class extends Component
         $delimiter = $settings?->csv_delimiter ?? ',';
 
         $rows = [
-            ['number', 'gross'],
-            [1, 45.230],
-            [2, 44.800],
-            [3, 43.500],
+            ['berac_br', 'bruto_tezina'],
+            [1, 2.230],
+            [2, 2.800],
+            [3, 2.500],
         ];
 
         $content = '';
@@ -499,10 +499,10 @@ class extends Component
         return response()
             ->streamDownload(
                 fn () => print $content,
-                'manual-harvest-template.csv',
+                'rucno-branje-templejt.csv',
                 [
                     'Content-Type' => 'text/csv',
-                    'Content-Disposition' => 'attachment; filename="manual-harvest-template.csv"',
+                    'Content-Disposition' => 'attachment; filename="rucno-branje-templejt.csv"',
                 ]
             );
     }

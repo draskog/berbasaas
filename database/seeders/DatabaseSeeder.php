@@ -16,8 +16,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(UserSeeder::class);
         $this->call(ProductSeeder::class);
-        $this->call(HarvesterAssignmentSeeder::class);
         $this->call(HarvestImportSettingsSeeder::class);
+        $this->call(HarvesterAssignmentSeeder::class);
         // $this->call(HarvestRecordSeeder::class);
     }
 }

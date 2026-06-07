@@ -36,8 +36,8 @@ beforeEach(function () {
 
 it('imports valid records successfully', function () {
     $csv = createManualCsvFile([
-        [1, 45.230],
-        [2, 44.800],
+        [1, 2.230],
+        [2, 2.800],
     ]);
 
     $result = $this->service->parse(
@@ -57,7 +57,7 @@ it('imports valid records successfully', function () {
     // Check weighed_at times (09:00:00, 09:00:01)
     $records = HarvestRecord::where('upload_id', $upload->id)->orderBy('sequence_number')->get();
     expect($records[0]->weighed_at->format('H:i:s'))->toBe('09:00:00');
-    expect($records[1]->weighed_at->format('H:i:s'))->toBe('09:00:01');
+    expect($records[1]->weighed_at->format('H:i:s'))->toBe('09:01:00');
 });
 
 it('stages records with tare out of range', function () {
@@ -68,8 +68,8 @@ it('stages records with tare out of range', function () {
     ]);
 
     $csv = createManualCsvFile([
-        [1, 45.230],
-        [2, 44.800],
+        [1, 2.230],
+        [2, 2.800],
     ]);
 
     $result = $this->service->parse(
@@ -91,7 +91,7 @@ it('stages records with tare out of range', function () {
 
 it('stages records with invalid harvester', function () {
     $csv = createManualCsvFile([
-        [99, 45.230],  // Invalid harvester number
+        [99, 2.230],  // Invalid harvester number
     ]);
 
     $result = $this->service->parse(
@@ -112,8 +112,8 @@ it('stages records with invalid harvester', function () {
 
 it('handles multiple records with unique timestamps', function () {
     $csv = createManualCsvFile([
-        [1, 45.230],
-        [1, 44.800],  // Different gross, so different weight
+        [1, 2.230],
+        [1, 2.800],  // Different gross, so different weight
     ]);
 
     $result = $this->service->parse(
@@ -138,13 +138,13 @@ it('detects database duplicates', function () {
         'harvester_number' => 1,
         'weight' => 43.730,
         'tare' => 1.5,
-        'gross' => 45.230,
+        'gross' => 2.230,
         'weighed_at' => Carbon::createFromFormat('Y-m-d H:i:s', '2026-01-15 09:00:00'),
         'sequence_number' => 1,
     ]);
 
     $csv = createManualCsvFile([
-        [1, 45.230],  // Same as existing
+        [1, 2.230],  // Same as existing
     ]);
 
     $result = $this->service->parse(
@@ -166,8 +166,8 @@ it('detects database duplicates', function () {
 
 it('calculates weight correctly', function () {
     $csv = createManualCsvFile([
-        [1, 45.230],
-        [2, 44.800],
+        [1, 2.230],
+        [2, 2.800],
     ]);
 
     $result = $this->service->parse(
@@ -176,16 +176,16 @@ it('calculates weight correctly', function () {
         $this->product->id,
         $this->user->id,
         '2026-01-15',
-        '1.5'
+        '0.5'
     );
 
     $records = HarvestRecord::where('upload_id', $result['upload']->id)->get();
-    expect($records[0]->weight)->toBe(45.230 - 1.5);
-    expect($records[1]->weight)->toBe(44.800 - 1.5);
+    expect($records[0]->weight)->toBe(2.230 - 0.5);
+    expect($records[1]->weight)->toBe(2.800 - 0.5);
 });
 
 it('throws exception for missing columns', function () {
-    $csv = createCsvFile([[1, 45.230]], ['harvester', 'weight']);
+    $csv = createCsvFile([[1, 2.230]], ['harvester', 'weight']);
 
     $this->service->parse(
         $csv,
@@ -199,7 +199,7 @@ it('throws exception for missing columns', function () {
 
 it('throws exception for invalid date format', function () {
     $csv = createManualCsvFile([
-        [1, 45.230],
+        [1, 2.230],
     ]);
 
     $this->service->parse(

@@ -34,13 +34,13 @@ class ManualHarvestImportService
 
         // Map column names to indices (case-insensitive)
         $columns = array_flip(array_map('strtolower', $header));
-        $numberCol = $columns['number'] ?? null;
-        $grossCol = $columns['gross'] ?? null;
+        $numberCol = $columns['berac_br'] ?? null;
+        $grossCol = $columns['bruto_tezina'] ?? null;
 
         if ($numberCol === null || $grossCol === null) {
             fclose($handle);
 
-            throw new \InvalidArgumentException('CSV must contain "number" and "gross" columns');
+            throw new \InvalidArgumentException('CSV must contain "berac_br" and "bruto_tezina" columns');
         }
 
         $records = [];
@@ -72,7 +72,7 @@ class ManualHarvestImportService
             // Generate weighed_at: harvest date + 09:00:00 + (sequence_number - 1) seconds
             $weighedAt = $harvestCarbon->clone()
                 ->setTime(9, 0, 0)
-                ->addSeconds($sequenceNumber - 1);
+                ->addMinutes($sequenceNumber - 1);
 
             $records[] = [
                 'company_id' => $companyId,

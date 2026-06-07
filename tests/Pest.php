@@ -39,7 +39,7 @@ function createCsvFile(array $rows, ?array $header = null, string $delimiter = '
 
 function createManualCsvFile(array $rows, string $delimiter = ','): UploadedFile
 {
-    $header = ['number', 'gross'];
+    $header = ['berac_br', 'bruto_tezina'];
     $content = implode($delimiter, $header)."\n";
     foreach ($rows as $row) {
         $content .= implode($delimiter, $row)."\n";
