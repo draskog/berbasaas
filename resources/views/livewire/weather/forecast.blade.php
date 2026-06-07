@@ -147,25 +147,19 @@ new class extends Component {
                                 @endif
                             </div>
 
-                            <!-- Right: Weather icon and conditions -->
-                            <div class="text-right">
-                                <div class="text-3xl mb-1">
+                            <!-- Right: Weather icon and conditions inline -->
+                            <div class="flex items-start gap-2">
+                                <div class="text-2xl">
                                     {{ $weatherDesc['emoji'] }}
                                 </div>
-                                <div class="text-xs text-zinc-600 dark:text-zinc-400 mb-2">
-                                    {{ $weatherDesc['label'] }}
-                                </div>
-                                <div class="flex flex-col gap-1 text-xs">
-                                    <div class="flex items-center justify-end gap-1">
-                                        <span class="font-semibold text-zinc-900 dark:text-white">
-                                            {{ number_format($weather->temperature_max, 0) }}°
-                                        </span>
-                                        <span class="text-zinc-600 dark:text-zinc-400">
-                                            {{ number_format($weather->temperature_min, 0) }}°
-                                        </span>
+                                <div class="flex flex-col gap-0.5 text-xs">
+                                    <div class="text-zinc-600 dark:text-zinc-400 max-w-[80px] line-clamp-2">
+                                        {{ $weatherDesc['label'] }}
                                     </div>
-                                    <div class="flex items-center justify-end gap-1 text-zinc-500">
-                                        💨 {{ number_format($weather->wind_speed_max, 0) }} km/h
+                                    <div class="flex items-center gap-1 font-semibold">
+                                        <span class="text-zinc-900 dark:text-white">{{ number_format($weather->temperature_max, 0) }}°</span>
+                                        <span class="text-zinc-600 dark:text-zinc-400">{{ number_format($weather->temperature_min, 0) }}°</span>
+                                        <span class="text-zinc-500">💨 {{ number_format($weather->wind_speed_max, 0) }}</span>
                                     </div>
                                 </div>
                             </div>
