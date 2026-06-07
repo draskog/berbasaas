@@ -1025,7 +1025,7 @@ class extends Component
                     wire:model="manualTare"
                     step="0.100"
                     min="0"
-                    placeholder="0.000"
+                    placeholder="0,000"
                 />
                 <flux:error name="manualTare"/>
             </flux:field>
