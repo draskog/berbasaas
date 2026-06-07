@@ -761,5 +761,9 @@
     "Price breakdown": "Raspodela cena",
     "Subtotal": "Suma po ceni",
     "present": "trenutno",
-    "continued": "nastavak"
+    "continued": "nastavak",
+    "Uvezi CSV fajl iz vage": "Uvezi CSV fajl iz vage",
+    "Uvezi ručni CSV": "Uvezi ručni CSV",
+    "Datum berbe": "Datum berbe",
+    "Error: :message": "Greška: :message"
 }

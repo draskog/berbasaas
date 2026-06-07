@@ -36,3 +36,23 @@ function createCsvFile(array $rows, ?array $header = null, string $delimiter = '
         true
     );
 }
+
+function createManualCsvFile(array $rows, string $delimiter = ','): UploadedFile
+{
+    $header = ['number', 'gross'];
+    $content = implode($delimiter, $header)."\n";
+    foreach ($rows as $row) {
+        $content .= implode($delimiter, $row)."\n";
+    }
+
+    $path = tempnam(sys_get_temp_dir(), 'csv');
+    file_put_contents($path, $content);
+
+    return new UploadedFile(
+        $path,
+        'manual.csv',
+        'text/csv',
+        null,
+        true
+    );
+}

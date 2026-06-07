@@ -17,6 +17,8 @@
     size: A4;
     margin: 6mm;
     bleed: 6mm;
+    @left-bottom {
+    }
 }
 
 @media print {
@@ -32,6 +34,28 @@
     height: var(--height);
     overflow: hidden;
     position: relative;
+}
+
+.pagedjs_page::before {
+    content: '';
+    position: absolute;
+    top: 20mm;
+    left: 0;
+    width: 6mm;
+    border-top: 1mm solid black;
+    pointer-events: none;
+    box-shadow: 0 97mm 0 0 black, 0 189mm 0 0 black;
+}
+
+.pagedjs_page::after {
+    content: '';
+    position: absolute;
+    top: 20mm;
+    right: 0;
+    width: 6mm;
+    border-top: 1mm solid black;
+    pointer-events: none;
+    box-shadow: 0 97mm 0 0 black, 0 189mm 0 0 black;
 }
 
 .payslip-page {

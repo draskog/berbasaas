@@ -6,6 +6,7 @@ use App\Models\HarvestRecordStaging;
 use App\Models\HarvestUpload;
 use App\Models\Product;
 use App\Services\HarvestImportService;
+use App\Services\ManualHarvestImportService;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
@@ -44,6 +45,16 @@ class extends Component
     public bool $showResolveModal = false;
 
     public bool $showUploadModal = false;
+
+    public bool $showManualUploadModal = false;
+
+    public mixed $manualUploadedFile = null;
+
+    public int $manualSelectedProductId = 0;
+
+    public string $manualHarvestDate = '';
+
+    public string $manualTare = '';
 
     public string $sortBy = 'created_at';
 
@@ -336,6 +347,74 @@ class extends Component
         Flux::toast(text: $message, variant: $variant);
     }
 
+    public function uploadManualFile(): void
+    {
+        $this->validate([
+            'manualSelectedProductId' => 'required|exists:products,id',
+            'manualUploadedFile' => 'required|file|mimes:csv|max:10240',
+            'manualHarvestDate' => 'required|date_format:Y-m-d',
+            'manualTare' => 'required|numeric|min:0',
+        ]);
+
+        try {
+            $service = new ManualHarvestImportService;
+            $result = $service->parse(
+                $this->manualUploadedFile,
+                auth()->user()->company_id,
+                $this->manualSelectedProductId,
+                auth()->id(),
+                $this->manualHarvestDate,
+                $this->manualTare
+            );
+
+            $upload = $result['upload'];
+            $inFileDuplicateCount = $result['inFileDuplicateCount'] ?? 0;
+            $dbDuplicateCount = $result['dbDuplicateCount'] ?? 0;
+
+            $this->manualUploadedFile = null;
+            $this->showManualUploadModal = false;
+
+            // Reload to get counts
+            $upload->loadCount('harvestRecords as valid_count');
+            $upload->loadCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
+            $upload->loadCount(['stagingRecords as resolvable_count' => fn ($q) => $q->where('status', 'invalid')->whereRaw("validation_reason NOT LIKE '%duplicate%' AND validation_reason NOT LIKE '%db_duplicate%'")]);
+
+            $validCount = $upload->valid_count;
+            $invalidCount = $upload->invalid_count;
+            $resolvableCount = $upload->resolvable_count;
+
+            if ($validCount === 0 && $invalidCount === 0) {
+                $message = __('No records could be imported from :filename', [
+                    'filename' => $upload->original_filename,
+                ]);
+                $variant = 'warning';
+            } else {
+                $message = __('Successfully imported :count records from :filename', [
+                    'count' => $validCount,
+                    'filename' => $upload->original_filename,
+                ]);
+
+                if ($dbDuplicateCount > 0) {
+                    $message .= ' '.__('(:db_dup database duplicate record(s) staged)', ['db_dup' => $dbDuplicateCount]);
+                }
+
+                if ($inFileDuplicateCount > 0) {
+                    $message .= ' '.__('(:in_dup in-file duplicate record(s) staged)', ['in_dup' => $inFileDuplicateCount]);
+                }
+
+                if ($resolvableCount > 0) {
+                    $message .= ' '.__('(:resolvable invalid record(s) require review)', ['resolvable' => $resolvableCount]);
+                }
+
+                $variant = 'success';
+            }
+
+            Flux::toast(text: $message, variant: $variant);
+        } catch (\InvalidArgumentException $e) {
+            Flux::toast(text: __('Error: :message', ['message' => $e->getMessage()]), variant: 'danger');
+        }
+    }
+
     public function confirmResolveUpload(int $id): void
     {
         $this->resolvingUploadId = $id;
@@ -542,7 +621,10 @@ class extends Component
     <flux:header :heading="__('Recent Upload Harvest Records')">
         <flux:spacer/>
         <flux:button variant="primary" size="sm" icon="arrow-up-tray" wire:click="$set('showUploadModal', true)">
-            {{ __('Upload CSV File') }}
+            {{ __('Uvezi CSV fajl iz vage') }}
+        </flux:button>
+        <flux:button variant="ghost" size="sm" icon="pencil-square" wire:click="$set('showManualUploadModal', true)">
+            {{ __('Uvezi ručni CSV') }}
         </flux:button>
     </flux:header>
 
@@ -768,6 +850,48 @@ class extends Component
         <div class="mt-6 flex gap-2 justify-end">
             <flux:button variant="ghost" wire:click="$set('showUploadModal', false)">{{ __('Cancel') }}</flux:button>
             <flux:button variant="primary" wire:click="uploadFile" wire:loading.attr="disabled">
+                <span wire:loading.remove>{{ __('Upload') }}</span>
+                <span wire:loading>{{ __('Uploading...') }}</span>
+            </flux:button>
+        </div>
+    </flux:modal>
+
+    <flux:modal name="manual-upload-csv" :dismissible="true" wire:model="showManualUploadModal">
+        <flux:heading>{{ __('Uvezi ručni CSV') }}</flux:heading>
+
+        <div class="mt-6 space-y-4">
+            <flux:field>
+                <flux:label>{{ __('Product') }}</flux:label>
+                <flux:select variant="listbox" searchable wire:model="manualSelectedProductId" :placeholder="__('Select a product...')">
+                    @foreach($this->products as $product)
+                        <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+                <flux:error name="manualSelectedProductId"/>
+            </flux:field>
+
+            <flux:field>
+                <flux:label>{{ __('Datum berbe') }}</flux:label>
+                <flux:input type="date" wire:model="manualHarvestDate"/>
+                <flux:error name="manualHarvestDate"/>
+            </flux:field>
+
+            <flux:field>
+                <flux:label>{{ __('Tare') }}</flux:label>
+                <flux:input type="number" wire:model="manualTare" step="0.001" placeholder="0.000"/>
+                <flux:error name="manualTare"/>
+            </flux:field>
+
+            <flux:field>
+                <flux:label>{{ __('CSV File') }}</flux:label>
+                <flux:input type="file" wire:model="manualUploadedFile" accept=".csv"/>
+                <flux:error name="manualUploadedFile"/>
+            </flux:field>
+        </div>
+
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:button variant="ghost" wire:click="$set('showManualUploadModal', false)">{{ __('Cancel') }}</flux:button>
+            <flux:button variant="primary" wire:click="uploadManualFile" wire:loading.attr="disabled">
                 <span wire:loading.remove>{{ __('Upload') }}</span>
                 <span wire:loading>{{ __('Uploading...') }}</span>
             </flux:button>
