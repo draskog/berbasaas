@@ -362,6 +362,7 @@
     "No assignments for :year": "Nema rasporeda za :year",
     "No data": "Nema podataka",
     "No data available": "Nema dostupnih podataka",
+    "No data available for the selected period": "Nema dostupnih podataka za izabrani period",
     "No data for this harvester in the selected date range.": "Nema podataka za ovog berača u izabranom periodu.",
     "No harvest records found": "Nisu pronađeni zapisi berbe",
     "No harvester list available for download.": "Nema dostupne liste berača za preuzimanje.",
