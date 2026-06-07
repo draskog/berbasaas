@@ -114,7 +114,7 @@ describe('Upload Page', function () {
 
         $this->assertDatabaseMissing('harvest_uploads', ['id' => $upload->id]);
         $this->assertDatabaseMissing('harvest_record_staging', ['id' => $staging->id]);
-        $this->assertDatabaseHas('harvest_records', ['id' => $record->id, 'upload_id' => null]);
+        $this->assertDatabaseMissing('harvest_records', ['id' => $record->id]);
     });
 
     it('confirms before archiving upload', function () {

@@ -538,7 +538,7 @@ class extends Component
     {
         $upload = HarvestUpload::find($this->archivingUploadId);
         if ($upload) {
-            HarvestRecord::where('upload_id', $upload->id)->update(['upload_id' => null]);
+            HarvestRecord::where('upload_id', $upload->id)->delete();
             $upload->stagingRecords()->delete();
             $upload->delete();
         }
