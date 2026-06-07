@@ -1011,15 +1011,21 @@ class extends Component
 
             <flux:field>
                 <flux:label>{{ __('Harvest Date') }}</flux:label>
-                <flux:date-picker wire:model="manualHarvestDate"/>
+                <flux:date-picker
+                    locale="{{ str_replace('_', '-', app()->getLocale()) }}"
+                    wire:model="manualHarvestDate"
+                />
                 <flux:error name="manualHarvestDate"/>
             </flux:field>
 
-            <flux:field>
-                <flux:label>{{ __('Tare') }}</flux:label>
-                <flux:input type="number" wire:model="manualTare" step="0.001" placeholder="0.000"/>
-                <flux:error name="manualTare"/>
-            </flux:field>
+            <flux:input
+                type="number"
+                wire:model="manualTare"
+                :label="__('Tare')"
+                step="0.001"
+                placeholder="0.000"
+            />
+            <flux:error name="manualTare"/>
 
             <flux:field>
                 <flux:label>{{ __('CSV File') }}</flux:label>
