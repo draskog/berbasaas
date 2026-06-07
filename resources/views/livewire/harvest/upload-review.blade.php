@@ -811,32 +811,15 @@ class extends Component
                             <flux:table.cell>
                                 @if(!in_array('duplicate', $reasons, true))
                                     @if(in_array('harvester_not_found', $reasons, true))
-                                        <flux:tooltip>
-                                            <flux:input
-                                                wire:model="corrections.{{ $record->id }}"
-                                                type="number"
-                                                min="1"
-                                                max="200"
-                                                placeholder="#"
-                                                size="sm"
-                                                class="w-24"
-                                            />
-                                            <flux:tooltip.content>
-                                                <div x-data="{ search: '' }" class="min-w-48">
-                                                    <input x-model="search" type="text" placeholder="{{ __('Search...') }}"
-                                                           class="w-full text-xs px-2 py-1 mb-1 bg-transparent border-b border-white/20 outline-none"/>
-                                                    @foreach($this->validNumbers as $assignment)
-                                                        <div
-                                                            x-show="search === '' || '{{ $assignment->number }} {{ $assignment->harvester?->name }}'.toLowerCase().includes(search.toLowerCase())"
-                                                            wire:click="applyHarvesterNumber({{ $record->id }}, {{ $assignment->number }})"
-                                                            class="cursor-pointer hover:opacity-80 px-1 py-0.5 rounded"
-                                                        >
-                                                            {{ $assignment->number }}# - {{ $assignment->harvester?->name }}
-                                                        </div>
-                                                    @endforeach
-                                                </div>
-                                            </flux:tooltip.content>
-                                        </flux:tooltip>
+                                        <flux:input
+                                            wire:model="corrections.{{ $record->id }}"
+                                            type="number"
+                                            min="1"
+                                            max="200"
+                                            placeholder="#"
+                                            size="sm"
+                                            class="w-24"
+                                        />
                                         @error('corrections.' . $record->id)
                                         <flux:error>{{ $message }}</flux:error>
                                         @enderror
@@ -893,6 +876,9 @@ class extends Component
                             <flux:table.row key="expand-{{ $record->id }}" class="bg-zinc-50 dark:bg-zinc-800/50">
                                 <flux:table.cell colspan="10">
                                     <div class="p-4 space-y-4">
+                                        <div class="text-xs text-gray-400 mb-4">
+                                            {{ __('Record #') }}: {{ $record->sequence_number }}
+                                        </div>
                                         <div class="grid grid-cols-2 gap-6">
                                             <!-- Pre ispravke -->
                                             <div class="space-y-3">
