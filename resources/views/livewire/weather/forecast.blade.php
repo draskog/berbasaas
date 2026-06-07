@@ -35,7 +35,7 @@ new class extends Component {
     ];
 
     #[Computed]
-    public function weatherDays(): Collection
+    public function weatherDays (): Collection
     {
         return WeatherRecord::where('company_id', auth()->user()->company_id)
             ->whereBetween('date', [now()->toDateString(), now()->addDays(5)->toDateString()])
@@ -44,20 +44,20 @@ new class extends Component {
     }
 
     #[Computed]
-    public function religiousHolidays(): array
+    public function religiousHolidays (): array
     {
         return ReligiousHoliday::whereBetween('date', [now()->toDateString(), now()->addDays(5)->toDateString()])
             ->get()
-            ->mapWithKeys(fn ($holiday) => [$holiday->date->toDateString() => $holiday->description])
+            ->mapWithKeys(fn($holiday) => [$holiday->date->toDateString() => $holiday->description])
             ->toArray();
     }
 
-    public function getWeatherDescription(int $code): array
+    public function getWeatherDescription (int $code): array
     {
         return self::WMO_DESCRIPTIONS[$code] ?? ['emoji' => '❓', 'label' => 'Nepoznato'];
     }
 
-    public function getDayName($date): string
+    public function getDayName ($date): string
     {
         $days = ['Ned', 'Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub'];
         if (is_string($date)) {
@@ -69,7 +69,7 @@ new class extends Component {
         return $days[$dayIndex];
     }
 
-    public function getTotalPrecipitation(?array $hourly): float
+    public function getTotalPrecipitation (?array $hourly): float
     {
         if (! $hourly) {
             return 0;
@@ -78,7 +78,7 @@ new class extends Component {
         return array_sum($hourly);
     }
 
-    public function buildHourlyChartData(array $hourlyPrecipitation): array
+    public function buildHourlyChartData (array $hourlyPrecipitation): array
     {
         $hours = [];
         for ($i = 9; $i <= 20; $i++) {
@@ -87,7 +87,7 @@ new class extends Component {
 
         return collect($hourlyPrecipitation)
             ->take(12)
-            ->map(fn ($mm, $index) => [
+            ->map(fn($mm, $index) => [
                 'hour' => $hours[$index] ?? ($index + 9).':00',
                 'mm' => round((float) $mm, 1),
             ])
@@ -96,9 +96,9 @@ new class extends Component {
     }
 }; ?>
 
-<div class="space-y-6">
+<div class="space-y-6 mt-6">
     <div>
-        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
+        <h3 class="text-zinc-900 dark:text-white mb-4">
             {{ __('Vremenska prognoza - narednih 7 dana') }}
         </h3>
 
@@ -127,21 +127,34 @@ new class extends Component {
                     <flux:card class="relative p-4 flex flex-col items-center">
                         <!-- Date header -->
                         <div class="text-center mb-3 w-full">
-                            <div class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                                {{ $dayName }}
-                            </div>
-                            <div class="flex items-center justify-center gap-1">
-                                <span class="text-lg font-bold text-zinc-900 dark:text-white">
-                                    {{ $dayOfMonth }}
-                                </span>
-                                @if ($isHoliday)
-                                    <flux:tooltip text="{{ $holidayName }}">
-                                        <flux:badge color="red" class="cursor-help">
-                                            ●
-                                        </flux:badge>
+                            @if ($isHoliday)
+
+                                <div class="text-sm font-semibold text-red-400 dark:text-zinc-300">
+                                    {{ $dayName }}
+                                </div>
+                                <div class="flex items-center justify-center gap-1">
+                                    <flux:tooltip size="sm" class="align-middle justify-center">
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-lg font-bold text-red-400 dark:text-white">
+                                                {{ $dayOfMonth }}
+                                            </span>
+                                            <flux:icon.cursor-arrow-rays class="size-4 cursor-help text-red-400 dark:text-red-600"/>
+                                        </div>
+                                        <flux:tooltip.content class="max-w-[20rem] space-y-2">
+                                            <p>{{ $holidayName }}</p>
+                                        </flux:tooltip.content>
                                     </flux:tooltip>
-                                @endif
-                            </div>
+                                </div>
+                            @else
+                                <div class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                                    {{ $dayName }}
+                                </div>
+                                <div class="flex items-center justify-center gap-1">
+                                    <span class="text-lg font-bold text-zinc-900 dark:text-white">
+                                        {{ $dayOfMonth }}
+                                    </span>
+                                </div>
+                            @endif
                         </div>
 
                         <!-- Weather icon and temp -->
@@ -171,19 +184,19 @@ new class extends Component {
                             <div class="w-full mb-3 h-40">
                                 <flux:chart :value="$chartData" class="w-full h-full">
                                     <flux:chart.svg>
-                                        <flux:chart.area field="mm" class="text-blue-400" curve="smooth" />
-                                        <flux:chart.line field="mm" class="text-blue-500" curve="smooth" stroke-width="2" />
+                                        <flux:chart.area field="mm" class="text-blue-400" curve="smooth"/>
+                                        <flux:chart.line field="mm" class="text-blue-500" curve="smooth" stroke-width="2"/>
                                         <flux:chart.axis axis="x" field="hour">
-                                            <flux:chart.axis.tick />
+                                            <flux:chart.axis.tick/>
                                         </flux:chart.axis>
                                         <flux:chart.axis axis="y">
-                                            <flux:chart.axis.grid />
+                                            <flux:chart.axis.grid/>
                                         </flux:chart.axis>
-                                        <flux:chart.cursor type="line" />
+                                        <flux:chart.cursor type="line"/>
                                     </flux:chart.svg>
                                     <flux:chart.tooltip>
-                                        <flux:chart.tooltip.heading field="hour" />
-                                        <flux:chart.tooltip.value field="mm" label="{{ __('Padavine') }}" suffix=" mm" />
+                                        <flux:chart.tooltip.heading field="hour"/>
+                                        <flux:chart.tooltip.value field="mm" label="{{ __('Padavine') }}" suffix=" mm"/>
                                     </flux:chart.tooltip>
                                 </flux:chart>
                             </div>
