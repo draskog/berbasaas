@@ -1023,7 +1023,7 @@ class extends Component
                 <flux:input
                     type="number"
                     wire:model="manualTare"
-                    step="0.001"
+                    step="0.100"
                     min="0"
                     placeholder="0.000"
                 />
