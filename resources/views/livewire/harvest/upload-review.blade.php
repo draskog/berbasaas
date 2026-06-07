@@ -808,10 +808,10 @@ class extends Component
                                 {{ number_format($record->weight, 3, ',', '.') }}
                             </flux:table.cell>
                             <flux:table.cell>
+                                @php $reasons = (array) $record->validation_reason; @endphp
                                 {{ number_format($record->tare, 3, ',', '.') }}
                             </flux:table.cell>
                             <flux:table.cell>
-                                @php $reasons = (array) $record->validation_reason; @endphp
                                 @if(in_array('tare_out_of_range', $reasons, true))
                                     <flux:tooltip>
                                         <flux:input
@@ -900,7 +900,7 @@ class extends Component
                             </flux:table.cell>
                             <flux:table.cell>
                                 <div class="flex items-center gap-2">
-                                    @if($reason === 'harvester_not_found')
+                                    @if(in_array('harvester_not_found', $reasons, true))
                                         <flux:button
                                             size="sm"
                                             variant="primary" color="orange"
