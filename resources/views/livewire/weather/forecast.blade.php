@@ -8,30 +8,30 @@ use Livewire\Volt\Component;
 
 new class extends Component {
     private const WMO_DESCRIPTIONS = [
-        0 => ['emoji' => '☀️', 'label' => 'Sunčano'],
-        1 => ['emoji' => '🌤️', 'label' => 'Većinski sunčano'],
-        2 => ['emoji' => '⛅', 'label' => 'Delimično oblačno'],
-        3 => ['emoji' => '☁️', 'label' => 'Oblačno'],
-        45 => ['emoji' => '🌫️', 'label' => 'Magla'],
-        48 => ['emoji' => '🌫️', 'label' => 'Magla sa rosulom'],
-        51 => ['emoji' => '🌧️', 'label' => 'Laka kiša'],
-        53 => ['emoji' => '🌧️', 'label' => 'Umeren kiša'],
-        55 => ['emoji' => '🌧️', 'label' => 'Jaka kiša'],
-        61 => ['emoji' => '🌧️', 'label' => 'Malo kiše'],
-        63 => ['emoji' => '🌧️', 'label' => 'Umeren kiša'],
-        65 => ['emoji' => '🌧️', 'label' => 'Jaka kiša'],
-        71 => ['emoji' => '🌨️', 'label' => 'Mali sneg'],
-        73 => ['emoji' => '🌨️', 'label' => 'Umeren sneg'],
-        75 => ['emoji' => '🌨️', 'label' => 'Jak sneg'],
-        77 => ['emoji' => '🌨️', 'label' => 'Sneg krupe'],
-        80 => ['emoji' => '🌦️', 'label' => 'Laka kiša i sunce'],
-        81 => ['emoji' => '🌦️', 'label' => 'Umeren kiša i sunce'],
-        82 => ['emoji' => '🌦️', 'label' => 'Jaka kiša i sunce'],
-        85 => ['emoji' => '🌨️', 'label' => 'Mali sneg i sunce'],
-        86 => ['emoji' => '🌨️', 'label' => 'Jak sneg i sunce'],
-        95 => ['emoji' => '⛈️', 'label' => 'Grmljavina'],
-        96 => ['emoji' => '⛈️', 'label' => 'Grmljavina sa ledom'],
-        99 => ['emoji' => '⛈️', 'label' => 'Grmljavina sa ledom'],
+        0 => ['emoji' => '☀️', 'label' => 'Clear'],
+        1 => ['emoji' => '🌤️', 'label' => 'Mostly clear'],
+        2 => ['emoji' => '⛅', 'label' => 'Partly cloudy'],
+        3 => ['emoji' => '☁️', 'label' => 'Cloudy'],
+        45 => ['emoji' => '🌫️', 'label' => 'Fog'],
+        48 => ['emoji' => '🌫️', 'label' => 'Depositing fog'],
+        51 => ['emoji' => '🌧️', 'label' => 'Light drizzle'],
+        53 => ['emoji' => '🌧️', 'label' => 'Moderate drizzle'],
+        55 => ['emoji' => '🌧️', 'label' => 'Heavy drizzle'],
+        61 => ['emoji' => '🌧️', 'label' => 'Slight rain'],
+        63 => ['emoji' => '🌧️', 'label' => 'Moderate rain'],
+        65 => ['emoji' => '🌧️', 'label' => 'Heavy rain'],
+        71 => ['emoji' => '🌨️', 'label' => 'Slight snow'],
+        73 => ['emoji' => '🌨️', 'label' => 'Moderate snow'],
+        75 => ['emoji' => '🌨️', 'label' => 'Heavy snow'],
+        77 => ['emoji' => '🌨️', 'label' => 'Snow grains'],
+        80 => ['emoji' => '🌦️', 'label' => 'Slight rain showers'],
+        81 => ['emoji' => '🌦️', 'label' => 'Moderate rain showers'],
+        82 => ['emoji' => '🌦️', 'label' => 'Heavy rain showers'],
+        85 => ['emoji' => '🌨️', 'label' => 'Slight snow showers'],
+        86 => ['emoji' => '🌨️', 'label' => 'Heavy snow showers'],
+        95 => ['emoji' => '⛈️', 'label' => 'Thunderstorm'],
+        96 => ['emoji' => '⛈️', 'label' => 'Thunderstorm with hail'],
+        99 => ['emoji' => '⛈️', 'label' => 'Thunderstorm with hail'],
     ];
 
     #[Computed]
@@ -155,7 +155,7 @@ new class extends Component {
                                 </div>
                                 <div class="flex flex-col gap-0.5 text-xs">
                                     <div class="text-zinc-600 dark:text-zinc-400 max-w-[80px] line-clamp-2">
-                                        {{ $weatherDesc['label'] }}
+                                        {{ __($weatherDesc['label']) }}
                                     </div>
                                     <div class="flex items-center gap-1 font-semibold">
                                         <span class="text-zinc-900 dark:text-white">{{ number_format($weather->temperature_max, 0) }}°</span>
