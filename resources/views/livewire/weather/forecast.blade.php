@@ -77,6 +77,23 @@ new class extends Component {
 
         return array_sum($hourly);
     }
+
+    public function buildHourlyChartData(array $hourlyPrecipitation): array
+    {
+        $hours = [];
+        for ($i = 9; $i <= 20; $i++) {
+            $hours[] = str_pad($i, 2, '0', STR_PAD_LEFT).':00';
+        }
+
+        return collect($hourlyPrecipitation)
+            ->take(12)
+            ->map(fn ($mm, $index) => [
+                'hour' => $hours[$index] ?? ($index + 9).':00',
+                'mm' => round((float) $mm, 1),
+            ])
+            ->values()
+            ->toArray();
+    }
 }; ?>
 
 <div class="space-y-6">
@@ -150,12 +167,27 @@ new class extends Component {
                             </div>
                         </div>
 
-                        <!-- Sparkline chart -->
+                        <!-- Hourly precipitation chart -->
                         @if ($weather->hourly_precipitation)
+                            @php $chartData = $this->buildHourlyChartData($weather->hourly_precipitation); @endphp
                             <div class="w-full mb-3">
-                                <livewire:components.weather-sparkline
-                                    :data="$weather->hourly_precipitation"
-                                />
+                                <flux:chart :value="$chartData" class="aspect-[2/1]">
+                                    <flux:chart.svg>
+                                        <flux:chart.area field="mm" class="text-blue-400" curve="smooth" />
+                                        <flux:chart.line field="mm" class="text-blue-500" curve="smooth" stroke-width="2" />
+                                        <flux:chart.axis axis="x" field="hour">
+                                            <flux:chart.axis.tick />
+                                        </flux:chart.axis>
+                                        <flux:chart.axis axis="y">
+                                            <flux:chart.axis.grid />
+                                        </flux:chart.axis>
+                                        <flux:chart.cursor type="line" />
+                                    </flux:chart.svg>
+                                    <flux:chart.tooltip>
+                                        <flux:chart.tooltip.heading field="hour" />
+                                        <flux:chart.tooltip.value field="mm" label="{{ __('Padavine') }}" suffix=" mm" />
+                                    </flux:chart.tooltip>
+                                </flux:chart>
                             </div>
                         @endif
 
