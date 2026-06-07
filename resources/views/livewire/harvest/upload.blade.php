@@ -51,8 +51,6 @@ class extends Component
 
     public mixed $manualUploadedFile = null;
 
-    public int $manualSelectedProductId = 0;
-
     public string $manualHarvestDate = '';
 
     public string $manualTare = '';
@@ -414,7 +412,7 @@ class extends Component
     public function uploadManualFile(): void
     {
         $this->validate([
-            'manualSelectedProductId' => 'required|exists:products,id',
+            'selectedProductId' => 'required|exists:products,id',
             'manualUploadedFile' => 'required|file|mimes:csv|max:10240',
             'manualHarvestDate' => 'required|date_format:Y-m-d',
             'manualTare' => 'required|numeric|min:0',
@@ -425,7 +423,7 @@ class extends Component
             $result = $service->parse(
                 $this->manualUploadedFile,
                 auth()->user()->company_id,
-                $this->manualSelectedProductId,
+                $this->selectedProductId,
                 auth()->id(),
                 $this->manualHarvestDate,
                 $this->manualTare
@@ -1000,12 +998,12 @@ class extends Component
         <div class="mt-6 space-y-4">
             <flux:field>
                 <flux:label>{{ __('Product') }}</flux:label>
-                <flux:select variant="listbox" searchable wire:model="manualSelectedProductId" :placeholder="__('Select a product...')">
+                <flux:select variant="listbox" searchable wire:model="selectedProductId" :placeholder="__('Select a product...')">
                     @foreach($this->products as $product)
                         <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
                     @endforeach
                 </flux:select>
-                <flux:error name="manualSelectedProductId"/>
+                <flux:error name="selectedProductId"/>
             </flux:field>
 
             <flux:field>
