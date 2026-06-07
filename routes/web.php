@@ -12,7 +12,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('dashboard', 'dashboard')->name('dashboard');
 
     Volt::route('harvest/harvesters', 'harvest.harvesters')->name('harvesters.index');
-    Volt::route('harvest/prices', 'harvest.prices')->name('harvest.prices');
     Volt::route('harvest/upload', 'harvest.upload')->name('harvest.upload');
     Volt::route('harvest/upload/{upload}', 'harvest.upload-review')->name('harvest.upload.review');
     Volt::route('harvest/upload/{upload}/view', 'harvest.upload-view')->name('harvest.upload.view');
