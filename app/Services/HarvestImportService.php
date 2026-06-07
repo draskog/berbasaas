@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ImportType;
 use App\Models\HarvesterAssignment;
 use App\Models\HarvestImportSettings;
 use App\Models\HarvestRecord;
@@ -110,6 +111,7 @@ class HarvestImportService
             'record_count' => $totalRecords,
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
+            'import_type' => ImportType::ScaleCsv,
         ]);
 
         // Auto-detect tare variation if no settings configured

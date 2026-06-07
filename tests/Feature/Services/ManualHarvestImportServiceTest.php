@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ImportType;
 use App\Models\Company;
 use App\Models\HarvesterAssignment;
 use App\Models\HarvestImportSettings;
@@ -51,6 +52,7 @@ it('imports valid records successfully', function () {
     $upload = $result['upload'];
     expect(HarvestRecord::count())->toBe(2);
     expect($upload->record_count)->toBe(2);
+    expect($upload->import_type)->toBe(ImportType::ManualCsv);
 
     // Check weighed_at times (09:00:00, 09:00:01)
     $records = HarvestRecord::where('upload_id', $upload->id)->orderBy('sequence_number')->get();

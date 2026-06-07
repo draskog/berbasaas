@@ -766,5 +766,8 @@
     "Uvezi ručni CSV": "Uvezi ručni CSV",
     "Preuzmi primer": "Preuzmi primer",
     "Datum berbe": "Datum berbe",
-    "Error: :message": "Greška: :message"
+    "Error: :message": "Greška: :message",
+    "Tip uvoza": "Tip uvoza",
+    "Iz vage": "Iz vage",
+    "Ručni": "Ručni"
 }

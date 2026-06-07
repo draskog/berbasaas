@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\ImportType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['company_id', 'product_id', 'uploaded_by', 'original_filename', 'record_count', 'date_from', 'date_to', 'resolved_at'])]
+#[Fillable(['company_id', 'product_id', 'uploaded_by', 'original_filename', 'record_count', 'date_from', 'date_to', 'resolved_at', 'import_type'])]
 class HarvestUpload extends Model
 {
     use HasFactory;
@@ -17,6 +18,7 @@ class HarvestUpload extends Model
         'date_from' => 'date',
         'date_to' => 'date',
         'resolved_at' => 'datetime',
+        'import_type' => ImportType::class,
     ];
 
     public function company(): BelongsTo

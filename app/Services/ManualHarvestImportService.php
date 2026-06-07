@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ImportType;
 use App\Models\HarvesterAssignment;
 use App\Models\HarvestImportSettings;
 use App\Models\HarvestRecord;
@@ -108,6 +109,7 @@ class ManualHarvestImportService
             'record_count' => $totalRecords,
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
+            'import_type' => ImportType::ManualCsv,
         ]);
 
         // Filter out duplicates and track count

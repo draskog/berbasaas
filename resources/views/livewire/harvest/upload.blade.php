@@ -74,6 +74,9 @@ class extends Component
     #[Session]
     public string $selectedResolved = 'all';
 
+    #[Session]
+    public string $selectedImportType = 'all';
+
     #[Computed]
     public function products(): Collection
     {
@@ -221,6 +224,10 @@ class extends Component
             });
         }
 
+        if ($this->selectedImportType !== 'all') {
+            $query->where('import_type', $this->selectedImportType);
+        }
+
         if ($this->search !== '') {
             $query->where('original_filename', 'like', "%$this->search%");
         }
@@ -260,6 +267,11 @@ class extends Component
     }
 
     public function updatedselectedResolved(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSelectedImportType(): void
     {
         $this->resetPage();
     }
@@ -703,6 +715,13 @@ class extends Component
                     @if(in_array('unresolved', $this->availableResolved, true))
                         <flux:radio value="unresolved" :label="__('Unresolved')"/>
                     @endif
+                </flux:radio.group>
+            </div>
+            <div>
+                <flux:radio.group wire:model.live="selectedImportType" :label="__('Tip uvoza')" variant="pills">
+                    <flux:radio value="all" :label="__('All')"/>
+                    <flux:radio value="scale_csv" :label="__('Iz vage')"/>
+                    <flux:radio value="manual_csv" :label="__('Ručni')"/>
                 </flux:radio.group>
             </div>
             <div class="flex justify-between items-center">
