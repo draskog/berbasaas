@@ -298,10 +298,10 @@ class extends Component
 
     <div class="p-6 space-y-6">
         <div class="flex flex-wrap items-end gap-4">
-            <flux:radio.group wire:model.live="selectedYear" label="{{ __('Year') }}" variant="pills">
+            <flux:radio.group wire:model.live="selectedYear" :label="__('Year')" variant="pills">
                 <flux:radio :label="__('All')" value="0"/>
                 @foreach($this->availableYears as $year)
-                    <flux:radio label="{{ $year }}" value="{{ $year }}"/>
+                    <flux:radio :label="$year" :value="$year"/>
                 @endforeach
             </flux:radio.group>
         </div>
@@ -310,7 +310,7 @@ class extends Component
                 <flux:radio.group wire:model.live="selectedPrefix" :label="__('Prefix')" variant="pills">
                     <flux:radio :label="__('All')" value=""/>
                     @foreach($this->availablePrefixes as $prefix)
-                        <flux:radio :label="$prefix" :value="$prefix"/>
+                        <flux:radio :label="$prefix" :value="$prefix" />
                     @endforeach
                 </flux:radio.group>
             </div>
@@ -345,7 +345,7 @@ class extends Component
         @if($this->harvesterNumbers->isEmpty())
             <div class="flex items-center justify-center py-12">
                 <div class="text-center">
-                    <p class="text-gray-500 text-lg">{{ __('No data available for the selected period') }}</p>
+                    <p class="text-gray-500">{{ __('No data available for the selected period') }}</p>
                 </div>
             </div>
         @else
