@@ -734,6 +734,7 @@ class extends Component
                     <flux:table.column class="w-12">
                         <flux:checkbox wire:model.live="selectAll"/>
                     </flux:table.column>
+                    <flux:table.column class="w-20">{{ __('Record #') }}</flux:table.column>
                     <flux:table.column sortable :sorted="$sortBy === 'weighed_at'" :direction="$sortDirection" wire:click="sort('weighed_at')">{{ __('Date / Time') }}</flux:table.column>
                     <flux:table.column sortable :sorted="$sortBy === 'weight'" :direction="$sortDirection" wire:click="sort('weight')">{{ __('Weight (kg)') }}</flux:table.column>
                     <flux:table.column>{{ __('Tare (kg)') }}</flux:table.column>
@@ -750,6 +751,9 @@ class extends Component
                         <flux:table.row key="record-{{ $record->id }}">
                             <flux:table.cell class="w-12">
                                 <flux:checkbox wire:model.live="selectedIds" value="{{ $record->id }}"/>
+                            </flux:table.cell>
+                            <flux:table.cell class="w-20">
+                                <span class="text-sm font-medium">{{ $record->sequence_number }}</span>
                             </flux:table.cell>
                             <flux:table.cell>
                                 {{ $record->weighed_at->format('d.m.Y H:i') }}
