@@ -112,7 +112,7 @@ new class extends Component {
                 </a>
             </flux:card>
         @else
-            <div class="grid grid-cols-7 gap-2">
+            <div class="grid grid-cols-3 gap-4">
                 @foreach ($this->weatherDays as $weather)
                     @php
                         $date = $weather->date;
@@ -135,13 +135,11 @@ new class extends Component {
                                     {{ $dayOfMonth }}
                                 </span>
                                 @if ($isHoliday)
-                                    <flux:badge
-                                        color="red"
-                                        class="cursor-help"
-                                        title="{{ $holidayName }}"
-                                    >
-                                        ●
-                                    </flux:badge>
+                                    <flux:tooltip text="{{ $holidayName }}">
+                                        <flux:badge color="red" class="cursor-help">
+                                            ●
+                                        </flux:badge>
+                                    </flux:tooltip>
                                 @endif
                             </div>
                         </div>
@@ -170,8 +168,8 @@ new class extends Component {
                         <!-- Hourly precipitation chart -->
                         @if ($weather->hourly_precipitation)
                             @php $chartData = $this->buildHourlyChartData($weather->hourly_precipitation); @endphp
-                            <div class="w-full mb-3">
-                                <flux:chart :value="$chartData" class="aspect-[2/1]">
+                            <div class="w-full mb-3 h-40">
+                                <flux:chart :value="$chartData" class="w-full h-full">
                                     <flux:chart.svg>
                                         <flux:chart.area field="mm" class="text-blue-400" curve="smooth" />
                                         <flux:chart.line field="mm" class="text-blue-500" curve="smooth" stroke-width="2" />
