@@ -780,5 +780,7 @@
     "Before": "Pre",
     "After": "Posle",
     "Net Weight (kg)": "Neto težina (kg)",
-    "Record #": "Redni broj zapisa #"
+    "Record #": "Redni broj zapisa #",
+    "No previous record": "Nema prethodnog zapisa",
+    "No next record": "Nema sledećeg zapisa"
 }

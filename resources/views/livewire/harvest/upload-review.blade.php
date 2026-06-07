@@ -587,10 +587,17 @@ class extends Component
         }
     }
 
-    public function findMatchingHarvestRecord(HarvestRecordStaging $stagingRecord): ?HarvestRecord
+    public function findPreviousHarvestRecord(HarvestRecordStaging $stagingRecord): ?HarvestRecord
     {
         return HarvestRecord::where('upload_id', $this->upload->id)
-            ->where('sequence_number', $stagingRecord->sequence_number)
+            ->where('sequence_number', $stagingRecord->sequence_number - 1)
+            ->first();
+    }
+
+    public function findNextHarvestRecord(HarvestRecordStaging $stagingRecord): ?HarvestRecord
+    {
+        return HarvestRecord::where('upload_id', $this->upload->id)
+            ->where('sequence_number', $stagingRecord->sequence_number + 1)
             ->first();
     }
 }; ?>
@@ -884,83 +891,80 @@ class extends Component
                             </flux:table.cell>
                         </flux:table.row>
                         @if(in_array($record->id, $expandedRows, true))
-                            @php $matchingRecord = $this->findMatchingHarvestRecord($record); @endphp
+                            @php
+                                $prevRecord = $this->findPreviousHarvestRecord($record);
+                                $nextRecord = $this->findNextHarvestRecord($record);
+                            @endphp
                             <flux:table.row key="expand-{{ $record->id }}" class="bg-zinc-50 dark:bg-zinc-800/50">
                                 <flux:table.cell colspan="10">
                                     <div class="p-4 space-y-4">
-                                        <div class="text-xs text-gray-400 mb-4">
-                                            <span>{{ __('Record #') }}: {{ $record->sequence_number }}</span>
-                                            @if($matchingRecord)
-                                                <span class="ml-4">→</span>
-                                                <span class="ml-4">{{ __('Record #') }}: {{ $matchingRecord->sequence_number }}</span>
-                                            @endif
+                                        <div class="text-xs text-gray-400 mb-4 text-center">
+                                            {{ __('Record #') }}: {{ $record->sequence_number }}
                                         </div>
                                         <div class="grid grid-cols-2 gap-6">
-                                            <!-- Pre ispravke -->
+                                            <!-- Pre (Prethodni zapis) -->
                                             <div class="space-y-3">
                                                 <div class="font-semibold text-sm">{{ __('Before') }}</div>
-                                                <div class="text-sm space-y-2">
-                                                    <div>
-                                                        <span class="text-gray-500">{{ __('Date / Time') }}:</span>
-                                                        <span class="ml-2">{{ $record->weighed_at->format('d.m.Y H:i') }}</span>
+                                                @if($prevRecord)
+                                                    <div class="text-sm space-y-2">
+                                                        <div>
+                                                            <span class="text-gray-500">{{ __('Date / Time') }}:</span>
+                                                            <span class="ml-2">{{ $prevRecord->weighed_at->format('d.m.Y H:i') }}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span class="text-gray-500">{{ __('Net Weight (kg)') }}:</span>
+                                                            <span class="ml-2">{{ number_format($prevRecord->weight, 3, ',', '.') }}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span class="text-gray-500">{{ __('Tare (kg)') }}:</span>
+                                                            <span class="ml-2">{{ number_format($prevRecord->tare, 3, ',', '.') }}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span class="text-gray-500">{{ __('Harvester #') }}:</span>
+                                                            <span class="ml-2">{{ $prevRecord->harvester_number }}
+                                                                @if($this->harvestersByNumber->has($prevRecord->harvester_number))
+                                                                    - {{ $this->harvestersByNumber[$prevRecord->harvester_number]->harvester?->name }}
+                                                                @endif
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <span class="text-gray-500">{{ __('Net Weight (kg)') }}:</span>
-                                                        <span class="ml-2">{{ number_format($record->weight, 3, ',', '.') }}</span>
+                                                @else
+                                                    <div class="text-sm text-gray-400 italic">
+                                                        {{ __('No previous record') }}
                                                     </div>
-                                                    <div>
-                                                        <span class="text-gray-500">{{ __('Tare (kg)') }}:</span>
-                                                        <span class="ml-2">{{ number_format($record->tare, 3, ',', '.') }}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span class="text-gray-500">{{ __('Harvester #') }}:</span>
-                                                        <span class="ml-2">{{ $record->harvester_number }}
-                                                            @if($this->harvestersByNumber->has($record->harvester_number))
-                                                                - {{ $this->harvestersByNumber[$record->harvester_number]->harvester?->name }}
-                                                            @endif
-                                                        </span>
-                                                    </div>
-                                                </div>
+                                                @endif
                                             </div>
-                                            <!-- Posle ispravke -->
+                                            <!-- Posle (Sledeći zapis) -->
                                             <div class="space-y-3">
                                                 <div class="font-semibold text-sm">{{ __('After') }}</div>
-                                                <div class="text-sm space-y-2">
-                                                    <div>
-                                                        <span class="text-gray-500">{{ __('Date / Time') }}:</span>
-                                                        <span class="ml-2">{{ $record->weighed_at->format('d.m.Y H:i') }}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span class="text-gray-500">{{ __('Net Weight (kg)') }}:</span>
-                                                        <span class="ml-2">{{ number_format($record->weight, 3, ',', '.') }}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span class="text-gray-500">{{ __('Tare (kg)') }}:</span>
-                                                        <span class="ml-2">
-                                                            @if(isset($correctedTares[$record->id]) && !empty($correctedTares[$record->id]))
-                                                                {{ number_format($correctedTares[$record->id], 3, ',', '.') }}
-                                                            @else
-                                                                {{ number_format($record->tare, 3, ',', '.') }}
-                                                            @endif
-                                                        </span>
-                                                    </div>
-                                                    <div>
-                                                        <span class="text-gray-500">{{ __('Harvester #') }}:</span>
-                                                        <span class="ml-2">
-                                                            @if(isset($corrections[$record->id]) && !empty($corrections[$record->id]))
-                                                                {{ $corrections[$record->id] }}
-                                                                @if($this->harvestersByNumber->has($corrections[$record->id]))
-                                                                    - {{ $this->harvestersByNumber[$corrections[$record->id]]->harvester?->name }}
+                                                @if($nextRecord)
+                                                    <div class="text-sm space-y-2">
+                                                        <div>
+                                                            <span class="text-gray-500">{{ __('Date / Time') }}:</span>
+                                                            <span class="ml-2">{{ $nextRecord->weighed_at->format('d.m.Y H:i') }}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span class="text-gray-500">{{ __('Net Weight (kg)') }}:</span>
+                                                            <span class="ml-2">{{ number_format($nextRecord->weight, 3, ',', '.') }}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span class="text-gray-500">{{ __('Tare (kg)') }}:</span>
+                                                            <span class="ml-2">{{ number_format($nextRecord->tare, 3, ',', '.') }}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span class="text-gray-500">{{ __('Harvester #') }}:</span>
+                                                            <span class="ml-2">{{ $nextRecord->harvester_number }}
+                                                                @if($this->harvestersByNumber->has($nextRecord->harvester_number))
+                                                                    - {{ $this->harvestersByNumber[$nextRecord->harvester_number]->harvester?->name }}
                                                                 @endif
-                                                            @else
-                                                                {{ $record->harvester_number }}
-                                                                @if($this->harvestersByNumber->has($record->harvester_number))
-                                                                    - {{ $this->harvestersByNumber[$record->harvester_number]->harvester?->name }}
-                                                                @endif
-                                                            @endif
-                                                        </span>
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                @else
+                                                    <div class="text-sm text-gray-400 italic">
+                                                        {{ __('No next record') }}
+                                                    </div>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
