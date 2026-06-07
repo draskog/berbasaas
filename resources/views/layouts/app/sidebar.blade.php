@@ -23,7 +23,7 @@
         <flux:sidebar.item icon="users" :href="route('harvesters.index')" :current="request()->routeIs('harvesters.index')" wire:navigate>
             {{ __('Harvesters') }}
         </flux:sidebar.item>
-        <flux:sidebar.item icon="currency-dollar" :href="route('harvest.prices')" :current="request()->routeIs('harvest.prices')" wire:navigate>
+        <flux:sidebar.item icon="currency-dollar" :href="route('prices.settings')" :current="request()->routeIs('prices.settings')" wire:navigate>
             {{ __('Prices') }}
         </flux:sidebar.item>
         <flux:sidebar.item icon="chart-bar" :href="route('harvest.charts')" :current="request()->routeIs('harvest.charts')" wire:navigate>
