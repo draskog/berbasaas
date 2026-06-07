@@ -900,13 +900,15 @@ class extends Component
                             </flux:table.cell>
                             <flux:table.cell>
                                 <div class="flex items-center gap-2">
-                                    <flux:button
-                                        size="sm"
-                                        variant="ghost"
-                                        icon="{{ in_array($record->id, $expandedRows, true) ? 'chevron-up' : 'chevron-down' }}"
-                                        wire:click="toggleExpanded({{ $record->id }})"
-                                        wire:loading.attr="disabled"
-                                    />
+                                    @if($reason === 'harvester_not_found')
+                                        <flux:button
+                                            size="sm"
+                                            variant="primary" color="orange"
+                                            icon="{{ in_array($record->id, $expandedRows, true) ? 'minus' : 'plus' }}"
+                                            wire:click="toggleExpanded({{ $record->id }})"
+                                            wire:loading.attr="disabled"
+                                        />
+                                    @endif
                                     @if(in_array('in_file_duplicate', $reasons, true) || in_array('db_duplicate', $reasons, true))
                                         <flux:button
                                             size="sm"
@@ -948,7 +950,7 @@ class extends Component
                                         <div class="grid grid-cols-2 gap-6">
                                             <!-- Pre (Prethodni zapis) -->
                                             <div class="space-y-3">
-                                                <div class="font-semibold text-sm">{{ __('Before') }}</div>
+                                                <div class="font-semibold text-sm">{{ __('Row Before') }}</div>
                                                 @if($prevRecord)
                                                     <div class="text-sm space-y-2">
                                                         <div>
@@ -988,7 +990,7 @@ class extends Component
                                             </div>
                                             <!-- Posle (Sledeći zapis) -->
                                             <div class="space-y-3">
-                                                <div class="font-semibold text-sm">{{ __('After') }}</div>
+                                                <div class="font-semibold text-sm">{{ __('Row After') }}</div>
                                                 @if($nextRecord)
                                                     <div class="text-sm space-y-2">
                                                         <div>

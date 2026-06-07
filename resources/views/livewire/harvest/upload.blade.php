@@ -813,8 +813,6 @@ class extends Component
                 <flux:table.column>{{ __('Status') }}</flux:table.column>
                 <flux:table.column>{{ __('Tip uvoza') }}</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">{{ __('Date Range') }}</flux:table.column>
-                <flux:table.column>{{ __('Imported At') }}</flux:table.column>
-                <flux:table.column>{{ __('Uploaded By') }}</flux:table.column>
                 <flux:table.column align="center">{{ __('Actions') }}</flux:table.column>
             </flux:table.columns>
 
@@ -880,23 +878,20 @@ class extends Component
                                 {{ $upload->date_from->format('d.m.Y') }} - {{ $upload->date_to->format('d.m.Y') }}
                             @endif
                         </flux:table.cell>
-                        <flux:table.cell>{{ $upload->created_at->format('d.m.Y H:i') }}</flux:table.cell>
-                        <flux:table.cell>{{ $upload->uploadedBy->name }}</flux:table.cell>
                         <flux:table.cell align="end" class="space-x-2">
-                            <a href="{{ route('harvest.upload.view', $upload) }}" wire:navigate>
-                                <flux:button size="sm" variant="ghost">{{ __('View') }}</flux:button>
-                            </a>
                             @if($upload->invalid_count > 0)
                                 <flux:button size="sm" variant="primary" wire:click="confirmResolveUpload({{ $upload->id }})">
                                     {{ __('Resolve') }}
                                 </flux:button>
                             @endif
+                            <a href="{{ route('harvest.upload.view', $upload) }}" wire:navigate>
+                                <flux:button size="sm" variant="ghost">{{ __('View') }}</flux:button>
+                            </a>
                             @if($upload->valid_count > 0)
                                 <flux:button size="sm" variant="filled" wire:click="confirmArchiveUpload({{ $upload->id }})">
                                     {{ __('Archive') }}
                                 </flux:button>
                             @endif
-
                             <flux:button variant="danger" size="sm" wire:click="confirmDeleteUpload({{ $upload->id }})">{{ __('Delete') }}</flux:button>
                         </flux:table.cell>
                     </flux:table.row>
