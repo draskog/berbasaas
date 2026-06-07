@@ -399,7 +399,10 @@ class extends Component
         $this->markUploadResolvedIfAllInvalidRecordsGone();
 
         unset($this->corrections[$recordId], $this->correctedTares[$recordId]);
-        $this->dispatch('$refresh');
+        $this->resetPage();
+
+        // Osvežavamo brojače na modelu
+        $this->upload->refresh();
 
         Flux::toast(text: __('Record updated and promoted.'), variant: 'success');
     }
@@ -507,7 +510,10 @@ class extends Component
         $this->selectAll = false;
         $this->bulkHarvesterNumber = '';
         $this->bulkTare = '';
-        $this->dispatch('$refresh');
+        $this->resetPage();
+
+        // Osvežavamo brojače na modelu
+        $this->upload->refresh();
 
         if ($resolved === 0 && $deleted === 0 && $skipped === 0) {
             $message = __('No records were processed.');
@@ -550,6 +556,9 @@ class extends Component
         $this->deleteConfirmRecordId = null;
         $this->resetPage();
 
+        // Osvežavamo brojače na modelu
+        $this->upload->refresh();
+
         Flux::toast(text: __('Record deleted.'), variant: 'success');
     }
 
@@ -574,6 +583,10 @@ class extends Component
         $this->selectedIds = [];
         $this->selectAll = false;
         $this->resetPage();
+
+        // Osvežavamo brojače na modelu
+        $this->upload->refresh();
+
         Flux::toast(text: __('Record(s) deleted.'), variant: 'success');
     }
 
