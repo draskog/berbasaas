@@ -569,6 +569,7 @@
     "Subscribe": "Pretplatite se",
     "Subscript": "Donji indeks",
     "Successfully imported :count harvesters for year :year.": "Uspešno učitano :count berača za godinu :year.",
+    "Successfully imported :count records from :filename": "Uspešno uvezeno :count zapisa iz :filename",
     "Successfully imported :count records from :filename (:from to :to)": "Uspešno uvezeno :count zapisa iz :filename (:from do :to)",
     "Superscript": "Gornji indeks",
     "Switch": "Prebacite se",
