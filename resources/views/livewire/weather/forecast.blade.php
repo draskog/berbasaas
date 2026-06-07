@@ -155,7 +155,6 @@ new class extends Component {
                             <div class="w-full mb-3">
                                 <livewire:components.weather-sparkline
                                     :data="$weather->hourly_precipitation"
-                                    lazy
                                 />
                             </div>
                         @endif
