@@ -1018,15 +1018,17 @@ class extends Component
                 <flux:error name="manualHarvestDate"/>
             </flux:field>
 
-            <flux:input
-                type="number"
-                wire:model="manualTare"
-                :label="__('Tare')"
-                step="0.001"
-                min="0"
-                placeholder="0.000"
-            />
-            <flux:error name="manualTare"/>
+            <flux:field>
+                <flux:label>{{ __('Tare') }}</flux:label>
+                <flux:input
+                    type="number"
+                    wire:model="manualTare"
+                    step="0.001"
+                    min="0"
+                    placeholder="0.000"
+                />
+                <flux:error name="manualTare"/>
+            </flux:field>
 
             <flux:field>
                 <flux:label>{{ __('CSV File') }}</flux:label>
