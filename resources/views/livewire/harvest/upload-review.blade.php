@@ -1012,13 +1012,25 @@ class extends Component
         @endif
     </div>
 
-    <flux:modal.confirm
-        wire:model="deleteConfirmRecordId"
-        title="{{ __('Confirm Delete') }}"
-        text="{{ __('Are you sure you want to delete this record? This action cannot be undone.') }}"
-        confirm-text="{{ __('Delete') }}"
-        cancel-text="{{ __('Cancel') }}"
-        variant="danger"
-        @confirm="$wire.delete({{ $deleteConfirmRecordId }})"
-    />
+    @if($deleteConfirmRecordId !== null)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" x-data>
+            <div class="bg-white dark:bg-zinc-900 rounded-lg shadow-lg max-w-sm w-full mx-4 p-6 space-y-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-red-600">{{ __('Confirm Delete') }}</h2>
+                </div>
+                <div class="space-y-2">
+                    <p>{{ __('Are you sure you want to delete this record?') }}</p>
+                    <p class="text-sm text-gray-500">{{ __('This action cannot be undone.') }}</p>
+                </div>
+                <div class="flex gap-3 justify-end pt-4">
+                    <flux:button variant="ghost" wire:click="cancelDelete">
+                        {{ __('Cancel') }}
+                    </flux:button>
+                    <flux:button variant="danger" wire:click="delete({{ $deleteConfirmRecordId }})">
+                        {{ __('Delete') }}
+                    </flux:button>
+                </div>
+            </div>
+        </div>
+    @endif
 </flux:main>
