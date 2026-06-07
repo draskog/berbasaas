@@ -113,7 +113,7 @@ class extends Component {
                             type="number"
                             wire:model="tare_min"
                             :label="__('Minimum Tare (kg)')"
-                            step="0.001"
+                            step="0.100"
                             placeholder="{{ __('No minimum') }}"
                         />
                         <flux:error name="tare_min"/>
@@ -122,7 +122,7 @@ class extends Component {
                             type="number"
                             wire:model="tare_max"
                             :label="__('Maximum Tare (kg)')"
-                            step="0.001"
+                            step="0.100"
                             placeholder="{{ __('No maximum') }}"
                         />
                         <flux:error name="tare_max"/>

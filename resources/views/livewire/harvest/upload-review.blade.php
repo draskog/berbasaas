@@ -679,7 +679,7 @@ class extends Component
                                 <flux:field>
                                     <flux:label>{{ __('Tara') }}</flux:label>
                                     <flux:tooltip>
-                                        <flux:input wire:model="bulkTare" type="number" step="0.001" min="0" placeholder="0,000" size="sm" class="w-32"/>
+                                        <flux:input wire:model="bulkTare" type="number" step="0.100" min="0" placeholder="0,000" size="sm" class="w-32"/>
                                         <flux:tooltip.content>
                                             @php
                                                 $suggestedTare = $this->fallbackTare;
@@ -749,7 +749,7 @@ class extends Component
                                         <flux:input
                                             wire:model="correctedTares.{{ $record->id }}"
                                             type="number"
-                                            step="0.001"
+                                            step="0.100"
                                             min="0"
                                             placeholder="0,000"
                                             size="sm"
