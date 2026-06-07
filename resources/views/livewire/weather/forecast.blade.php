@@ -124,57 +124,50 @@ new class extends Component {
                         $holidayName = $this->religiousHolidays[$date->toDateString()] ?? null;
                     @endphp
 
-                    <flux:card class="relative p-4 flex flex-col items-center">
-                        <!-- Date header -->
-                        <div class="text-center mb-3 w-full">
-                            @if ($isHoliday)
-
-                                <div class="text-sm font-semibold text-red-400 dark:text-zinc-300">
-                                    {{ $dayName }}
-                                </div>
-                                <div class="flex items-center justify-center gap-1">
-                                    <flux:tooltip size="sm" class="align-middle justify-center">
-                                        <div class="flex items-center gap-1">
-                                            <span class="text-lg font-bold text-red-400 dark:text-white">
-                                                {{ $dayOfMonth }}
-                                            </span>
-                                            <flux:icon.cursor-arrow-rays class="size-4 cursor-help text-red-400 dark:text-red-600"/>
-                                        </div>
+                    <flux:card class="relative p-4 flex flex-col">
+                        <!-- Date header (left) and weather (right) in same row -->
+                        <div class="flex items-start justify-between mb-4 w-full">
+                            <!-- Left: Day name and date -->
+                            <div>
+                                @if ($isHoliday)
+                                    <div class="text-sm font-semibold text-red-400 dark:text-red-400">
+                                        {{ $dayName }}
+                                    </div>
+                                    <flux:tooltip size="sm">
+                                        <span class="text-lg font-bold text-red-400 dark:text-red-400">{{ $dayOfMonth }}</span>
                                         <flux:tooltip.content class="max-w-[20rem] space-y-2">
                                             <p>{{ $holidayName }}</p>
                                         </flux:tooltip.content>
                                     </flux:tooltip>
-                                </div>
-                            @else
-                                <div class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                                    {{ $dayName }}
-                                </div>
-                                <div class="flex items-center justify-center gap-1">
-                                    <span class="text-lg font-bold text-zinc-900 dark:text-white">
-                                        {{ $dayOfMonth }}
-                                    </span>
-                                </div>
-                            @endif
-                        </div>
+                                @else
+                                    <div class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                                        {{ $dayName }}
+                                    </div>
+                                    <span class="text-lg font-bold text-zinc-900 dark:text-white">{{ $dayOfMonth }}</span>
+                                @endif
+                            </div>
 
-                        <!-- Weather icon and temp -->
-                        <div class="text-center mb-3">
-                            <div class="text-2xl mb-1">
-                                {{ $weatherDesc['emoji'] }}
-                            </div>
-                            <div class="text-xs text-zinc-600 dark:text-zinc-400 mb-2">
-                                {{ $weatherDesc['label'] }}
-                            </div>
-                            <div class="flex items-center justify-center gap-2 text-sm">
-                                <span class="font-semibold text-zinc-900 dark:text-white">
-                                    {{ number_format($weather->temperature_max, 0) }}°
-                                </span>
-                                <span class="text-zinc-600 dark:text-zinc-400">
-                                    {{ number_format($weather->temperature_min, 0) }}°
-                                </span>
-                                <span class="text-xs text-zinc-500 dark:text-zinc-500">
-                                    💨 {{ number_format($weather->wind_speed_max, 0) }} km/h
-                                </span>
+                            <!-- Right: Weather icon and conditions -->
+                            <div class="text-right">
+                                <div class="text-3xl mb-1">
+                                    {{ $weatherDesc['emoji'] }}
+                                </div>
+                                <div class="text-xs text-zinc-600 dark:text-zinc-400 mb-2">
+                                    {{ $weatherDesc['label'] }}
+                                </div>
+                                <div class="flex flex-col gap-1 text-xs">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <span class="font-semibold text-zinc-900 dark:text-white">
+                                            {{ number_format($weather->temperature_max, 0) }}°
+                                        </span>
+                                        <span class="text-zinc-600 dark:text-zinc-400">
+                                            {{ number_format($weather->temperature_min, 0) }}°
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-end gap-1 text-zinc-500">
+                                        💨 {{ number_format($weather->wind_speed_max, 0) }} km/h
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
