@@ -299,6 +299,7 @@ class extends Component
         if ($product) {
             $this->selectedProductId = $product->id;
         }
+        $this->manualHarvestDate = now()->toDateString();
     }
 
     public function updatedPerPage(): void
@@ -1010,7 +1011,7 @@ class extends Component
 
             <flux:field>
                 <flux:label>{{ __('Harvest Date') }}</flux:label>
-                <flux:input type="date" wire:model="manualHarvestDate"/>
+                <flux:date-picker wire:model="manualHarvestDate"/>
                 <flux:error name="manualHarvestDate"/>
             </flux:field>
 
