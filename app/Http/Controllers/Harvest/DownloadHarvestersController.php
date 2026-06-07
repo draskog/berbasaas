@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Harvest;
 
 use App\Http\Controllers\Controller;
 use App\Models\Harvester;
+use App\Models\HarvestImportSettings;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DownloadHarvestersController extends Controller
@@ -22,9 +23,12 @@ class DownloadHarvestersController extends Controller
         $filename = 'Spisak_beraca_'.now()->format('Y-m-d').'.csv';
 
         $callback = function () use ($harvesters) {
+            $settings = HarvestImportSettings::where('company_id', auth()->user()->company_id)->first();
+            $delimiter = $settings?->csv_delimiter ?? ';';
+
             $handle = fopen('php://output', 'wb');
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
-            fputcsv($handle, ['Redni broj', 'Ime i prezime berača', 'Prefiks'], ';');
+            fputcsv($handle, ['Redni broj', 'Ime i prezime berača', 'Prefiks'], $delimiter);
 
             $index = 1;
             foreach ($harvesters as $harvester) {
@@ -32,7 +36,7 @@ class DownloadHarvestersController extends Controller
                     $index,
                     $harvester->name,
                     $harvester->prefix ?? '',
-                ], ';');
+                ], $delimiter);
                 $index++;
             }
 

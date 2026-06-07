@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Company;
 use App\Models\Harvester;
 use App\Models\HarvesterAssignment;
+use App\Models\HarvestImportSettings;
 use Illuminate\Database\Seeder;
 
 class HarvesterAssignmentSeeder extends Seeder
@@ -26,11 +27,14 @@ class HarvesterAssignmentSeeder extends Seeder
             return;
         }
 
+        $settings = HarvestImportSettings::where('company_id', $company->id)->first();
+        $delimiter = $settings?->csv_delimiter ?? ';';
+
         $harvesters = [];
         if (($handle = fopen($csvPath, 'rb')) !== false) {
-            fgetcsv($handle, 1000, ';');
+            fgetcsv($handle, 1000, $delimiter);
 
-            while (($data = fgetcsv($handle, 1000, ';')) !== false) {
+            while (($data = fgetcsv($handle, 1000, $delimiter)) !== false) {
                 if (count($data) >= 2 && ! empty($data[1])) {
                     $number = (int) $data[0];
                     $name = trim($data[1]);

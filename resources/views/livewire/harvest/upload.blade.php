@@ -417,10 +417,20 @@ class extends Component
 
     public function downloadManualCsvTemplate()
     {
-        $header = "number,gross\n";
-        $example = "1,45.230\n2,44.800\n3,43.500\n";
+        $settings = HarvestImportSettings::where('company_id', auth()->user()->company_id)->first();
+        $delimiter = $settings?->csv_delimiter ?? ',';
 
-        $content = $header.$example;
+        $rows = [
+            ['number', 'gross'],
+            [1, 45.230],
+            [2, 44.800],
+            [3, 43.500],
+        ];
+
+        $content = '';
+        foreach ($rows as $row) {
+            $content .= implode($delimiter, $row)."\n";
+        }
 
         return response()
             ->streamDownload(

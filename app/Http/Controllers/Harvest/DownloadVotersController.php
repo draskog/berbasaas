@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Harvest;
 
 use App\Http\Controllers\Controller;
 use App\Models\HarvesterAssignment;
+use App\Models\HarvestImportSettings;
 use Illuminate\Http\Response;
 
 class DownloadVotersController extends Controller
@@ -27,16 +28,19 @@ class DownloadVotersController extends Controller
         $filename = "Spisak_beraca_{$lastYear}.csv";
 
         $callback = function () use ($assignments) {
+            $settings = HarvestImportSettings::where('company_id', auth()->user()->company_id)->first();
+            $delimiter = $settings?->csv_delimiter ?? ';';
+
             $handle = fopen('php://output', 'wb');
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
-            fputcsv($handle, ['Redni broj', 'Ime i prezime berača', 'Prefiks'], ';');
+            fputcsv($handle, ['Redni broj', 'Ime i prezime berača', 'Prefiks'], $delimiter);
 
             foreach ($assignments as $assignment) {
                 fputcsv($handle, [
                     $assignment->number,
                     $assignment->harvester->name,
                     $assignment->harvester->prefix ?? '',
-                ], ';');
+                ], $delimiter);
             }
 
             fclose($handle);

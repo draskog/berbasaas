@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Harvester;
+use App\Models\HarvestImportSettings;
 use App\Models\HarvesterAssignment;
 use Flux\Flux;
 use Illuminate\Support\Collection;
@@ -369,10 +370,13 @@ class extends Component
 
             fgets($file);
 
+            $settings = HarvestImportSettings::where('company_id', $companyId)->first();
+            $delimiter = $settings?->csv_delimiter ?? ';';
+
             $createdCount = 0;
             $line = 0;
 
-            while (($data = fgetcsv($file, 0, ';')) !== false) {
+            while (($data = fgetcsv($file, 0, $delimiter)) !== false) {
                 $line++;
                 if (empty($data[0])) {
                     continue;
