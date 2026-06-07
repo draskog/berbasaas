@@ -322,6 +322,7 @@ class extends Component
         if (in_array('in_file_duplicate', $reasons, true) || in_array('db_duplicate', $reasons, true)) {
             $stagingRecord->delete();
             $this->markUploadResolvedIfAllInvalidRecordsGone();
+            $this->updateUploadRecordCount();
             $this->dispatch('$refresh');
             Flux::toast(text: __('Duplicate deleted.'), variant: 'success');
 
@@ -403,6 +404,7 @@ class extends Component
 
         // Osvežavamo brojače na modelu
         $this->upload->refresh();
+        $this->updateUploadRecordCount();
 
         Flux::toast(text: __('Record updated and promoted.'), variant: 'success');
     }
@@ -514,6 +516,7 @@ class extends Component
 
         // Osvežavamo brojače na modelu
         $this->upload->refresh();
+        $this->updateUploadRecordCount();
 
         if ($resolved === 0 && $deleted === 0 && $skipped === 0) {
             $message = __('No records were processed.');
@@ -558,6 +561,7 @@ class extends Component
 
         // Osvežavamo brojače na modelu
         $this->upload->refresh();
+        $this->updateUploadRecordCount();
 
         Flux::toast(text: __('Record deleted.'), variant: 'success');
     }
@@ -586,6 +590,7 @@ class extends Component
 
         // Osvežavamo brojače na modelu
         $this->upload->refresh();
+        $this->updateUploadRecordCount();
 
         Flux::toast(text: __('Record(s) deleted.'), variant: 'success');
     }
@@ -595,6 +600,14 @@ class extends Component
         if ($this->upload->stagingRecords()->where('status', 'invalid')->doesntExist()) {
             $this->upload->update(['resolved_at' => now()]);
         }
+    }
+
+    private function updateUploadRecordCount(): void
+    {
+        $totalRecords = HarvestRecord::where('upload_id', $this->upload->id)->count()
+            + HarvestRecordStaging::where('upload_id', $this->upload->id)->count();
+
+        $this->upload->update(['record_count' => $totalRecords]);
     }
 
     public function skipDuplicate(int $recordId): void
