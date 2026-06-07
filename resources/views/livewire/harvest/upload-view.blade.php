@@ -58,7 +58,10 @@ class extends Component
         $query = HarvestRecordStaging::where('upload_id', $this->upload->id)
             ->when($this->stagingStatus !== 'all', fn ($q) => $q->where('status', $this->stagingStatus))
             ->when($this->stagingReason !== 'all', fn ($q) => $q->where('validation_reason', 'like', "%$this->stagingReason%"))
-            ->when($this->search !== '', fn ($q) => $q->where('harvester_number', 'like', "%$this->search%"))
+            ->when($this->search !== '', fn ($q) => $q
+                ->where('harvester_number', 'like', "%$this->search%")
+                ->orWhere('sequence_number', 'like', "%$this->search%")
+            )
             ->orderBy($this->sortBy, $this->sortDirection);
 
         if ($this->perPage === 0) {
@@ -96,6 +99,7 @@ class extends Component
             ->when($this->harvestCorrected === 'not_corrected', fn ($q) => $q->where('corrected', false))
             ->when($this->search !== '', fn ($q) => $q
                 ->where('harvester_number', 'like', "%$this->search%")
+                ->orWhere('sequence_number', 'like', "%$this->search%")
                 ->orWhereRaw('EXISTS (
                     SELECT 1 FROM harvester_assignments ha
                     JOIN harvesters h ON ha.harvester_id = h.id
@@ -338,6 +342,7 @@ class extends Component
                     @else
                     <flux:table :paginate="$this->perPage > 0 ? $this->stagingRecords : null" pageName="staging_page">
                         <flux:table.columns>
+                            <flux:table.column class="w-12">{{ __('#') }}</flux:table.column>
                             <flux:table.column sortable :sorted="$sortBy === 'weighed_at'" :direction="$sortDirection" wire:click="sort('weighed_at')">{{ __('Date / Time') }}</flux:table.column>
                             <flux:table.column sortable :sorted="$sortBy === 'weight'" :direction="$sortDirection" wire:click="sort('weight')">{{ __('Weight (kg)') }}</flux:table.column>
                             <flux:table.column>{{ __('Tare (kg)') }}</flux:table.column>
@@ -350,6 +355,7 @@ class extends Component
                         <flux:table.rows>
                             @forelse($this->stagingRecords as $record)
                                 <flux:table.row>
+                                    <flux:table.cell class="text-center font-medium text-gray-500">{{ $record->sequence_number }}</flux:table.cell>
                                     <flux:table.cell>{{ $record->weighed_at->format('d.m.Y H:i') }}</flux:table.cell>
                                     <flux:table.cell>{{ number_format($record->weight, 3, ',', '.') }}</flux:table.cell>
                                     <flux:table.cell>{{ number_format($record->tare, 3, ',', '.') }}</flux:table.cell>
@@ -385,7 +391,7 @@ class extends Component
                                 </flux:table.row>
                             @empty
                                 <flux:table.row>
-                                    <flux:table.cell colspan="7" class="text-center text-gray-500">{{ __('No staging records found') }}</flux:table.cell>
+                                    <flux:table.cell colspan="8" class="text-center text-gray-500">{{ __('No staging records found') }}</flux:table.cell>
                                 </flux:table.row>
                             @endforelse
                         </flux:table.rows>
@@ -418,6 +424,7 @@ class extends Component
                     </div>
                     <flux:table :paginate="$this->perPage > 0 ? $this->harvestRecords : null" pageName="harvest_page">
                         <flux:table.columns>
+                            <flux:table.column class="w-12">{{ __('#') }}</flux:table.column>
                             <flux:table.column sortable :sorted="$sortBy === 'weighed_at'" :direction="$sortDirection" wire:click="sort('weighed_at')">{{ __('Date / Time') }}</flux:table.column>
                             <flux:table.column sortable :sorted="$sortBy === 'weight'" :direction="$sortDirection" wire:click="sort('weight')">{{ __('Weight (kg)') }}</flux:table.column>
                             <flux:table.column>{{ __('Tare (kg)') }}</flux:table.column>
@@ -429,6 +436,7 @@ class extends Component
                         <flux:table.rows>
                             @forelse($this->harvestRecords as $record)
                                 <flux:table.row>
+                                    <flux:table.cell class="text-center font-medium text-gray-500">{{ $record->sequence_number }}</flux:table.cell>
                                     <flux:table.cell>{{ $record->weighed_at->format('d.m.Y H:i') }}</flux:table.cell>
                                     <flux:table.cell>{{ number_format($record->weight, 3, ',', '.') }}</flux:table.cell>
                                     <flux:table.cell>
@@ -482,7 +490,7 @@ class extends Component
                                 </flux:table.row>
                             @empty
                                 <flux:table.row>
-                                    <flux:table.cell colspan="6" class="text-center text-gray-500">{{ __('No harvest records found') }}</flux:table.cell>
+                                    <flux:table.cell colspan="7" class="text-center text-gray-500">{{ __('No harvest records found') }}</flux:table.cell>
                                 </flux:table.row>
                             @endforelse
                         </flux:table.rows>
