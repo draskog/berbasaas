@@ -7,6 +7,7 @@ use App\Models\Product;
 use Carbon\Carbon;
 use Flux\DateRange;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -37,6 +38,12 @@ class extends Component {
 
     #[Url]
     public int $selectedHarvesterNumber = 0;
+
+    #[Url]
+    public string $selectedPrefix = '';
+
+    #[Url]
+    public string $searchHarvesterName = '';
 
     #[Url]
     public string $activeTab = 'daily';
@@ -76,14 +83,91 @@ class extends Component {
     }
 
     #[Computed]
-    public function harvesterNumbers (): Collection
+    public function availablePrefixes (): Collection
     {
-        return HarvesterAssignment::where('company_id', auth()->user()->company_id)
-            ->where('year', $this->selectedYear)
-            ->distinct()
-            ->pluck('number')
+        $query = HarvestRecord::from('harvest_records')
+            ->where('harvest_records.company_id', auth()->user()->company_id)
+            ->join('harvester_assignments', function ($join) {
+                $join->on('harvester_assignments.company_id', '=', 'harvest_records.company_id')
+                    ->on('harvester_assignments.number', '=', 'harvest_records.harvester_number');
+
+                if (\Illuminate\Support\Facades\DB::getDefaultConnection() === 'sqlite') {
+                    $join->whereRaw('harvester_assignments.year = CAST(strftime(\'%Y\', harvest_records.weighed_at) AS INTEGER)');
+                } else {
+                    $join->whereRaw('harvester_assignments.year = YEAR(harvest_records.weighed_at)');
+                }
+            })
+            ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
+            ->whereNotNull('harvesters.prefix')
+            ->where('harvesters.prefix', '!=', '')
+            ->when($this->selectedYear, fn($q) => $q->whereYear('harvest_records.weighed_at', $this->selectedYear))
+            ->when($this->fromDate, fn($q) => $q->whereDate('harvest_records.weighed_at', '>=', $this->fromDate))
+            ->when($this->toDate, fn($q) => $q->whereDate('harvest_records.weighed_at', '<=', $this->toDate));
+
+        return $query->distinct()
+            ->pluck('harvesters.prefix')
             ->sort()
             ->values();
+    }
+
+    #[Computed]
+    public function harvesterNumbers (): Collection
+    {
+        $query = HarvestRecord::where('company_id', auth()->user()->company_id)
+            ->when($this->selectedYear, fn($q) => $q->whereYear('weighed_at', $this->selectedYear))
+            ->when($this->fromDate, fn($q) => $q->whereDate('weighed_at', '>=', $this->fromDate))
+            ->when($this->toDate, fn($q) => $q->whereDate('weighed_at', '<=', $this->toDate));
+
+        if ($this->selectedPrefix) {
+            $query->whereExists(function ($sub) {
+                $sub->select('harvester_assignments.id')
+                    ->from('harvester_assignments')
+                    ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
+                    ->whereColumn('harvester_assignments.company_id', 'harvest_records.company_id')
+                    ->whereColumn('harvester_assignments.number', 'harvest_records.harvester_number');
+
+                if (\Illuminate\Support\Facades\DB::getDefaultConnection() === 'sqlite') {
+                    $sub->whereRaw('harvester_assignments.year = CAST(strftime(\'%Y\', harvest_records.weighed_at) AS INTEGER)');
+                } else {
+                    $sub->whereRaw('harvester_assignments.year = YEAR(harvest_records.weighed_at)');
+                }
+
+                $sub->where('harvesters.prefix', $this->selectedPrefix);
+            });
+        }
+
+        $harvesterNumbers = $query->distinct()
+            ->pluck('harvester_number')
+            ->sort()
+            ->values();
+
+        if (! $this->searchHarvesterName) {
+            return $harvesterNumbers;
+        }
+
+        $search = strtolower($this->searchHarvesterName);
+        $companyId = auth()->user()->company_id;
+        $selectedYear = $this->selectedYear;
+
+        return $harvesterNumbers->filter(function ($number) use ($search, $companyId, $selectedYear) {
+            $assignment = HarvesterAssignment::where('company_id', $companyId)
+                ->where('number', $number);
+
+            if ($selectedYear > 0) {
+                $assignment->where('year', $selectedYear);
+            }
+
+            $assignment = $assignment->with('harvester')->first();
+
+            if (! $assignment || ! $assignment->harvester) {
+                return false;
+            }
+
+            $name = strtolower($assignment->harvester->name);
+            $prefix = strtolower($assignment->harvester->prefix ?? '');
+
+            return str_contains($name, $search) || str_contains($prefix, $search);
+        });
     }
 
     #[Computed]
@@ -210,11 +294,43 @@ class extends Component {
 
     private function baseQuery (): Builder
     {
-        return HarvestRecord::where('company_id', auth()->user()->company_id)
+        $query = HarvestRecord::where('company_id', auth()->user()->company_id)
             ->when($this->fromDate, fn($q) => $q->whereDate('weighed_at', '>=', $this->fromDate))
             ->when($this->toDate, fn($q) => $q->whereDate('weighed_at', '<=', $this->toDate))
             ->when($this->selectedProductId, fn($q) => $q->where('product_id', $this->selectedProductId))
             ->when($this->selectedHarvesterNumber, fn($q) => $q->where('harvester_number', $this->selectedHarvesterNumber));
+
+        if ($this->selectedPrefix) {
+            $query->whereExists(function ($sub) {
+                $sub->select('harvester_assignments.id')
+                    ->from('harvester_assignments')
+                    ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
+                    ->whereColumn('harvester_assignments.company_id', 'harvest_records.company_id')
+                    ->whereColumn('harvester_assignments.number', 'harvest_records.harvester_number');
+
+                if (\Illuminate\Support\Facades\DB::getDefaultConnection() === 'sqlite') {
+                    $sub->whereRaw('harvester_assignments.year = CAST(strftime(\'%Y\', harvest_records.weighed_at) AS INTEGER)');
+                } else {
+                    $sub->whereRaw('harvester_assignments.year = YEAR(harvest_records.weighed_at)');
+                }
+
+                $sub->where('harvesters.prefix', $this->selectedPrefix);
+            });
+        }
+
+        if ($this->searchHarvesterName) {
+            $search = strtolower($this->searchHarvesterName);
+            $companyId = auth()->user()->company_id;
+            $selectedYear = $this->selectedYear;
+
+            $numbers = $this->harvesterNumbers()->toArray();
+            if (empty($numbers)) {
+                $numbers = [0];
+            }
+            $query->whereIn('harvester_number', $numbers);
+        }
+
+        return $query;
     }
 
     private function priceAt (?string $date): ?float
@@ -365,6 +481,65 @@ class extends Component {
             'earnings' => $price ? round(($data[0]?->total_weight ?? 0) * $price, 2) : 0,
         ];
     }
+
+    #[Computed]
+    public function overLimitCount (): int
+    {
+        $maxWeight = auth()->user()->company->importSettings?->max_bucket_weight;
+        if (! $maxWeight) {
+            return 0;
+        }
+
+        return $this->baseQuery()
+            ->where('weight', '>', $maxWeight)
+            ->selectRaw('DATE(weighed_at) as date, harvester_number')
+            ->groupByRaw('DATE(weighed_at), harvester_number')
+            ->count();
+    }
+
+    #[Computed]
+    public function overLimitRows ()
+    {
+        $maxWeight = auth()->user()->company->importSettings?->max_bucket_weight;
+
+        if (! $maxWeight) {
+            return new LengthAwarePaginator([], 0, $this->perPage);
+        }
+
+        $names = $this->harvesterNames();
+        $query = $this->baseQuery()
+            ->where('weight', '>', $maxWeight)
+            ->selectRaw('
+                DATE(weighed_at) as date,
+                harvester_number,
+                COUNT(*) as over_limit_count,
+                MAX(weight) as max_weight,
+                SUM(weight) as total_weight
+            ')
+            ->groupByRaw('DATE(weighed_at), harvester_number')
+            ->orderByRaw('DATE(weighed_at) desc')
+            ->orderByDesc('over_limit_count');
+
+        if ($this->perPage === 0) {
+            return $query->get()->map(fn($row) => [
+                'date' => $row->date,
+                'number' => $row->harvester_number,
+                'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
+                'over_limit_count' => $row->over_limit_count,
+                'max_weight' => round($row->max_weight, 3),
+                'total_weight' => round($row->total_weight, 3),
+            ]);
+        }
+
+        return $query->paginate($this->perPage, pageName: 'over_limit')->through(fn($row) => [
+            'date' => $row->date,
+            'number' => $row->harvester_number,
+            'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
+            'over_limit_count' => $row->over_limit_count,
+            'max_weight' => round($row->max_weight, 3),
+            'total_weight' => round($row->total_weight, 3),
+        ]);
+    }
 }; ?>
 
 
@@ -427,17 +602,47 @@ class extends Component {
                     @endforeach
                 </flux:radio.group>
             </div>
+
+            @if ($this->availablePrefixes->isNotEmpty())
+                <div>
+                    <flux:radio.group wire:model.live="selectedPrefix" label="{{ __('Prefix') }}" variant="pills">
+                        <flux:radio value="" label="{{ __('All') }}"/>
+                        @foreach ($this->availablePrefixes as $prefix)
+                            <flux:radio value="{{ $prefix }}" label="{{ $prefix }}"/>
+                        @endforeach
+                    </flux:radio.group>
+                </div>
+            @endif
+
+            <div>
+                <flux:input
+                    size="sm"
+                    wire:model.live.debounce.300ms="searchHarvesterName"
+                    type="search"
+                    placeholder="{{ __('Search by harvester name...') }}"
+                    icon="magnifying-glass"
+                    clearable
+                    class="w-72"
+                />
+            </div>
         </div>
 
         <!-- Tab Navigation -->
-        <flux:tabs wire:model="activeTab" class="mb-6">
-            <flux:tab name="daily">{{ __('Daily Summary') }}</flux:tab>
-            <flux:tab name="harvesters">{{ __('Harvesters') }}</flux:tab>
-            <flux:tab name="products">{{ __('Products') }}</flux:tab>
-        </flux:tabs>
+        <flux:tab.group>
+            <flux:tabs wire:model="activeTab" class="mb-6">
+                <flux:tab name="daily">{{ __('Daily Summary') }}</flux:tab>
+                <flux:tab name="harvesters">{{ __('Harvesters') }}</flux:tab>
+                <flux:tab name="products">{{ __('Products') }}</flux:tab>
+                <flux:tab name="over_limit">
+                    {{ __('Over Limit') }}
+                    @if ($this->overLimitCount > 0)
+                        <flux:badge variant="primary" size="sm">{{ $this->overLimitCount }}</flux:badge>
+                    @endif
+                </flux:tab>
+            </flux:tabs>
 
-        <!-- Daily Summary Tab -->
-        <flux:tab.panel name="daily">
+            <!-- Daily Summary Tab -->
+            <flux:tab.panel name="daily">
             <flux:table :paginate="$this->perPage > 0 ? $this->dailyData : null">
                 <flux:table.columns>
                     <flux:table.column sortable :sorted="$dailySortBy === 'date'" :direction="$dailySortDirection" wire:click="sortDaily('date')">{{ __('Date') }}</flux:table.column>
@@ -560,6 +765,51 @@ class extends Component {
                 </flux:table.rows>
             </flux:table>
         </flux:tab.panel>
+
+        <!-- Over Limit Tab -->
+        <flux:tab.panel name="over_limit">
+            @php
+                $maxWeight = auth()->user()->company->importSettings?->max_bucket_weight;
+            @endphp
+
+            @if (! $maxWeight)
+                <flux:card class="text-center py-8">
+                    <p class="text-zinc-600 dark:text-zinc-400 mb-4">
+                        {{ __('Maximum bucket weight limit is not configured.') }}
+                    </p>
+                    <a href="{{ route('harvest.edit') }}" class="text-blue-600 hover:text-blue-700 dark:text-blue-400">
+                        {{ __('Configure in settings') }}
+                    </a>
+                </flux:card>
+            @else
+                <flux:table :paginate="$this->perPage > 0 ? $this->overLimitRows : null">
+                    <flux:table.columns>
+                        <flux:table.column>{{ __('Date') }}</flux:table.column>
+                        <flux:table.column>{{ __('Harvester') }}</flux:table.column>
+                        <flux:table.column>{{ __('Over Limit Count') }}</flux:table.column>
+                        <flux:table.column>{{ __('Max Weight (kg)') }}</flux:table.column>
+                        <flux:table.column>{{ __('Total Weight (kg)') }}</flux:table.column>
+                    </flux:table.columns>
+
+                    <flux:table.rows>
+                        @forelse ($this->overLimitRows as $row)
+                            <flux:table.row>
+                                <flux:table.cell>{{ Carbon::parse($row['date'])->format('d.m.Y') }}</flux:table.cell>
+                                <flux:table.cell>#{{ $row['number'] }} - {{ $row['name'] }}</flux:table.cell>
+                                <flux:table.cell>{{ $row['over_limit_count'] }}</flux:table.cell>
+                                <flux:table.cell>{{ number_format($row['max_weight'], 3, ',', '.') }}</flux:table.cell>
+                                <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
+                            </flux:table.row>
+                        @empty
+                            <flux:table.row>
+                                <flux:table.cell colspan="5" class="text-center text-gray-500">{{ __('No data') }}</flux:table.cell>
+                            </flux:table.row>
+                        @endforelse
+                    </flux:table.rows>
+                </flux:table>
+            @endif
+        </flux:tab.panel>
+        </flux:tab.group>
 
     </div>
 </flux:main>

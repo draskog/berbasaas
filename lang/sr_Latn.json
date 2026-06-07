@@ -789,5 +789,15 @@
     "No next record": "Nema sledećeg zapisa",
     "Confirm Delete": "Potvrdi Brisanje",
     "Are you sure you want to delete this record?": "Da li ste sigurni da želite da obrišete ovaj zapis?",
-    "This action cannot be undone.": "Ova akcija se ne može poništiti."
+    "This action cannot be undone.": "Ova akcija se ne može poništiti.",
+    "Over Limit": "Preko limite",
+    "Over Limit Count": "Broj preko limite",
+    "Max Weight (kg)": "Max težina (kg)",
+    "Total Weight (kg)": "Ukupna težina (kg)",
+    "Max bucket weight (kg)": "Max težina gajbice (kg)",
+    "Maximum Bucket Weight": "Maksimalna težina gajbice",
+    "Set the maximum acceptable weight per bucket (gajbica). Buckets exceeding this weight will be flagged in the over-limit report.": "Postavite maksimalnu dozvoljenu težinu po gajbici. Gajbice koje prekorače ovu težinu će biti označene u izveštaju o prekoračenju.",
+    "Maximum bucket weight limit is not configured.": "Limit maksimalne težine gajbice nije konfigurisan.",
+    "Configure in settings": "Konfiguriši u podešavanjima",
+    "Search by harvester name...": "Pretraga po imenu berca..."
 }

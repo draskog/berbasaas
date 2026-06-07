@@ -19,6 +19,8 @@ class extends Component {
 
     public ?string $tare_max = null;
 
+    public ?string $max_bucket_weight = null;
+
     public function mount (): void
     {
         $this->default_per_page = Auth::user()->userSettings?->default_per_page ?? 25;
@@ -28,6 +30,7 @@ class extends Component {
             $this->csv_delimiter = $settings->csv_delimiter ?? ',';
             $this->tare_min = $settings->tare_min;
             $this->tare_max = $settings->tare_max;
+            $this->max_bucket_weight = $settings->max_bucket_weight;
         }
     }
 
@@ -38,6 +41,7 @@ class extends Component {
             'csv_delimiter' => ['required', Rule::in([',', ';', "\t", '|'])],
             'tare_min' => 'nullable|numeric|min:0',
             'tare_max' => 'nullable|numeric|min:0',
+            'max_bucket_weight' => 'nullable|numeric|min:0',
         ]);
 
         if ($this->tare_min !== null && $this->tare_max !== null && $this->tare_min > $this->tare_max) {
@@ -57,6 +61,7 @@ class extends Component {
                 'csv_delimiter' => $this->csv_delimiter,
                 'tare_min' => $this->tare_min ?: null,
                 'tare_max' => $this->tare_max ?: null,
+                'max_bucket_weight' => $this->max_bucket_weight ?: null,
             ]
         );
 
@@ -127,6 +132,22 @@ class extends Component {
                         />
                         <flux:error name="tare_max"/>
                     </div>
+                </div>
+
+                <div class="my-8 border-t border-zinc-200 pt-6 dark:border-zinc-700">
+                    <flux:label class="mb-2 block">{{ __('Maximum Bucket Weight') }}</flux:label>
+                    <flux:text class="mb-4 text-sm text-gray-600 dark:text-zinc-400">
+                        {{ __('Set the maximum acceptable weight per bucket (gajbica). Buckets exceeding this weight will be flagged in the over-limit report.') }}
+                    </flux:text>
+
+                    <flux:input
+                        type="number"
+                        wire:model="max_bucket_weight"
+                        :label="__('Max bucket weight (kg)')"
+                        step="0.100"
+                        placeholder="{{ __('No limit') }}"
+                    />
+                    <flux:error name="max_bucket_weight"/>
                 </div>
 
                 <div class="flex items-center gap-4">
