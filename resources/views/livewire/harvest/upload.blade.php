@@ -494,13 +494,15 @@ class extends Component
             $content .= implode($delimiter, $row)."\n";
         }
 
+        $filename = 'rucno-branje-templejt-'.now()->format('Y-m-d').'.csv';
+
         return response()
             ->streamDownload(
                 fn () => print $content,
-                'rucno-branje-templejt.csv',
+                $filename,
                 [
                     'Content-Type' => 'text/csv',
-                    'Content-Disposition' => 'attachment; filename="rucno-branje-templejt.csv"',
+                    'Content-Disposition' => "attachment; filename=\"$filename\"",
                 ]
             );
     }
