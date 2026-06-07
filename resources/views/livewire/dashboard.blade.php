@@ -201,7 +201,7 @@ class extends Component
             </a>
 
             <!-- Active Products -->
-            <a href="{{ route('harvest.prices') }}" wire:navigate class="block">
+            <a href="{{ route('products.settings') }}" wire:navigate class="block">
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
                     <flux:heading size="sm">{{ __('Active Products') }}</flux:heading>
                     <flux:text class="text-2xl font-bold mt-2">

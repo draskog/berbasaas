@@ -320,101 +320,100 @@ class extends Component
             </div>
         </x-pages::settings.layout>
     </section>
+    <flux:modal name="create-price" wire:model="showCreatePriceModal" class="md:max-w-3xl! md:w-3xl!">
+        <flux:heading>{{ __('Add Price') }}</flux:heading>
+        <flux:subheading>{{ __('Set a new price for a product.') }}</flux:subheading>
+
+        <div class="mt-6 space-y-4">
+            <flux:field>
+                <flux:label>{{ __('Product') }}</flux:label>
+                <flux:select variant="listbox" searchable wire:model="newProductId" placeholder="{{ __('Select product...') }}">
+                    @foreach ($this->products as $product)
+                        <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+                <flux:error name="newProductId"/>
+            </flux:field>
+
+            <flux:field>
+                <flux:label>{{ __('Price per kg') }}</flux:label>
+                <flux:input type="number" step="10" wire:model="newPricePerKg"/>
+                <flux:error name="newPricePerKg"/>
+            </flux:field>
+
+            <flux:field>
+                <flux:label>{{ __('Effective Date Range') }}</flux:label>
+                <flux:date-picker
+                    mode="range"
+                    with-presets
+                    presets="today yesterday thisWeek last7Days thisMonth yearToDate"
+                    wire:model.live="newEffectiveDateRange"
+                    locale="{{ str_replace('_', '-', app()->getLocale()) }}"
+                >
+                    <x-slot name="trigger">
+                        <div class="flex flex-col sm:flex-row gap-6 sm:gap-4">
+                            <flux:date-picker.input variant="custom" label="{{ __('Effective From') }}"/>
+                            <flux:date-picker.input variant="custom" label="{{ __('Effective To') }}"/>
+                        </div>
+                    </x-slot>
+                </flux:date-picker>
+                <flux:error name="newEffectiveFrom"/>
+                <flux:error name="newEffectiveTo"/>
+            </flux:field>
+        </div>
+
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:modal.close>
+                <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+            </flux:modal.close>
+            <flux:button variant="primary" wire:click="createPrice">{{ __('Save') }}</flux:button>
+        </div>
+    </flux:modal>
+
+    <flux:modal name="edit-price" wire:model="showEditPriceModal" class="md:max-w-3xl! md:w-3xl!">
+        <flux:heading>{{ __('Edit Price') }}</flux:heading>
+
+        <div class="mt-6 space-y-4">
+            <flux:field>
+                <flux:label>{{ __('Price per kg') }}</flux:label>
+                <flux:input type="number" step="10" wire:model="editPricePerKg"/>
+                <flux:error name="editPricePerKg"/>
+            </flux:field>
+
+            <flux:field>
+                <flux:label>{{ __('Effective Date Range') }}</flux:label>
+                <flux:date-picker
+                    mode="range"
+                    with-presets
+                    presets="today yesterday thisWeek last7Days thisMonth yearToDate"
+                    wire:model.live="editEffectiveDateRange"
+                    locale="{{ str_replace('_', '-', app()->getLocale()) }}"
+                >
+                    <x-slot name="trigger">
+                        <div class="flex flex-col sm:flex-row gap-6 sm:gap-4">
+                            <flux:date-picker.input variant="custom" label="{{ __('Effective From') }}"/>
+                            <flux:date-picker.input variant="custom" label="{{ __('Effective To') }}"/>
+                        </div>
+                    </x-slot>
+                </flux:date-picker>
+                <flux:error name="editEffectiveFrom"/>
+                <flux:error name="editEffectiveTo"/>
+            </flux:field>
+        </div>
+
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:button variant="ghost" wire:click="$set('showEditPriceModal', false)">{{ __('Cancel') }}</flux:button>
+            <flux:button variant="primary" wire:click="updatePrice">{{ __('Save') }}</flux:button>
+        </div>
+    </flux:modal>
+
+    <flux:modal name="confirm-delete-price" :dismissible="false" wire:model="showDeleteModal">
+        <flux:heading>{{ __('Delete Price') }}</flux:heading>
+        <flux:text>{{ __('Are you sure you want to delete this price? This cannot be undone.') }}</flux:text>
+
+        <div class="mt-6 flex gap-2 justify-end">
+            <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">{{ __('Cancel') }}</flux:button>
+            <flux:button variant="danger" wire:click="deletePrice">{{ __('Delete') }}</flux:button>
+        </div>
+    </flux:modal>
 </flux:main>
-
-<flux:modal name="create-price" wire:model="showCreatePriceModal" class="md:max-w-3xl! md:w-3xl!">
-    <flux:heading>{{ __('Add Price') }}</flux:heading>
-    <flux:subheading>{{ __('Set a new price for a product.') }}</flux:subheading>
-
-    <div class="mt-6 space-y-4">
-        <flux:field>
-            <flux:label>{{ __('Product') }}</flux:label>
-            <flux:select variant="listbox" searchable wire:model="newProductId" placeholder="{{ __('Select product...') }}">
-                @foreach ($this->products as $product)
-                    <flux:select.option value="{{ $product->id }}">{{ $product->name }}</flux:select.option>
-                @endforeach
-            </flux:select>
-            <flux:error name="newProductId"/>
-        </flux:field>
-
-        <flux:field>
-            <flux:label>{{ __('Price per kg') }}</flux:label>
-            <flux:input type="number" step="10" wire:model="newPricePerKg"/>
-            <flux:error name="newPricePerKg"/>
-        </flux:field>
-
-        <flux:field>
-            <flux:label>{{ __('Effective Date Range') }}</flux:label>
-            <flux:date-picker
-                mode="range"
-                with-presets
-                presets="today yesterday thisWeek last7Days thisMonth yearToDate"
-                wire:model.live="newEffectiveDateRange"
-                locale="{{ str_replace('_', '-', app()->getLocale()) }}"
-            >
-                <x-slot name="trigger">
-                    <div class="flex flex-col sm:flex-row gap-6 sm:gap-4">
-                        <flux:date-picker.input variant="custom" label="{{ __('Effective From') }}"/>
-                        <flux:date-picker.input variant="custom" label="{{ __('Effective To') }}"/>
-                    </div>
-                </x-slot>
-            </flux:date-picker>
-            <flux:error name="newEffectiveFrom"/>
-            <flux:error name="newEffectiveTo"/>
-        </flux:field>
-    </div>
-
-    <div class="mt-6 flex gap-2 justify-end">
-        <flux:modal.close>
-            <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-        </flux:modal.close>
-        <flux:button variant="primary" wire:click="createPrice">{{ __('Save') }}</flux:button>
-    </div>
-</flux:modal>
-
-<flux:modal name="edit-price" wire:model="showEditPriceModal" class="md:max-w-3xl! md:w-3xl!">
-    <flux:heading>{{ __('Edit Price') }}</flux:heading>
-
-    <div class="mt-6 space-y-4">
-        <flux:field>
-            <flux:label>{{ __('Price per kg') }}</flux:label>
-            <flux:input type="number" step="10" wire:model="editPricePerKg"/>
-            <flux:error name="editPricePerKg"/>
-        </flux:field>
-
-        <flux:field>
-            <flux:label>{{ __('Effective Date Range') }}</flux:label>
-            <flux:date-picker
-                mode="range"
-                with-presets
-                presets="today yesterday thisWeek last7Days thisMonth yearToDate"
-                wire:model.live="editEffectiveDateRange"
-                locale="{{ str_replace('_', '-', app()->getLocale()) }}"
-            >
-                <x-slot name="trigger">
-                    <div class="flex flex-col sm:flex-row gap-6 sm:gap-4">
-                        <flux:date-picker.input variant="custom" label="{{ __('Effective From') }}"/>
-                        <flux:date-picker.input variant="custom" label="{{ __('Effective To') }}"/>
-                    </div>
-                </x-slot>
-            </flux:date-picker>
-            <flux:error name="editEffectiveFrom"/>
-            <flux:error name="editEffectiveTo"/>
-        </flux:field>
-    </div>
-
-    <div class="mt-6 flex gap-2 justify-end">
-        <flux:button variant="ghost" wire:click="$set('showEditPriceModal', false)">{{ __('Cancel') }}</flux:button>
-        <flux:button variant="primary" wire:click="updatePrice">{{ __('Save') }}</flux:button>
-    </div>
-</flux:modal>
-
-<flux:modal name="confirm-delete-price" :dismissible="false" wire:model="showDeleteModal">
-    <flux:heading>{{ __('Delete Price') }}</flux:heading>
-    <flux:text>{{ __('Are you sure you want to delete this price? This cannot be undone.') }}</flux:text>
-
-    <div class="mt-6 flex gap-2 justify-end">
-        <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">{{ __('Cancel') }}</flux:button>
-        <flux:button variant="danger" wire:click="deletePrice">{{ __('Delete') }}</flux:button>
-    </div>
-</flux:modal>
