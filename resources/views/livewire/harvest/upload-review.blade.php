@@ -50,6 +50,8 @@ class extends Component
 
     public array $expandedRows = [];
 
+    public ?int $deleteConfirmRecordId = null;
+
     #[Computed]
     public function year(): int
     {
@@ -528,6 +530,11 @@ class extends Component
         Flux::toast(text: $message, variant: $variant);
     }
 
+    public function confirmDelete(int $recordId): void
+    {
+        $this->deleteConfirmRecordId = $recordId;
+    }
+
     public function delete(int $recordId): void
     {
         $stagingRecord = HarvestRecordStaging::findOrFail($recordId);
@@ -540,9 +547,15 @@ class extends Component
 
         $stagingRecord->delete();
         $this->markUploadResolvedIfAllInvalidRecordsGone();
+        $this->deleteConfirmRecordId = null;
 
         $this->dispatch('$refresh');
         Flux::toast(text: __('Record deleted.'), variant: 'success');
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->deleteConfirmRecordId = null;
     }
 
     public function deleteSelected(): void
@@ -872,7 +885,7 @@ class extends Component
                                         <flux:button
                                             size="sm"
                                             variant="danger"
-                                            wire:click="delete({{ $record->id }})"
+                                            wire:click="confirmDelete({{ $record->id }})"
                                             wire:loading.attr="disabled"
                                         >
                                             {{ __('Delete') }}
@@ -889,7 +902,7 @@ class extends Component
                                         <flux:button
                                             size="sm"
                                             variant="danger"
-                                            wire:click="delete({{ $record->id }})"
+                                            wire:click="confirmDelete({{ $record->id }})"
                                             wire:loading.attr="disabled"
                                         >
                                             {{ __('Delete') }}
@@ -998,4 +1011,24 @@ class extends Component
             @endif
         @endif
     </div>
+
+    @if($deleteConfirmRecordId !== null)
+        <flux:modal name="delete-confirm" title="{{ __('Confirm Delete') }}" variant="danger">
+            <div class="space-y-4">
+                <p>{{ __('Are you sure you want to delete this record?') }}</p>
+                <p class="text-sm text-gray-500">{{ __('This action cannot be undone.') }}</p>
+            </div>
+
+            <flux:spacer />
+
+            <div class="flex gap-3">
+                <flux:button variant="ghost" wire:click="cancelDelete">
+                    {{ __('Cancel') }}
+                </flux:button>
+                <flux:button variant="danger" wire:click="delete({{ $deleteConfirmRecordId }})">
+                    {{ __('Delete') }}
+                </flux:button>
+            </div>
+        </flux:modal>
+    @endif
 </flux:main>

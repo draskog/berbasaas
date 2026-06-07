@@ -782,5 +782,8 @@
     "Net Weight (kg)": "Neto težina (kg)",
     "Record #": "Redni broj zapisa #",
     "No previous record": "Nema prethodnog zapisa",
-    "No next record": "Nema sledećeg zapisa"
+    "No next record": "Nema sledećeg zapisa",
+    "Confirm Delete": "Potvrdi Brisanje",
+    "Are you sure you want to delete this record?": "Da li ste sigurni da želite da obrišete ovaj zapis?",
+    "This action cannot be undone.": "Ova akcija se ne može poništiti."
 }

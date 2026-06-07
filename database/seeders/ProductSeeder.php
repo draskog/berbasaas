@@ -44,8 +44,8 @@ class ProductSeeder extends Seeder
         HarvestPrice::create([
             'company_id' => $company->id,
             'product_id' => 1,
-            'price_per_kg' => 100,
-            'effective_from' => now()->subYears(4),
+            'price_per_kg' => 120,
+            'effective_from' => now()->subYear(),
         ]);
     }
 }
