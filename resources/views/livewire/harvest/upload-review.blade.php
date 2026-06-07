@@ -48,6 +48,8 @@ class extends Component
 
     public string $search = '';
 
+    public array $expandedRows = [];
+
     #[Computed]
     public function year(): int
     {
@@ -575,6 +577,15 @@ class extends Component
         // This is handled via filtering in the UI, but included for completeness
         $this->dispatch('$refresh');
     }
+
+    public function toggleExpanded(int $recordId): void
+    {
+        if (in_array($recordId, $this->expandedRows, true)) {
+            $this->expandedRows = array_filter($this->expandedRows, static fn ($id) => $id !== $recordId);
+        } else {
+            $this->expandedRows[] = $recordId;
+        }
+    }
 }; ?>
 
 <flux:main>
@@ -848,27 +859,112 @@ class extends Component
                                 @endforeach
                             </flux:table.cell>
                             <flux:table.cell>
-                                @if(in_array('in_file_duplicate', $reasons, true) || in_array('db_duplicate', $reasons, true))
+                                <div class="flex items-center gap-2">
                                     <flux:button
                                         size="sm"
-                                        variant="danger"
-                                        wire:click="delete({{ $record->id }})"
+                                        variant="ghost"
+                                        icon="{{ in_array($record->id, $expandedRows, true) ? 'chevron-up' : 'chevron-down' }}"
+                                        wire:click="toggleExpanded({{ $record->id }})"
                                         wire:loading.attr="disabled"
-                                    >
-                                        {{ __('Delete') }}
-                                    </flux:button>
-                                @else
-                                    <flux:button
-                                        size="sm"
-                                        variant="primary"
-                                        wire:click="resolve({{ $record->id }})"
-                                        wire:loading.attr="disabled"
-                                    >
-                                        {{ __('Save') }}
-                                    </flux:button>
-                                @endif
+                                    />
+                                    @if(in_array('in_file_duplicate', $reasons, true) || in_array('db_duplicate', $reasons, true))
+                                        <flux:button
+                                            size="sm"
+                                            variant="danger"
+                                            wire:click="delete({{ $record->id }})"
+                                            wire:loading.attr="disabled"
+                                        >
+                                            {{ __('Delete') }}
+                                        </flux:button>
+                                    @else
+                                        <flux:button
+                                            size="sm"
+                                            variant="primary"
+                                            wire:click="resolve({{ $record->id }})"
+                                            wire:loading.attr="disabled"
+                                        >
+                                            {{ __('Save') }}
+                                        </flux:button>
+                                    @endif
+                                </div>
                             </flux:table.cell>
                         </flux:table.row>
+                        @if(in_array($record->id, $expandedRows, true))
+                            <flux:table.row key="expand-{{ $record->id }}" class="bg-zinc-50 dark:bg-zinc-800/50">
+                                <flux:table.cell colspan="10">
+                                    <div class="p-4 space-y-4">
+                                        <div class="grid grid-cols-2 gap-6">
+                                            <!-- Pre ispravke -->
+                                            <div class="space-y-3">
+                                                <div class="font-semibold text-sm">{{ __('Before') }}</div>
+                                                <div class="text-sm space-y-2">
+                                                    <div>
+                                                        <span class="text-gray-500">{{ __('Date / Time') }}:</span>
+                                                        <span class="ml-2">{{ $record->weighed_at->format('d.m.Y H:i') }}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="text-gray-500">{{ __('Net Weight (kg)') }}:</span>
+                                                        <span class="ml-2">{{ number_format($record->weight, 3, ',', '.') }}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="text-gray-500">{{ __('Tare (kg)') }}:</span>
+                                                        <span class="ml-2">{{ number_format($record->tare, 3, ',', '.') }}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="text-gray-500">{{ __('Harvester #') }}:</span>
+                                                        <span class="ml-2">{{ $record->harvester_number }}
+                                                            @if($this->harvestersByNumber->has($record->harvester_number))
+                                                                - {{ $this->harvestersByNumber[$record->harvester_number]->harvester?->name }}
+                                                            @endif
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Posle ispravke -->
+                                            <div class="space-y-3">
+                                                <div class="font-semibold text-sm">{{ __('After') }}</div>
+                                                <div class="text-sm space-y-2">
+                                                    <div>
+                                                        <span class="text-gray-500">{{ __('Date / Time') }}:</span>
+                                                        <span class="ml-2">{{ $record->weighed_at->format('d.m.Y H:i') }}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="text-gray-500">{{ __('Net Weight (kg)') }}:</span>
+                                                        <span class="ml-2">{{ number_format($record->weight, 3, ',', '.') }}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="text-gray-500">{{ __('Tare (kg)') }}:</span>
+                                                        <span class="ml-2">
+                                                            @if(isset($correctedTares[$record->id]) && !empty($correctedTares[$record->id]))
+                                                                {{ number_format($correctedTares[$record->id], 3, ',', '.') }}
+                                                            @else
+                                                                {{ number_format($record->tare, 3, ',', '.') }}
+                                                            @endif
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="text-gray-500">{{ __('Harvester #') }}:</span>
+                                                        <span class="ml-2">
+                                                            @if(isset($corrections[$record->id]) && !empty($corrections[$record->id]))
+                                                                {{ $corrections[$record->id] }}
+                                                                @if($this->harvestersByNumber->has($corrections[$record->id]))
+                                                                    - {{ $this->harvestersByNumber[$corrections[$record->id]]->harvester?->name }}
+                                                                @endif
+                                                            @else
+                                                                {{ $record->harvester_number }}
+                                                                @if($this->harvestersByNumber->has($record->harvester_number))
+                                                                    - {{ $this->harvestersByNumber[$record->harvester_number]->harvester?->name }}
+                                                                @endif
+                                                            @endif
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </flux:table.cell>
+                            </flux:table.row>
+                        @endif
                     @endforeach
                 </flux:table.rows>
                 </flux:table>
