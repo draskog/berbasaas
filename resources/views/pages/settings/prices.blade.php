@@ -267,26 +267,8 @@ class extends Component
 
         <flux:heading class="sr-only">{{ __('Harvest Prices') }}</flux:heading>
 
-        <div class="flex items-start max-md:flex-col">
-            <div class="me-10 w-full pb-4 md:w-55">
-                <flux:navlist aria-label="{{ __('Settings') }}">
-                    <flux:navlist.item :href="route('profile.edit')" wire:navigate>{{ __('Profile') }}</flux:navlist.item>
-                    <flux:navlist.item :href="route('company.edit')" wire:navigate>{{ __('Company') }}</flux:navlist.item>
-                    <flux:navlist.item :href="route('harvest.edit')" wire:navigate>{{ __('Harvest') }}</flux:navlist.item>
-                    <flux:navlist.item :href="route('prices.settings')" wire:navigate>{{ __('Harvest Prices') }}</flux:navlist.item>
-                    <flux:navlist.item :href="route('products.settings')" wire:navigate>{{ __('Products') }}</flux:navlist.item>
-                    <flux:navlist.item :href="route('security.edit')" wire:navigate>{{ __('Security') }}</flux:navlist.item>
-                    <flux:navlist.item :href="route('appearance.edit')" wire:navigate>{{ __('Appearance') }}</flux:navlist.item>
-                </flux:navlist>
-            </div>
-
-            <flux:separator class="md:hidden"/>
-
-            <div class="flex-1 self-stretch max-md:pt-6">
-                <flux:heading>{{ __('Harvest Prices') }}</flux:heading>
-                <flux:subheading>{{ __('Manage harvest prices for products') }}</flux:subheading>
-
-                <div class="mt-5 w-full space-y-6">
+        <x-pages::settings.layout :heading="__('Harvest Prices')" :subheading="__('Manage harvest prices for products')">
+            <div class="w-full space-y-6">
                 <div class="flex items-center justify-between">
                     <div class="flex-1">
                         <flux:radio.group wire:model.live="selectedProduct" label="{{ __('Product') }}" variant="pills">
@@ -335,9 +317,8 @@ class extends Component
                         @endforelse
                     </flux:table.rows>
                 </flux:table>
-                </div>
             </div>
-        </div>
+        </x-pages::settings.layout>
     </section>
 </flux:main>
 
