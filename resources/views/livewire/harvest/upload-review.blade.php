@@ -586,6 +586,15 @@ class extends Component
             $this->expandedRows[] = $recordId;
         }
     }
+
+    public function findMatchingHarvestRecord(HarvestRecordStaging $stagingRecord): ?HarvestRecord
+    {
+        return HarvestRecord::where('upload_id', $this->upload->id)
+            ->where('weighed_at', $stagingRecord->weighed_at)
+            ->where('weight', $stagingRecord->weight)
+            ->where('tare', $stagingRecord->tare)
+            ->first();
+    }
 }; ?>
 
 <flux:main>
@@ -873,11 +882,16 @@ class extends Component
                             </flux:table.cell>
                         </flux:table.row>
                         @if(in_array($record->id, $expandedRows, true))
+                            @php $matchingRecord = $this->findMatchingHarvestRecord($record); @endphp
                             <flux:table.row key="expand-{{ $record->id }}" class="bg-zinc-50 dark:bg-zinc-800/50">
                                 <flux:table.cell colspan="10">
                                     <div class="p-4 space-y-4">
                                         <div class="text-xs text-gray-400 mb-4">
-                                            {{ __('Record #') }}: {{ $record->sequence_number }}
+                                            <span>{{ __('Record #') }}: {{ $record->sequence_number }}</span>
+                                            @if($matchingRecord)
+                                                <span class="ml-4">→</span>
+                                                <span class="ml-4">{{ __('Record #') }}: {{ $matchingRecord->sequence_number }}</span>
+                                            @endif
                                         </div>
                                         <div class="grid grid-cols-2 gap-6">
                                             <!-- Pre ispravke -->
