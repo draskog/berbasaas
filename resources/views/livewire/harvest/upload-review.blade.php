@@ -898,9 +898,6 @@ class extends Component
                             <flux:table.row key="expand-{{ $record->id }}" class="bg-zinc-50 dark:bg-zinc-800/50">
                                 <flux:table.cell colspan="10">
                                     <div class="p-4 space-y-4">
-                                        <div class="text-xs text-gray-400 mb-4 text-center">
-                                            {{ __('Record #') }}: {{ $record->sequence_number }}
-                                        </div>
                                         <div class="grid grid-cols-2 gap-6">
                                             <!-- Pre (Prethodni zapis) -->
                                             <div class="space-y-3">
@@ -908,8 +905,20 @@ class extends Component
                                                 @if($prevRecord)
                                                     <div class="text-sm space-y-2">
                                                         <div>
-                                                            <span class="text-gray-500">{{ __('Date / Time') }}:</span>
-                                                            <span class="ml-2">{{ $prevRecord->weighed_at->format('d.m.Y H:i') }}</span>
+                                                            <span class="text-gray-500">{{ __('Record #') }}:</span>
+                                                            <span class="ml-2">{{ $prevRecord->sequence_number }}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span class="text-gray-500">{{ __('Harvester #') }}:</span>
+                                                            <span class="ml-2">{{ $prevRecord->harvester_number }}
+                                                                @if($this->harvestersByNumber->has($prevRecord->harvester_number))
+                                                                    - {{ $this->harvestersByNumber[$prevRecord->harvester_number]->harvester?->name }}
+                                                                @endif
+                                                            </span>
+                                                        </div>
+                                                        <div class="{{ (float)$prevRecord->gross === (float)$record->gross ? 'bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded' : '' }}">
+                                                            <span class="text-gray-500">{{ __('Gross (kg)') }}:</span>
+                                                            <span class="ml-2 {{ (float)$prevRecord->gross === (float)$record->gross ? 'font-semibold text-yellow-700 dark:text-yellow-400' : '' }}">{{ number_format($prevRecord->gross, 3, ',', '.') }}</span>
                                                         </div>
                                                         <div>
                                                             <span class="text-gray-500">{{ __('Net Weight (kg)') }}:</span>
@@ -920,12 +929,8 @@ class extends Component
                                                             <span class="ml-2">{{ number_format($prevRecord->tare, 3, ',', '.') }}</span>
                                                         </div>
                                                         <div>
-                                                            <span class="text-gray-500">{{ __('Harvester #') }}:</span>
-                                                            <span class="ml-2">{{ $prevRecord->harvester_number }}
-                                                                @if($this->harvestersByNumber->has($prevRecord->harvester_number))
-                                                                    - {{ $this->harvestersByNumber[$prevRecord->harvester_number]->harvester?->name }}
-                                                                @endif
-                                                            </span>
+                                                            <span class="text-gray-500">{{ __('Date / Time') }}:</span>
+                                                            <span class="ml-2">{{ $prevRecord->weighed_at->format('d.m.Y H:i') }}</span>
                                                         </div>
                                                     </div>
                                                 @else
@@ -940,8 +945,20 @@ class extends Component
                                                 @if($nextRecord)
                                                     <div class="text-sm space-y-2">
                                                         <div>
-                                                            <span class="text-gray-500">{{ __('Date / Time') }}:</span>
-                                                            <span class="ml-2">{{ $nextRecord->weighed_at->format('d.m.Y H:i') }}</span>
+                                                            <span class="text-gray-500">{{ __('Record #') }}:</span>
+                                                            <span class="ml-2">{{ $nextRecord->sequence_number }}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span class="text-gray-500">{{ __('Harvester #') }}:</span>
+                                                            <span class="ml-2">{{ $nextRecord->harvester_number }}
+                                                                @if($this->harvestersByNumber->has($nextRecord->harvester_number))
+                                                                    - {{ $this->harvestersByNumber[$nextRecord->harvester_number]->harvester?->name }}
+                                                                @endif
+                                                            </span>
+                                                        </div>
+                                                        <div class="{{ (float)$nextRecord->gross === (float)$record->gross ? 'bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded' : '' }}">
+                                                            <span class="text-gray-500">{{ __('Gross (kg)') }}:</span>
+                                                            <span class="ml-2 {{ (float)$nextRecord->gross === (float)$record->gross ? 'font-semibold text-yellow-700 dark:text-yellow-400' : '' }}">{{ number_format($nextRecord->gross, 3, ',', '.') }}</span>
                                                         </div>
                                                         <div>
                                                             <span class="text-gray-500">{{ __('Net Weight (kg)') }}:</span>
@@ -952,12 +969,8 @@ class extends Component
                                                             <span class="ml-2">{{ number_format($nextRecord->tare, 3, ',', '.') }}</span>
                                                         </div>
                                                         <div>
-                                                            <span class="text-gray-500">{{ __('Harvester #') }}:</span>
-                                                            <span class="ml-2">{{ $nextRecord->harvester_number }}
-                                                                @if($this->harvestersByNumber->has($nextRecord->harvester_number))
-                                                                    - {{ $this->harvestersByNumber[$nextRecord->harvester_number]->harvester?->name }}
-                                                                @endif
-                                                            </span>
+                                                            <span class="text-gray-500">{{ __('Date / Time') }}:</span>
+                                                            <span class="ml-2">{{ $nextRecord->weighed_at->format('d.m.Y H:i') }}</span>
                                                         </div>
                                                     </div>
                                                 @else
