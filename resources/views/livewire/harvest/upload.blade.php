@@ -521,7 +521,11 @@ class extends Component
 
     public function deleteUpload(): void
     {
-        HarvestUpload::find($this->deletingUploadId)?->delete();
+        $upload = HarvestUpload::find($this->deletingUploadId);
+        if ($upload) {
+            HarvestRecord::where('upload_id', $upload->id)->delete();
+            $upload->delete();
+        }
         $this->deletingUploadId = null;
         $this->showDeleteModal = false;
         $this->dispatch('$refresh');
@@ -538,7 +542,7 @@ class extends Component
     {
         $upload = HarvestUpload::find($this->archivingUploadId);
         if ($upload) {
-            HarvestRecord::where('upload_id', $upload->id)->delete();
+            HarvestRecord::where('upload_id', $upload->id)->update(['upload_id' => null]);
             $upload->stagingRecords()->delete();
             $upload->delete();
         }
