@@ -1023,6 +1023,7 @@ class extends Component
                 wire:model="manualTare"
                 :label="__('Tare')"
                 step="0.001"
+                min="0"
                 placeholder="0.000"
             />
             <flux:error name="manualTare"/>
