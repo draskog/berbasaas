@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ImportType;
 use App\Models\HarvestImportSettings;
 use App\Models\HarvestRecord;
 use App\Models\HarvestRecordStaging;
@@ -183,6 +184,57 @@ class extends Component
         }
 
         return array_keys($resolved);
+    }
+
+    #[Computed]
+    public function availableImportTypes(): array
+    {
+        $query = HarvestUpload::where('company_id', auth()->user()->company_id)
+            ->whereNotNull('import_type')
+            ->withCount('harvestRecords as valid_count')
+            ->withCount('stagingRecords as invalid_count');
+
+        if ($this->selectedYear > 0) {
+            $query->whereYear('date_from', $this->selectedYear);
+        }
+
+        if ($this->selectedProduct !== 'all') {
+            $query->where('product_id', $this->selectedProduct);
+        }
+
+        if ($this->selectedStatus !== 'all') {
+            $uploads = $query->get();
+            $filtered = $uploads->filter(function ($upload) {
+                if ($this->selectedStatus === 'valid') {
+                    return $upload->valid_count > 0 && $upload->invalid_count === 0;
+                } elseif ($this->selectedStatus === 'invalid') {
+                    return $upload->valid_count === 0;
+                } elseif ($this->selectedStatus === 'partially_valid') {
+                    return $upload->valid_count > 0 && $upload->invalid_count > 0;
+                } elseif ($this->selectedStatus === 'resolved') {
+                    return $upload->resolved_at !== null && $upload->invalid_count === 0;
+                }
+
+                return true;
+            });
+            $query = $filtered;
+        } else {
+            $query = $query->get();
+        }
+
+        if ($this->selectedResolved === 'resolved') {
+            $query = collect($query)->filter(fn ($upload) => $upload->invalid_count === 0);
+        } elseif ($this->selectedResolved === 'unresolved') {
+            $query = collect($query)->filter(fn ($upload) => $upload->invalid_count > 0);
+        }
+
+        return collect($query)
+            ->pluck('import_type')
+            ->map(fn ($type) => $type instanceof ImportType ? $type->value : $type)
+            ->unique()
+            ->sort()
+            ->values()
+            ->toArray();
     }
 
     #[Computed]
@@ -717,13 +769,23 @@ class extends Component
                     @endif
                 </flux:radio.group>
             </div>
-            <div>
-                <flux:radio.group wire:model.live="selectedImportType" :label="__('Tip uvoza')" variant="pills">
-                    <flux:radio value="all" :label="__('All')"/>
-                    <flux:radio value="scale_csv" :label="__('Iz vage')"/>
-                    <flux:radio value="manual_csv" :label="__('Ručni')"/>
-                </flux:radio.group>
-            </div>
+            @if(count($this->availableImportTypes) > 0)
+                <div>
+                    <flux:radio.group wire:model.live="selectedImportType" :label="__('Tip uvoza')" variant="pills">
+                        <flux:radio value="all" :label="__('All')"/>
+                        @foreach($this->availableImportTypes as $type)
+                            @php
+                                $labels = [
+                                    'scale_csv' => __('Iz vage'),
+                                    'manual_csv' => __('Ručni'),
+                                ];
+                                $label = $labels[$type] ?? $type;
+                            @endphp
+                            <flux:radio value="{{ $type }}" :label="$label"/>
+                        @endforeach
+                    </flux:radio.group>
+                </div>
+            @endif
             <div class="flex justify-between items-center">
                 <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search" :placeholder="__('Search by filename...')" icon="magnifying-glass" class="w-72!"/>
                 <flux:select wire:model.live="perPage" size="sm" class="w-28">
