@@ -8,31 +8,31 @@ use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 
 new class extends Component {
-    private const WMO_DESCRIPTIONS = [
-        0 => ['emoji' => '☀️', 'label' => 'Clear'],
-        1 => ['emoji' => '🌤️', 'label' => 'Mostly clear'],
-        2 => ['emoji' => '⛅', 'label' => 'Partly cloudy'],
-        3 => ['emoji' => '☁️', 'label' => 'Cloudy'],
-        45 => ['emoji' => '🌫️', 'label' => 'Fog'],
-        48 => ['emoji' => '🌫️', 'label' => 'Depositing fog'],
-        51 => ['emoji' => '🌧️', 'label' => 'Light drizzle'],
-        53 => ['emoji' => '🌧️', 'label' => 'Moderate drizzle'],
-        55 => ['emoji' => '🌧️', 'label' => 'Heavy drizzle'],
-        61 => ['emoji' => '🌧️', 'label' => 'Slight rain'],
-        63 => ['emoji' => '🌧️', 'label' => 'Moderate rain'],
-        65 => ['emoji' => '🌧️', 'label' => 'Heavy rain'],
-        71 => ['emoji' => '🌨️', 'label' => 'Slight snow'],
-        73 => ['emoji' => '🌨️', 'label' => 'Moderate snow'],
-        75 => ['emoji' => '🌨️', 'label' => 'Heavy snow'],
-        77 => ['emoji' => '🌨️', 'label' => 'Snow grains'],
-        80 => ['emoji' => '🌦️', 'label' => 'Slight rain showers'],
-        81 => ['emoji' => '🌦️', 'label' => 'Moderate rain showers'],
-        82 => ['emoji' => '🌦️', 'label' => 'Heavy rain showers'],
-        85 => ['emoji' => '🌨️', 'label' => 'Slight snow showers'],
-        86 => ['emoji' => '🌨️', 'label' => 'Heavy snow showers'],
-        95 => ['emoji' => '⛈️', 'label' => 'Thunderstorm'],
-        96 => ['emoji' => '⛈️', 'label' => 'Thunderstorm with hail'],
-        99 => ['emoji' => '⛈️', 'label' => 'Thunderstorm with hail'],
+    private const WMO_EMOJIS = [
+        0 => '☀️',
+        1 => '🌤️',
+        2 => '⛅',
+        3 => '☁️',
+        45 => '🌫️',
+        48 => '🌫️',
+        51 => '🌧️',
+        53 => '🌧️',
+        55 => '🌧️',
+        61 => '🌧️',
+        63 => '🌧️',
+        65 => '🌧️',
+        71 => '🌨️',
+        73 => '🌨️',
+        75 => '🌨️',
+        77 => '🌨️',
+        80 => '🌦️',
+        81 => '🌦️',
+        82 => '🌦️',
+        85 => '🌨️',
+        86 => '🌨️',
+        95 => '⛈️',
+        96 => '⛈️',
+        99 => '⛈️',
     ];
 
     #[Computed]
@@ -63,7 +63,37 @@ new class extends Component {
 
     public function getWeatherDescription (int $code): array
     {
-        return self::WMO_DESCRIPTIONS[$code] ?? ['emoji' => '❓', 'label' => 'Nepoznato'];
+        $labels = [
+            0 => __('Clear'),
+            1 => __('Mostly clear'),
+            2 => __('Partly cloudy'),
+            3 => __('Cloudy'),
+            45 => __('Fog'),
+            48 => __('Depositing fog'),
+            51 => __('Light drizzle'),
+            53 => __('Moderate drizzle'),
+            55 => __('Heavy drizzle'),
+            61 => __('Slight rain'),
+            63 => __('Moderate rain'),
+            65 => __('Heavy rain'),
+            71 => __('Slight snow'),
+            73 => __('Moderate snow'),
+            75 => __('Heavy snow'),
+            77 => __('Snow grains'),
+            80 => __('Slight rain showers'),
+            81 => __('Moderate rain showers'),
+            82 => __('Heavy rain showers'),
+            85 => __('Slight snow showers'),
+            86 => __('Heavy snow showers'),
+            95 => __('Thunderstorm'),
+            96 => __('Thunderstorm with hail'),
+            99 => __('Thunderstorm with hail'),
+        ];
+
+        return [
+            'emoji' => self::WMO_EMOJIS[$code] ?? '❓',
+            'label' => $labels[$code] ?? __('Unknown'),
+        ];
     }
 
     public function getDayName ($date): string
