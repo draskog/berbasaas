@@ -17,12 +17,12 @@ use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 new
 #[Layout('layouts.app')]
 #[Title('Harvest Records')]
-class extends Component
-{
+class extends Component {
     use WithFileUploads, WithPagination;
 
     public int $selectedProductId = 0;
@@ -77,7 +77,7 @@ class extends Component
     public string $selectedImportType = 'all';
 
     #[Computed]
-    public function products(): Collection
+    public function products (): Collection
     {
         return Product::where('company_id', auth()->user()->company_id)
             ->where('active', true)
@@ -86,20 +86,20 @@ class extends Component
     }
 
     #[Computed]
-    public function selectedProducts(): Collection
+    public function selectedProducts (): Collection
     {
         return Product::where('company_id', auth()->user()->company_id)
-            ->whereHas('harvestUploads', fn ($q) => $q->where('company_id', auth()->user()->company_id))
+            ->whereHas('harvestUploads', fn($q) => $q->where('company_id', auth()->user()->company_id))
             ->orderBy('name')
             ->get();
     }
 
     #[Computed]
-    public function availableYears(): array
+    public function availableYears (): array
     {
         return HarvestUpload::where('company_id', auth()->user()->company_id)
             ->pluck('date_from')
-            ->map(fn ($date) => $date->year)
+            ->map(fn($date) => $date->year)
             ->unique()
             ->sortDesc()
             ->values()
@@ -107,7 +107,7 @@ class extends Component
     }
 
     #[Computed]
-    public function availableStatuses(): array
+    public function availableStatuses (): array
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
             ->withCount('harvestRecords as valid_count')
@@ -139,7 +139,7 @@ class extends Component
     }
 
     #[Computed]
-    public function availableResolved(): array
+    public function availableResolved (): array
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
             ->withCount('stagingRecords as invalid_count');
@@ -157,11 +157,17 @@ class extends Component
             $filtered = $uploads->filter(function ($upload) {
                 if ($this->selectedStatus === 'valid') {
                     return $upload->valid_count > 0 && $upload->invalid_count === 0;
-                } elseif ($this->selectedStatus === 'invalid') {
+                }
+
+                if ($this->selectedStatus === 'invalid') {
                     return $upload->valid_count === 0;
-                } elseif ($this->selectedStatus === 'partially_valid') {
+                }
+
+                if ($this->selectedStatus === 'partially_valid') {
                     return $upload->valid_count > 0 && $upload->invalid_count > 0;
-                } elseif ($this->selectedStatus === 'resolved') {
+                }
+
+                if ($this->selectedStatus === 'resolved') {
                     return $upload->resolved_at !== null && $upload->invalid_count === 0;
                 }
 
@@ -185,7 +191,7 @@ class extends Component
     }
 
     #[Computed]
-    public function availableImportTypes(): array
+    public function availableImportTypes (): array
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
             ->whereNotNull('import_type')
@@ -205,11 +211,17 @@ class extends Component
             $filtered = $uploads->filter(function ($upload) {
                 if ($this->selectedStatus === 'valid') {
                     return $upload->valid_count > 0 && $upload->invalid_count === 0;
-                } elseif ($this->selectedStatus === 'invalid') {
+                }
+
+                if ($this->selectedStatus === 'invalid') {
                     return $upload->valid_count === 0;
-                } elseif ($this->selectedStatus === 'partially_valid') {
+                }
+
+                if ($this->selectedStatus === 'partially_valid') {
                     return $upload->valid_count > 0 && $upload->invalid_count > 0;
-                } elseif ($this->selectedStatus === 'resolved') {
+                }
+
+                if ($this->selectedStatus === 'resolved') {
                     return $upload->resolved_at !== null && $upload->invalid_count === 0;
                 }
 
@@ -221,14 +233,14 @@ class extends Component
         }
 
         if ($this->selectedResolved === 'resolved') {
-            $query = collect($query)->filter(fn ($upload) => $upload->invalid_count === 0);
+            $query = collect($query)->filter(fn($upload) => $upload->invalid_count === 0);
         } elseif ($this->selectedResolved === 'unresolved') {
-            $query = collect($query)->filter(fn ($upload) => $upload->invalid_count > 0);
+            $query = collect($query)->filter(fn($upload) => $upload->invalid_count > 0);
         }
 
         return collect($query)
             ->pluck('import_type')
-            ->map(fn ($type) => $type instanceof ImportType ? $type->value : $type)
+            ->map(fn($type) => $type instanceof ImportType ? $type->value : $type)
             ->unique()
             ->sort()
             ->values()
@@ -236,12 +248,12 @@ class extends Component
     }
 
     #[Computed]
-    public function recentUploads()
+    public function recentUploads ()
     {
         $query = HarvestUpload::where('company_id', auth()->user()->company_id)
             ->withCount('harvestRecords as valid_count')
             ->withCount('stagingRecords as invalid_count')
-            ->withCount(['stagingRecords as db_duplicate_count' => fn ($q) => $q->where('validation_reason', 'like', '%db_duplicate%')]);
+            ->withCount(['stagingRecords as db_duplicate_count' => fn($q) => $q->where('validation_reason', 'like', '%db_duplicate%')]);
 
         if ($this->selectedYear > 0) {
             $query->whereYear('date_from', $this->selectedYear);
@@ -291,7 +303,7 @@ class extends Component
         return $query->paginate($this->perPage);
     }
 
-    public function mount(): void
+    public function mount (): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
         $currentYear = now()->year;
@@ -302,42 +314,42 @@ class extends Component
         $this->manualHarvestDate = now()->toDateString();
     }
 
-    public function updatedPerPage(): void
+    public function updatedPerPage (): void
     {
         $this->resetPage();
     }
 
-    public function updatedselectedProduct(): void
+    public function updatedselectedProduct (): void
     {
         $this->resetPage();
     }
 
-    public function updatedselectedStatus(): void
+    public function updatedselectedStatus (): void
     {
         $this->resetPage();
     }
 
-    public function updatedselectedResolved(): void
+    public function updatedselectedResolved (): void
     {
         $this->resetPage();
     }
 
-    public function updatedSelectedImportType(): void
+    public function updatedSelectedImportType (): void
     {
         $this->resetPage();
     }
 
-    public function updatedselectedYear(): void
+    public function updatedselectedYear (): void
     {
         $this->resetPage();
     }
 
-    public function updatedSearch(): void
+    public function updatedSearch (): void
     {
         $this->resetPage();
     }
 
-    public function sort(string $column): void
+    public function sort (string $column): void
     {
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -348,7 +360,7 @@ class extends Component
         $this->resetPage();
     }
 
-    public function uploadFile(): void
+    public function uploadFile (): void
     {
         $this->validate([
             'selectedProductId' => 'required|exists:products,id',
@@ -372,8 +384,10 @@ class extends Component
 
         // Reload to get counts
         $upload->loadCount('harvestRecords as valid_count');
-        $upload->loadCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
-        $upload->loadCount(['stagingRecords as resolvable_count' => fn ($q) => $q->where('status', 'invalid')->whereRaw("validation_reason NOT LIKE '%duplicate%' AND validation_reason NOT LIKE '%db_duplicate%'")]);
+        $upload->loadCount(['stagingRecords as invalid_count' => fn($q) => $q->where('status', 'invalid')]);
+        $upload->loadCount([
+            'stagingRecords as resolvable_count' => fn($q) => $q->where('status', 'invalid')->whereRaw("validation_reason NOT LIKE '%duplicate%' AND validation_reason NOT LIKE '%db_duplicate%'")
+        ]);
 
         $validCount = $upload->valid_count;
         $invalidCount = $upload->invalid_count;
@@ -410,7 +424,7 @@ class extends Component
         Flux::toast(text: $message, variant: $variant);
     }
 
-    public function uploadManualFile(): void
+    public function uploadManualFile (): void
     {
         $this->validate([
             'selectedProductId' => 'required|exists:products,id',
@@ -439,8 +453,10 @@ class extends Component
 
             // Reload to get counts
             $upload->loadCount('harvestRecords as valid_count');
-            $upload->loadCount(['stagingRecords as invalid_count' => fn ($q) => $q->where('status', 'invalid')]);
-            $upload->loadCount(['stagingRecords as resolvable_count' => fn ($q) => $q->where('status', 'invalid')->whereRaw("validation_reason NOT LIKE '%duplicate%' AND validation_reason NOT LIKE '%db_duplicate%'")]);
+            $upload->loadCount(['stagingRecords as invalid_count' => fn($q) => $q->where('status', 'invalid')]);
+            $upload->loadCount([
+                'stagingRecords as resolvable_count' => fn($q) => $q->where('status', 'invalid')->whereRaw("validation_reason NOT LIKE '%duplicate%' AND validation_reason NOT LIKE '%db_duplicate%'")
+            ]);
 
             $validCount = $upload->valid_count;
             $invalidCount = $upload->invalid_count;
@@ -473,12 +489,12 @@ class extends Component
             }
 
             Flux::toast(text: $message, variant: $variant);
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             Flux::toast(text: __('Error: :message', ['message' => $e->getMessage()]), variant: 'danger');
         }
     }
 
-    public function downloadManualCsvTemplate()
+    public function downloadManualCsvTemplate (): StreamedResponse
     {
         $settings = HarvestImportSettings::where('company_id', auth()->user()->company_id)->first();
         $delimiter = $settings?->csv_delimiter ?? ',';
@@ -499,7 +515,7 @@ class extends Component
 
         return response()
             ->streamDownload(
-                fn () => print $content,
+                fn() => print $content,
                 $filename,
                 [
                     'Content-Type' => 'text/csv',
@@ -508,19 +524,19 @@ class extends Component
             );
     }
 
-    public function confirmResolveUpload(int $id): void
+    public function confirmResolveUpload (int $id): void
     {
         $this->resolvingUploadId = $id;
         $this->showResolveModal = true;
     }
 
-    public function confirmDeleteUpload(int $id): void
+    public function confirmDeleteUpload (int $id): void
     {
         $this->deletingUploadId = $id;
         $this->showDeleteModal = true;
     }
 
-    public function deleteUpload(): void
+    public function deleteUpload (): void
     {
         $upload = HarvestUpload::find($this->deletingUploadId);
         if ($upload) {
@@ -533,13 +549,13 @@ class extends Component
         Flux::toast(text: __('Upload deleted.'), variant: 'warning');
     }
 
-    public function confirmArchiveUpload(int $id): void
+    public function confirmArchiveUpload (int $id): void
     {
         $this->archivingUploadId = $id;
         $this->showArchiveModal = true;
     }
 
-    public function archiveUpload(): void
+    public function archiveUpload (): void
     {
         $upload = HarvestUpload::find($this->archivingUploadId);
         if ($upload) {
@@ -553,7 +569,7 @@ class extends Component
         Flux::toast(text: __('Upload archived.'), variant: 'success');
     }
 
-    public function autoResolve(int $uploadId): void
+    public function autoResolve (int $uploadId): void
     {
         $upload = HarvestUpload::findOrFail($uploadId);
 
@@ -602,10 +618,10 @@ class extends Component
             }
 
             if ($suggestedTare === null) {
-                $allTareErrors = $tareErrors->filter(fn ($r) => $r->sequence_number !== null);
+                $allTareErrors = $tareErrors->filter(fn($r) => $r->sequence_number !== null);
                 if ($allTareErrors->isNotEmpty()) {
                     $nextSequence = $allTareErrors->pluck('sequence_number')
-                        ->map(fn ($n) => $n + 1)
+                        ->map(fn($n) => $n + 1)
                         ->unique();
 
                     $suggestedTare = HarvestRecordStaging::where('upload_id', $uploadId)
@@ -683,7 +699,7 @@ class extends Component
         Flux::toast(text: $message, variant: $variant);
     }
 
-    private function promoteRecord(HarvestRecordStaging $record, ?int $originalHarvesterNumber = null): void
+    private function promoteRecord (HarvestRecordStaging $record, ?int $originalHarvesterNumber = null): void
     {
         $data = [
             'company_id' => $record->company_id,
@@ -861,7 +877,7 @@ class extends Component
                                         'scale_csv' => __('Iz vage'),
                                         'manual_csv' => __('Ručni'),
                                     ];
-                                    $typeValue = $upload->import_type instanceof \App\Enums\ImportType ? $upload->import_type->value : $upload->import_type;
+                                    $typeValue = $upload->import_type instanceof ImportType ? $upload->import_type->value : $upload->import_type;
                                     $icon = $icons[$typeValue] ?? 'document';
                                     $label = $labels[$typeValue] ?? $typeValue;
                                 @endphp
