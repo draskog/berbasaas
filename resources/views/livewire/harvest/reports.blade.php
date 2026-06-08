@@ -310,26 +310,32 @@ class extends Component
             $companyId = auth()->user()->company_id;
             $selectedYear = $this->selectedYear;
 
-            $harvestersWithSearch = HarvesterAssignment::where('company_id', $companyId)
-                ->when($selectedYear > 0, fn ($q) => $q->where('year', $selectedYear))
-                ->with('harvester')
-                ->get()
-                ->filter(function ($assignment) use ($search) {
-                    if (! $assignment->harvester) {
-                        return false;
-                    }
-                    $name = strtolower($assignment->harvester->name);
-                    $prefix = strtolower($assignment->harvester->prefix ?? '');
+            // Ako počinje sa #, traži exact harvester number
+            if (str_starts_with($search, '#')) {
+                $number = (int) substr($search, 1);
+                $query->where('harvester_number', $number);
+            } else {
+                $harvestersWithSearch = HarvesterAssignment::where('company_id', $companyId)
+                    ->when($selectedYear > 0, fn ($q) => $q->where('year', $selectedYear))
+                    ->with('harvester')
+                    ->get()
+                    ->filter(function ($assignment) use ($search) {
+                        if (! $assignment->harvester) {
+                            return false;
+                        }
+                        $name = strtolower($assignment->harvester->name);
+                        $prefix = strtolower($assignment->harvester->prefix ?? '');
 
-                    return str_contains($name, $search) || str_contains($prefix, $search);
-                })
-                ->pluck('number')
-                ->toArray();
+                        return str_contains($name, $search) || str_contains($prefix, $search);
+                    })
+                    ->pluck('number')
+                    ->toArray();
 
-            if (empty($harvestersWithSearch)) {
-                $harvestersWithSearch = [0];
+                if (empty($harvestersWithSearch)) {
+                    $harvestersWithSearch = [0];
+                }
+                $query->whereIn('harvester_number', $harvestersWithSearch);
             }
-            $query->whereIn('harvester_number', $harvestersWithSearch);
         }
 
         return $query;
