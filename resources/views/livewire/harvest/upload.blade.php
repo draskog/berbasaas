@@ -806,7 +806,6 @@ class extends Component
             <flux:table.columns>
                 <flux:table.column sortable :sorted="$sortBy === 'original_filename'" :direction="$sortDirection" wire:click="sort('original_filename')">{{ __('Filename') }}</flux:table.column>
                 <flux:table.column>{{ __('Product') }}</flux:table.column>
-                <flux:table.column>{{ __('Uploaded By') }}</flux:table.column>
                 <flux:table.column>{{ __('Total') }}</flux:table.column>
                 <flux:table.column>{{ __('Valid') }}</flux:table.column>
                 <flux:table.column>{{ __('Duplicates') }}</flux:table.column>
@@ -822,7 +821,6 @@ class extends Component
                     <flux:table.row>
                         <flux:table.cell>{{ $upload->original_filename }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->product->name }}</flux:table.cell>
-                        <flux:table.cell>{{ $upload->uploadedBy->name }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->record_count }}</flux:table.cell>
                         <flux:table.cell>{{ $upload->valid_count }}</flux:table.cell>
                         <flux:table.cell>
