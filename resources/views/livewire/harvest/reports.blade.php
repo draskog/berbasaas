@@ -37,9 +37,6 @@ class extends Component {
     public ?DateRange $dateRange = null;
 
     #[Url]
-    public int $selectedHarvesterNumber = 0;
-
-    #[Url]
     public string $selectedPrefix = '';
 
     #[Url]
@@ -108,66 +105,6 @@ class extends Component {
             ->pluck('harvesters.prefix')
             ->sort()
             ->values();
-    }
-
-    #[Computed]
-    public function harvesterNumbers (): Collection
-    {
-        $query = HarvestRecord::where('company_id', auth()->user()->company_id)
-            ->when($this->selectedYear, fn($q) => $q->whereYear('weighed_at', $this->selectedYear))
-            ->when($this->fromDate, fn($q) => $q->whereDate('weighed_at', '>=', $this->fromDate))
-            ->when($this->toDate, fn($q) => $q->whereDate('weighed_at', '<=', $this->toDate));
-
-        if ($this->selectedPrefix) {
-            $query->whereExists(function ($sub) {
-                $sub->select('harvester_assignments.id')
-                    ->from('harvester_assignments')
-                    ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
-                    ->whereColumn('harvester_assignments.company_id', 'harvest_records.company_id')
-                    ->whereColumn('harvester_assignments.number', 'harvest_records.harvester_number');
-
-                if (\Illuminate\Support\Facades\DB::getDefaultConnection() === 'sqlite') {
-                    $sub->whereRaw('harvester_assignments.year = CAST(strftime(\'%Y\', harvest_records.weighed_at) AS INTEGER)');
-                } else {
-                    $sub->whereRaw('harvester_assignments.year = YEAR(harvest_records.weighed_at)');
-                }
-
-                $sub->where('harvesters.prefix', $this->selectedPrefix);
-            });
-        }
-
-        $harvesterNumbers = $query->distinct()
-            ->pluck('harvester_number')
-            ->sort()
-            ->values();
-
-        if (! $this->searchHarvesterName) {
-            return $harvesterNumbers;
-        }
-
-        $search = strtolower($this->searchHarvesterName);
-        $companyId = auth()->user()->company_id;
-        $selectedYear = $this->selectedYear;
-
-        return $harvesterNumbers->filter(function ($number) use ($search, $companyId, $selectedYear) {
-            $assignment = HarvesterAssignment::where('company_id', $companyId)
-                ->where('number', $number);
-
-            if ($selectedYear > 0) {
-                $assignment->where('year', $selectedYear);
-            }
-
-            $assignment = $assignment->with('harvester')->first();
-
-            if (! $assignment || ! $assignment->harvester) {
-                return false;
-            }
-
-            $name = strtolower($assignment->harvester->name);
-            $prefix = strtolower($assignment->harvester->prefix ?? '');
-
-            return str_contains($name, $search) || str_contains($prefix, $search);
-        });
     }
 
     #[Computed]
@@ -247,7 +184,6 @@ class extends Component {
 
     public function updatedSelectedYear (): void
     {
-        $this->selectedHarvesterNumber = 0;
         $this->fromDate = Carbon::create($this->selectedYear)->format('Y-m-d');
         $this->toDate = Carbon::create($this->selectedYear, 12, 31)->format('Y-m-d');
         $this->dateRange = new DateRange($this->fromDate, $this->toDate);
@@ -299,8 +235,7 @@ class extends Component {
         $query = HarvestRecord::where('company_id', auth()->user()->company_id)
             ->when($this->fromDate, fn($q) => $q->whereDate('weighed_at', '>=', $this->fromDate))
             ->when($this->toDate, fn($q) => $q->whereDate('weighed_at', '<=', $this->toDate))
-            ->when($this->selectedProductId, fn($q) => $q->where('product_id', $this->selectedProductId))
-            ->when($this->selectedHarvesterNumber, fn($q) => $q->where('harvester_number', $this->selectedHarvesterNumber));
+            ->when($this->selectedProductId, fn($q) => $q->where('product_id', $this->selectedProductId));
 
         if ($this->selectedPrefix) {
             $query->whereExists(function ($sub) {
@@ -325,11 +260,26 @@ class extends Component {
             $companyId = auth()->user()->company_id;
             $selectedYear = $this->selectedYear;
 
-            $numbers = $this->harvesterNumbers()->toArray();
-            if (empty($numbers)) {
-                $numbers = [0];
+            $harvestersWithSearch = HarvesterAssignment::where('company_id', $companyId)
+                ->when($selectedYear > 0, fn($q) => $q->where('year', $selectedYear))
+                ->with('harvester')
+                ->get()
+                ->filter(function ($assignment) use ($search) {
+                    if (! $assignment->harvester) {
+                        return false;
+                    }
+                    $name = strtolower($assignment->harvester->name);
+                    $prefix = strtolower($assignment->harvester->prefix ?? '');
+
+                    return str_contains($name, $search) || str_contains($prefix, $search);
+                })
+                ->pluck('number')
+                ->toArray();
+
+            if (empty($harvestersWithSearch)) {
+                $harvestersWithSearch = [0];
             }
-            $query->whereIn('harvester_number', $numbers);
+            $query->whereIn('harvester_number', $harvestersWithSearch);
         }
 
         return $query;
@@ -592,15 +542,6 @@ class extends Component {
                     <flux:radio value="0" label="{{ __('All') }}"/>
                     @foreach ($this->products as $product)
                         <flux:radio value="{{ $product->id }}" label="{{ $product->name }}"/>
-                    @endforeach
-                </flux:radio.group>
-            </div>
-
-            <div>
-                <flux:radio.group wire:model.live="selectedHarvesterNumber" label="{{ __('Harvester') }}" variant="pills">
-                    <flux:radio value="0" label="{{ __('All') }}"/>
-                    @foreach ($this->harvesterNumbers as $number)
-                        <flux:radio value="{{ $number }}" label="#{{ $number }}"/>
                     @endforeach
                 </flux:radio.group>
             </div>
