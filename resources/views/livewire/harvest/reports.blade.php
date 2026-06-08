@@ -203,6 +203,7 @@ class extends Component {
     public function minDate (): string
     {
         $year = $this->selectedYear ?: $this->availableYears->first() ?? now()->year;
+
         return Carbon::create($year)->format('Y-m-d');
     }
 
@@ -210,6 +211,7 @@ class extends Component {
     public function maxDate (): string
     {
         $year = $this->selectedYear ?: $this->availableYears->first() ?? now()->year;
+
         return Carbon::create($year, 12, 31)->format('Y-m-d');
     }
 
@@ -613,17 +615,18 @@ class extends Component {
                     </flux:radio.group>
                 </div>
             @endif
-
-            <div>
-                <flux:input
-                    size="sm"
-                    wire:model.live.debounce.300ms="searchHarvesterName"
-                    type="search"
-                    placeholder="{{ __('Search by harvester name...') }}"
-                    icon="magnifying-glass"
-                    clearable
-                    class="w-72"
-                />
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-4">
+                    <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search"
+                                placeholder="{{ __('Search by harvester number or name...') }}"
+                                icon="magnifying-glass" class="w-72!"/>
+                </div>
+                <flux:select wire:model.live="perPage" size="sm" class="w-28">
+                    <flux:select.option value="25">25</flux:select.option>
+                    <flux:select.option value="50">50</flux:select.option>
+                    <flux:select.option value="100">100</flux:select.option>
+                    <flux:select.option value="0">{{ __('All') }}</flux:select.option>
+                </flux:select>
             </div>
         </div>
 
@@ -643,172 +646,172 @@ class extends Component {
 
             <!-- Daily Summary Tab -->
             <flux:tab.panel name="daily">
-            <flux:table :paginate="$this->perPage > 0 ? $this->dailyData : null">
-                <flux:table.columns>
-                    <flux:table.column sortable :sorted="$dailySortBy === 'date'" :direction="$dailySortDirection" wire:click="sortDaily('date')">{{ __('Date') }}</flux:table.column>
-                    <flux:table.column sortable :sorted="$dailySortBy === 'bucket_count'" :direction="$dailySortDirection" wire:click="sortDaily('bucket_count')">{{ __('Buckets') }}</flux:table.column>
-                    <flux:table.column sortable :sorted="$dailySortBy === 'total_weight'" :direction="$dailySortDirection" wire:click="sortDaily('total_weight')">{{ __('Total kg') }}</flux:table.column>
-                </flux:table.columns>
-
-                <flux:table.rows>
-                    @forelse ($this->dailyData as $row)
-                        <flux:table.row>
-                            <flux:table.cell>{{ Carbon::parse($row['date'])->format('d.m.Y') }}</flux:table.cell>
-                            <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
-                            <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
-                        </flux:table.row>
-                    @empty
-                        <flux:table.row>
-                            <flux:table.cell colspan="3" class="text-center text-gray-500">{{ __('No data') }}</flux:table.cell>
-                        </flux:table.row>
-                    @endforelse
-
-                    @if ($this->dailyData->isNotEmpty())
-                        <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                            <flux:table.cell>{{ __('Total') }}</flux:table.cell>
-                            <flux:table.cell>{{ $this->dailyTotals['buckets'] }}</flux:table.cell>
-                            <flux:table.cell>{{ number_format($this->dailyTotals['weight'], 3, ',', '.') }}</flux:table.cell>
-                        </flux:table.row>
-                    @endif
-                </flux:table.rows>
-            </flux:table>
-        </flux:tab.panel>
-
-        <!-- Harvester Totals Tab -->
-        <flux:tab.panel name="harvesters">
-            <flux:table :paginate="$this->perPage > 0 ? $this->harvesterData : null">
-                <flux:table.columns>
-                    <flux:table.column sortable :sorted="$harvesterSortBy === 'harvester_number'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('harvester_number')">#</flux:table.column>
-                    <flux:table.column>{{ __('Name') }}</flux:table.column>
-                    <flux:table.column sortable :sorted="$harvesterSortBy === 'bucket_count'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('bucket_count')">{{ __('Buckets') }}</flux:table.column>
-                    <flux:table.column sortable :sorted="$harvesterSortBy === 'total_weight'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('total_weight')">{{ __('Total kg') }}</flux:table.column>
-                    <flux:table.column>{{ __('Earnings') }}</flux:table.column>
-                </flux:table.columns>
-
-                <flux:table.rows>
-                    @forelse ($this->harvesterData as $row)
-                        <flux:table.row>
-                            <flux:table.cell>{{ $row['number'] }}</flux:table.cell>
-                            <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
-                            <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
-                            <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
-                            <flux:table.cell>
-                                @if ($row['earnings'] !== null)
-                                    €{{ number_format($row['earnings'], 2, ',', '.') }}
-                                @else
-                                    —
-                                @endif
-                            </flux:table.cell>
-                        </flux:table.row>
-                    @empty
-                        <flux:table.row>
-                            <flux:table.cell colspan="5" class="text-center text-gray-500">{{ __('No data') }}</flux:table.cell>
-                        </flux:table.row>
-                    @endforelse
-
-                    @if ($this->harvesterData->isNotEmpty())
-                        <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                            <flux:table.cell colspan="2">{{ __('Total') }}</flux:table.cell>
-                            <flux:table.cell>{{ $this->harvesterTotals['buckets'] }}</flux:table.cell>
-                            <flux:table.cell>{{ number_format($this->harvesterTotals['weight'], 3, ',', '.') }}</flux:table.cell>
-                            <flux:table.cell>€{{ number_format($this->harvesterTotals['earnings'], 2, ',', '.') }}</flux:table.cell>
-                        </flux:table.row>
-                    @endif
-                </flux:table.rows>
-            </flux:table>
-        </flux:tab.panel>
-
-        <!-- Product Totals Tab -->
-        <flux:tab.panel name="products">
-            <flux:table :paginate="$this->perPage > 0 ? $this->productData : null">
-                <flux:table.columns>
-                    <flux:table.column>{{ __('Product') }}</flux:table.column>
-                    <flux:table.column sortable :sorted="$productSortBy === 'bucket_count'" :direction="$productSortDirection" wire:click="sortProducts('bucket_count')">{{ __('Total kg') }}</flux:table.column>
-                    <flux:table.column>{{ __('Price/kg') }}</flux:table.column>
-                    <flux:table.column sortable :sorted="$productSortBy === 'total_weight'" :direction="$productSortDirection" wire:click="sortProducts('total_weight')">{{ __('Total earnings') }}</flux:table.column>
-                </flux:table.columns>
-
-                <flux:table.rows>
-                    @forelse ($this->productData as $row)
-                        <flux:table.row>
-                            <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
-                            <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
-                            <flux:table.cell>
-                                @if ($row['price_per_kg'])
-                                    €{{ number_format($row['price_per_kg'], 3, ',', '.') }}
-                                @else
-                                    —
-                                @endif
-                            </flux:table.cell>
-                            <flux:table.cell>
-                                @if ($row['earnings'] !== null)
-                                    €{{ number_format($row['earnings'], 2, ',', '.') }}
-                                @else
-                                    —
-                                @endif
-                            </flux:table.cell>
-                        </flux:table.row>
-                    @empty
-                        <flux:table.row>
-                            <flux:table.cell colspan="4" class="text-center text-gray-500">{{ __('No data') }}</flux:table.cell>
-                        </flux:table.row>
-                    @endforelse
-
-                    @if ($this->productData->isNotEmpty())
-                        <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
-                            <flux:table.cell>{{ __('Total') }}</flux:table.cell>
-                            <flux:table.cell>{{ number_format($this->productTotals['weight'], 3, ',', '.') }}</flux:table.cell>
-                            <flux:table.cell>—</flux:table.cell>
-                            <flux:table.cell>€{{ number_format($this->productTotals['earnings'], 2, ',', '.') }}</flux:table.cell>
-                        </flux:table.row>
-                    @endif
-                </flux:table.rows>
-            </flux:table>
-        </flux:tab.panel>
-
-        <!-- Over Limit Tab -->
-        <flux:tab.panel name="over_limit">
-            @php
-                $maxWeight = auth()->user()->company->importSettings?->max_bucket_weight;
-            @endphp
-
-            @if (! $maxWeight)
-                <flux:card class="text-center py-8">
-                    <p class="text-zinc-600 dark:text-zinc-400 mb-4">
-                        {{ __('Maximum bucket weight limit is not configured.') }}
-                    </p>
-                    <a href="{{ route('harvest.edit') }}" class="text-blue-600 hover:text-blue-700 dark:text-blue-400">
-                        {{ __('Configure in settings') }}
-                    </a>
-                </flux:card>
-            @else
-                <flux:table :paginate="$this->perPage > 0 ? $this->overLimitRows : null">
+                <flux:table :paginate="$this->perPage > 0 ? $this->dailyData : null">
                     <flux:table.columns>
-                        <flux:table.column>{{ __('Date') }}</flux:table.column>
-                        <flux:table.column>{{ __('Harvester') }}</flux:table.column>
-                        <flux:table.column>{{ __('Over Limit Count') }}</flux:table.column>
-                        <flux:table.column>{{ __('Max Weight (kg)') }}</flux:table.column>
-                        <flux:table.column>{{ __('Total Weight (kg)') }}</flux:table.column>
+                        <flux:table.column sortable :sorted="$dailySortBy === 'date'" :direction="$dailySortDirection" wire:click="sortDaily('date')">{{ __('Date') }}</flux:table.column>
+                        <flux:table.column sortable :sorted="$dailySortBy === 'bucket_count'" :direction="$dailySortDirection" wire:click="sortDaily('bucket_count')">{{ __('Buckets') }}</flux:table.column>
+                        <flux:table.column sortable :sorted="$dailySortBy === 'total_weight'" :direction="$dailySortDirection" wire:click="sortDaily('total_weight')">{{ __('Total kg') }}</flux:table.column>
                     </flux:table.columns>
 
                     <flux:table.rows>
-                        @forelse ($this->overLimitRows as $row)
+                        @forelse ($this->dailyData as $row)
                             <flux:table.row>
                                 <flux:table.cell>{{ Carbon::parse($row['date'])->format('d.m.Y') }}</flux:table.cell>
-                                <flux:table.cell>#{{ $row['number'] }} - {{ $row['name'] }}</flux:table.cell>
-                                <flux:table.cell>{{ $row['over_limit_count'] }}</flux:table.cell>
-                                <flux:table.cell>{{ number_format($row['max_weight'], 3, ',', '.') }}</flux:table.cell>
+                                <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
                                 <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
+                            </flux:table.row>
+                        @empty
+                            <flux:table.row>
+                                <flux:table.cell colspan="3" class="text-center text-gray-500">{{ __('No data') }}</flux:table.cell>
+                            </flux:table.row>
+                        @endforelse
+
+                        @if ($this->dailyData->isNotEmpty())
+                            <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
+                                <flux:table.cell>{{ __('Total') }}</flux:table.cell>
+                                <flux:table.cell>{{ $this->dailyTotals['buckets'] }}</flux:table.cell>
+                                <flux:table.cell>{{ number_format($this->dailyTotals['weight'], 3, ',', '.') }}</flux:table.cell>
+                            </flux:table.row>
+                        @endif
+                    </flux:table.rows>
+                </flux:table>
+            </flux:tab.panel>
+
+            <!-- Harvester Totals Tab -->
+            <flux:tab.panel name="harvesters">
+                <flux:table :paginate="$this->perPage > 0 ? $this->harvesterData : null">
+                    <flux:table.columns>
+                        <flux:table.column sortable :sorted="$harvesterSortBy === 'harvester_number'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('harvester_number')">#</flux:table.column>
+                        <flux:table.column>{{ __('Name') }}</flux:table.column>
+                        <flux:table.column sortable :sorted="$harvesterSortBy === 'bucket_count'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('bucket_count')">{{ __('Buckets') }}</flux:table.column>
+                        <flux:table.column sortable :sorted="$harvesterSortBy === 'total_weight'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('total_weight')">{{ __('Total kg') }}</flux:table.column>
+                        <flux:table.column>{{ __('Earnings') }}</flux:table.column>
+                    </flux:table.columns>
+
+                    <flux:table.rows>
+                        @forelse ($this->harvesterData as $row)
+                            <flux:table.row>
+                                <flux:table.cell>{{ $row['number'] }}</flux:table.cell>
+                                <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
+                                <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
+                                <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
+                                <flux:table.cell>
+                                    @if ($row['earnings'] !== null)
+                                        €{{ number_format($row['earnings'], 2, ',', '.') }}
+                                    @else
+                                        —
+                                    @endif
+                                </flux:table.cell>
                             </flux:table.row>
                         @empty
                             <flux:table.row>
                                 <flux:table.cell colspan="5" class="text-center text-gray-500">{{ __('No data') }}</flux:table.cell>
                             </flux:table.row>
                         @endforelse
+
+                        @if ($this->harvesterData->isNotEmpty())
+                            <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
+                                <flux:table.cell colspan="2">{{ __('Total') }}</flux:table.cell>
+                                <flux:table.cell>{{ $this->harvesterTotals['buckets'] }}</flux:table.cell>
+                                <flux:table.cell>{{ number_format($this->harvesterTotals['weight'], 3, ',', '.') }}</flux:table.cell>
+                                <flux:table.cell>€{{ number_format($this->harvesterTotals['earnings'], 2, ',', '.') }}</flux:table.cell>
+                            </flux:table.row>
+                        @endif
                     </flux:table.rows>
                 </flux:table>
-            @endif
-        </flux:tab.panel>
+            </flux:tab.panel>
+
+            <!-- Product Totals Tab -->
+            <flux:tab.panel name="products">
+                <flux:table :paginate="$this->perPage > 0 ? $this->productData : null">
+                    <flux:table.columns>
+                        <flux:table.column>{{ __('Product') }}</flux:table.column>
+                        <flux:table.column sortable :sorted="$productSortBy === 'bucket_count'" :direction="$productSortDirection" wire:click="sortProducts('bucket_count')">{{ __('Total kg') }}</flux:table.column>
+                        <flux:table.column>{{ __('Price/kg') }}</flux:table.column>
+                        <flux:table.column sortable :sorted="$productSortBy === 'total_weight'" :direction="$productSortDirection" wire:click="sortProducts('total_weight')">{{ __('Total earnings') }}</flux:table.column>
+                    </flux:table.columns>
+
+                    <flux:table.rows>
+                        @forelse ($this->productData as $row)
+                            <flux:table.row>
+                                <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
+                                <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
+                                <flux:table.cell>
+                                    @if ($row['price_per_kg'])
+                                        €{{ number_format($row['price_per_kg'], 3, ',', '.') }}
+                                    @else
+                                        —
+                                    @endif
+                                </flux:table.cell>
+                                <flux:table.cell>
+                                    @if ($row['earnings'] !== null)
+                                        €{{ number_format($row['earnings'], 2, ',', '.') }}
+                                    @else
+                                        —
+                                    @endif
+                                </flux:table.cell>
+                            </flux:table.row>
+                        @empty
+                            <flux:table.row>
+                                <flux:table.cell colspan="4" class="text-center text-gray-500">{{ __('No data') }}</flux:table.cell>
+                            </flux:table.row>
+                        @endforelse
+
+                        @if ($this->productData->isNotEmpty())
+                            <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
+                                <flux:table.cell>{{ __('Total') }}</flux:table.cell>
+                                <flux:table.cell>{{ number_format($this->productTotals['weight'], 3, ',', '.') }}</flux:table.cell>
+                                <flux:table.cell>—</flux:table.cell>
+                                <flux:table.cell>€{{ number_format($this->productTotals['earnings'], 2, ',', '.') }}</flux:table.cell>
+                            </flux:table.row>
+                        @endif
+                    </flux:table.rows>
+                </flux:table>
+            </flux:tab.panel>
+
+            <!-- Over Limit Tab -->
+            <flux:tab.panel name="over_limit">
+                @php
+                    $maxWeight = auth()->user()->company->importSettings?->max_bucket_weight;
+                @endphp
+
+                @if (! $maxWeight)
+                    <flux:card class="text-center py-8">
+                        <p class="text-zinc-600 dark:text-zinc-400 mb-4">
+                            {{ __('Maximum bucket weight limit is not configured.') }}
+                        </p>
+                        <a href="{{ route('harvest.edit') }}" class="text-blue-600 hover:text-blue-700 dark:text-blue-400">
+                            {{ __('Configure in settings') }}
+                        </a>
+                    </flux:card>
+                @else
+                    <flux:table :paginate="$this->perPage > 0 ? $this->overLimitRows : null">
+                        <flux:table.columns>
+                            <flux:table.column>{{ __('Date') }}</flux:table.column>
+                            <flux:table.column>{{ __('Harvester') }}</flux:table.column>
+                            <flux:table.column>{{ __('Over Limit Count') }}</flux:table.column>
+                            <flux:table.column>{{ __('Max Weight (kg)') }}</flux:table.column>
+                            <flux:table.column>{{ __('Total Weight (kg)') }}</flux:table.column>
+                        </flux:table.columns>
+
+                        <flux:table.rows>
+                            @forelse ($this->overLimitRows as $row)
+                                <flux:table.row>
+                                    <flux:table.cell>{{ Carbon::parse($row['date'])->format('d.m.Y') }}</flux:table.cell>
+                                    <flux:table.cell>#{{ $row['number'] }} - {{ $row['name'] }}</flux:table.cell>
+                                    <flux:table.cell>{{ $row['over_limit_count'] }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($row['max_weight'], 3, ',', '.') }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
+                                </flux:table.row>
+                            @empty
+                                <flux:table.row>
+                                    <flux:table.cell colspan="5" class="text-center text-gray-500">{{ __('No data') }}</flux:table.cell>
+                                </flux:table.row>
+                            @endforelse
+                        </flux:table.rows>
+                    </flux:table>
+                @endif
+            </flux:tab.panel>
         </flux:tab.group>
 
     </div>
