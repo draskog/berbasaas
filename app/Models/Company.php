@@ -62,4 +62,9 @@ class Company extends Model
     {
         return $this->hasMany(WeatherRecord::class);
     }
+
+    public function currentWeatherRecords(): HasMany
+    {
+        return $this->hasMany(CurrentWeatherRecord::class);
+    }
 }

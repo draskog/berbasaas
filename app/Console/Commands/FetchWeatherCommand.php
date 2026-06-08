@@ -28,7 +28,10 @@ class FetchWeatherCommand extends Command
 
         foreach ($companies as $company) {
             $this->info("Fetching for: {$company->name}");
+            $this->info('  - Fetching 7-day forecast...');
             $weatherService->fetchForCompany($company);
+            $this->info('  - Fetching current weather...');
+            $weatherService->saveCurrentWeatherForCompany($company);
         }
 
         $this->info('Weather data fetched successfully.');

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\CurrentWeatherRecord;
 use App\Models\ReligiousHoliday;
 use App\Models\WeatherRecord;
 use Illuminate\Support\Collection;
@@ -44,10 +45,27 @@ new class extends Component {
     }
 
     #[Computed]
+    public function currentWeatherRecord(): ?CurrentWeatherRecord
+    {
+        return CurrentWeatherRecord::where('company_id', auth()->user()->company_id)
+            ->whereDate('time', now())
+            ->latest('time')
+            ->first();
+    }
+
+    #[Computed]
+    public function todayWeatherRecord(): ?WeatherRecord
+    {
+        return WeatherRecord::where('company_id', auth()->user()->company_id)
+            ->whereDate('date', now())
+            ->first();
+    }
+
+    #[Computed]
     public function weatherDays (): Collection
     {
         return WeatherRecord::where('company_id', auth()->user()->company_id)
-            ->whereBetween('date', [now()->toDateString(), now()->addDays(5)->toDateString()])
+            ->whereBetween('date', [now()->addDay()->toDateString(), now()->addDays(5)->toDateString()])
             ->orderBy('date')
             ->get();
     }
@@ -150,7 +168,7 @@ new class extends Component {
                     {{ __('Postavi lokaciju kompanije') }}
                 </a>
             </flux:card>
-        @elseif ($this->weatherDays->isEmpty())
+        @elseif (! $this->currentWeatherRecord && $this->weatherDays->isEmpty())
             <flux:card class="text-center py-8">
                 <p class="text-zinc-600 dark:text-zinc-400 mb-4">
                     {{ __('Meteorološki podaci još nisu dostupni') }}
@@ -158,6 +176,106 @@ new class extends Component {
             </flux:card>
         @else
             <div class="grid grid-cols-3 gap-4">
+                <!-- Today: Current Weather -->
+                @if ($this->currentWeatherRecord)
+                    @php
+                        $current = $this->currentWeatherRecord;
+                        $weatherDesc = $this->getWeatherDescription($current->weather_code);
+                        $todayDate = now();
+                        $dayName = $this->getDayName($todayDate);
+                        $dayOfMonth = $todayDate->format('j');
+                        $isHoliday = isset($this->religiousHolidays[$todayDate->toDateString()]);
+                         $holidayName = $this->religiousHolidays[$todayDate->toDateString()] ?? null;
+                    @endphp
+
+                    <flux:card class="relative p-4 flex flex-col col-span-1">
+                        <div class="flex items-start justify-between mb-4 w-full">
+                            <!-- Left: Today label -->
+                            <div>
+                                @if ($isHoliday)
+                                    <div class="text-sm font-semibold text-red-600">
+                                        {{ __('Today') }} - {{ $dayName }}
+                                    </div>
+                                    <flux:tooltip size="sm" class="inline-flex items-center gap-1">
+                                        <span class="text-lg font-bold text-red-600">{{ $dayOfMonth }}</span>
+                                        <img src="{{ asset('images/orthodox_cross.svg') }}" alt="Verski praznik" class="size-4 cursor-help"/>
+                                        <flux:tooltip.content class="max-w-[20rem] space-y-2">
+                                            <p>{{ $holidayName }}</p>
+                                        </flux:tooltip.content>
+                                    </flux:tooltip>
+                                @else
+                                    <div class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                                        {{ __('Today') }} - {{ $dayName }}
+                                    </div>
+                                    <span class="text-lg font-bold text-zinc-900 dark:text-white">{{ $dayOfMonth }}</span>
+                                @endif
+                            </div>
+
+                            <!-- Right: Weather icon and conditions -->
+                            <div class="flex items-start gap-2">
+                                <div class="text-2xl">
+                                    {{ $weatherDesc['emoji'] }}
+                                </div>
+                                <div class="flex flex-col gap-0.5 text-xs">
+                                    <div class="text-zinc-600 dark:text-zinc-400 max-w-[80px] line-clamp-2">
+                                        {{ __($weatherDesc['label']) }}
+                                    </div>
+                                    <div class="flex items-center gap-1 font-semibold">
+                                        <span class="text-zinc-900 dark:text-white">{{ number_format($current->temperature) }}°</span>
+                                        <span class="text-zinc-500">💨 {{ number_format($current->wind_speed) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hourly precipitation chart for today -->
+                        @if ($this->todayWeatherRecord?->hourly_precipitation)
+                            @php $chartData = $this->buildHourlyChartData($this->todayWeatherRecord->hourly_precipitation); @endphp
+                            <div class="w-full mb-3 h-40">
+                                <flux:chart :value="$chartData" class="w-full h-full">
+                                    <flux:chart.svg>
+                                        <flux:chart.area field="mm" class="text-blue-400" curve="smooth"/>
+                                        <flux:chart.line field="mm" class="text-blue-500" curve="smooth" stroke-width="2"/>
+                                        <flux:chart.axis axis="x" field="hour">
+                                            <flux:chart.axis.tick/>
+                                        </flux:chart.axis>
+                                        <flux:chart.axis axis="y">
+                                            <flux:chart.axis.grid/>
+                                        </flux:chart.axis>
+                                        <flux:chart.cursor type="line"/>
+                                    </flux:chart.svg>
+                                    <flux:chart.tooltip>
+                                        <flux:chart.tooltip.heading field="hour"/>
+                                        <flux:chart.tooltip.value field="mm" label="{{ __('Padavine') }}" suffix=" mm"/>
+                                    </flux:chart.tooltip>
+                                </flux:chart>
+                            </div>
+                        @endif
+
+                        <!-- Additional info for current weather -->
+                        <div class="border-t pt-3 space-y-2 text-xs">
+                            <div class="flex justify-between">
+                                <span class="text-zinc-600 dark:text-zinc-400">{{ __('Vlažnost') }}</span>
+                                <span class="font-semibold text-zinc-900 dark:text-white">{{ $current->humidity }}%</span>
+                            </div>
+                            <div class="flex justify-between text-xs text-zinc-500">
+                                <span>{{ $current->time->format('H:i') }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Precipitation total for today -->
+                        <div class="text-center border-t pt-2 w-full">
+                            <div class="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                {{ number_format($this->getTotalPrecipitation($this->todayWeatherRecord?->hourly_precipitation), 1) }} mm
+                            </div>
+                            <div class="text-xs text-zinc-500">
+                                {{ __('Padavine') }}
+                            </div>
+                        </div>
+                    </flux:card>
+                @endif
+
+                <!-- Forecast: Next 5 Days -->
                 @foreach ($this->weatherDays as $weather)
                     @php
                         $date = $weather->date;
@@ -175,12 +293,12 @@ new class extends Component {
                             <!-- Left: Day name and date -->
                             <div>
                                 @if ($isHoliday)
-                                    <div class="text-sm font-semibold text-red-400 dark:text-red-400">
+                                    <div class="text-sm font-semibold text-red-600">
                                         {{ $dayName }}
                                     </div>
                                     <flux:tooltip size="sm" class="inline-flex items-center gap-1">
-                                        <span class="text-lg font-bold text-red-400 dark:text-red-400">{{ $dayOfMonth }}</span>
-                                        <flux:icon.bell class="size-5 cursor-help text-red-400 dark:text-red-600"/>
+                                        <span class="text-lg font-bold text-red-600">{{ $dayOfMonth }}</span>
+                                        <img src="{{ asset('images/orthodox_cross.svg') }}" alt="Verski praznik" class="size-4 cursor-help"/>
                                         <flux:tooltip.content class="max-w-[20rem] space-y-2">
                                             <p>{{ $holidayName }}</p>
                                         </flux:tooltip.content>

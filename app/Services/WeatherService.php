@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Company;
+use App\Models\CurrentWeatherRecord;
 use App\Models\WeatherRecord;
 use Illuminate\Support\Facades\Http;
 
@@ -60,6 +61,46 @@ class WeatherService
             }
         } catch (\Exception) {
             // Silently fail, logging can be added if needed
+        }
+    }
+
+public function saveCurrentWeatherForCompany(Company $company): void
+    {
+        if (! $company->latitude || ! $company->longitude) {
+            return;
+        }
+
+        try {
+            $response = Http::get(self::OPEN_METEO_URL, [
+                'latitude' => $company->latitude,
+                'longitude' => $company->longitude,
+                'current' => 'temperature_2m,weather_code,wind_speed_10m,precipitation,relative_humidity_2m',
+                'timezone' => 'Europe/Belgrade',
+            ]);
+
+            if (! $response->successful()) {
+                return;
+            }
+
+            $data = $response->json();
+
+            CurrentWeatherRecord::updateOrCreate(
+                [
+                    'company_id' => $company->id,
+                    'time' => $data['current']['time'],
+                ],
+                [
+                    'temperature' => $data['current']['temperature_2m'],
+                    'weather_code' => $data['current']['weather_code'],
+                    'wind_speed' => $data['current']['wind_speed_10m'],
+                    'precipitation' => $data['current']['precipitation'],
+                    'humidity' => $data['current']['relative_humidity_2m'] ?? null,
+                    'timezone' => $data['timezone'],
+                    'fetched_at' => now(),
+                ]
+            );
+        } catch (\Exception) {
+            // Silently fail
         }
     }
 
