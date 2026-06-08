@@ -27,6 +27,8 @@ class extends Component {
 
     public array $geocodeSuggestions = [];
 
+    public bool $addressSearchNoResults = false;
+
     public function mount (): void
     {
         $company = Auth::user()->company;
@@ -53,7 +55,7 @@ class extends Component {
             $response = \Illuminate\Support\Facades\Http::get('https://photon.komoot.io/api', [
                 'q' => $this->geocodeSearch,
                 'limit' => 5,
-                'lang' => 'sr',
+                'lang' => 'en',
             ]);
 
             if ($response->successful()) {
@@ -68,6 +70,43 @@ class extends Component {
             }
         } catch (\Exception) {
             $this->geocodeSuggestions = [];
+        }
+    }
+
+    public function findLocationFromAddress(): void
+    {
+        $this->geocodeSuggestions = [];
+        $this->addressSearchNoResults = false;
+
+        if (strlen($this->address ?? '') < 2) {
+            return;
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::get('https://photon.komoot.io/api', [
+                'q' => $this->address,
+                'limit' => 5,
+                'lang' => 'en',
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $suggestions = collect($data['features'] ?? [])
+                    ->map(fn ($feature) => [
+                        'lat' => $feature['geometry']['coordinates'][1],
+                        'lon' => $feature['geometry']['coordinates'][0],
+                        'label' => $this->buildLabel($feature['properties']),
+                    ])
+                    ->toArray();
+
+                if (empty($suggestions)) {
+                    $this->addressSearchNoResults = true;
+                } else {
+                    $this->geocodeSuggestions = $suggestions;
+                }
+            }
+        } catch (\Exception) {
+            $this->addressSearchNoResults = true;
         }
     }
 
