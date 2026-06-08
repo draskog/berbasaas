@@ -9,6 +9,7 @@ use Flux\DateRange;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -19,7 +20,8 @@ use Livewire\WithPagination;
 new
 #[Layout('layouts.app')]
 #[Title('Harvest Reports')]
-class extends Component {
+class extends Component
+{
     use WithPagination;
 
     #[Url]
@@ -62,7 +64,7 @@ class extends Component {
     public string $productSortDirection = 'desc';
 
     #[Computed]
-    public function availableYears (): Collection
+    public function availableYears(): Collection
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->distinct()
@@ -73,16 +75,16 @@ class extends Component {
     }
 
     #[Computed]
-    public function products (): Collection
+    public function products(): Collection
     {
         return Product::where('company_id', auth()->user()->company_id)
-            ->whereHas('harvestRecords', fn($q) => $q->where('company_id', auth()->user()->company_id))
+            ->whereHas('harvestRecords', fn ($q) => $q->where('company_id', auth()->user()->company_id))
             ->orderBy('name')
             ->get();
     }
 
     #[Computed]
-    public function availablePrefixes (): Collection
+    public function availablePrefixes(): Collection
     {
         $query = HarvestRecord::from('harvest_records')
             ->where('harvest_records.company_id', auth()->user()->company_id)
@@ -90,7 +92,7 @@ class extends Component {
                 $join->on('harvester_assignments.company_id', '=', 'harvest_records.company_id')
                     ->on('harvester_assignments.number', '=', 'harvest_records.harvester_number');
 
-                if (\Illuminate\Support\Facades\DB::getDefaultConnection() === 'sqlite') {
+                if (DB::getDefaultConnection() === 'sqlite') {
                     $join->whereRaw('harvester_assignments.year = CAST(strftime(\'%Y\', harvest_records.weighed_at) AS INTEGER)');
                 } else {
                     $join->whereRaw('harvester_assignments.year = YEAR(harvest_records.weighed_at)');
@@ -99,9 +101,9 @@ class extends Component {
             ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
             ->whereNotNull('harvesters.prefix')
             ->where('harvesters.prefix', '!=', '')
-            ->when($this->selectedYear, fn($q) => $q->whereYear('harvest_records.weighed_at', $this->selectedYear))
-            ->when($this->fromDate, fn($q) => $q->whereDate('harvest_records.weighed_at', '>=', $this->fromDate))
-            ->when($this->toDate, fn($q) => $q->whereDate('harvest_records.weighed_at', '<=', $this->toDate));
+            ->when($this->selectedYear, fn ($q) => $q->whereYear('harvest_records.weighed_at', $this->selectedYear))
+            ->when($this->fromDate, fn ($q) => $q->whereDate('harvest_records.weighed_at', '>=', $this->fromDate))
+            ->when($this->toDate, fn ($q) => $q->whereDate('harvest_records.weighed_at', '<=', $this->toDate));
 
         return $query->distinct()
             ->pluck('harvesters.prefix')
@@ -110,7 +112,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function datesWithData (): array
+    public function datesWithData(): array
     {
         return HarvestRecord::query()
             ->where('company_id', auth()->user()->company_id)
@@ -122,7 +124,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function unavailableDates (): array
+    public function unavailableDates(): array
     {
         $start = Carbon::create($this->selectedYear);
         $end = Carbon::create($this->selectedYear, 12, 31);
@@ -139,7 +141,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function minDate (): string
+    public function minDate(): string
     {
         $year = $this->selectedYear ?: $this->availableYears->first() ?? now()->year;
 
@@ -147,14 +149,14 @@ class extends Component {
     }
 
     #[Computed]
-    public function maxDate (): string
+    public function maxDate(): string
     {
         $year = $this->selectedYear ?: $this->availableYears->first() ?? now()->year;
 
         return Carbon::create($year, 12, 31)->format('Y-m-d');
     }
 
-    public function mount (): void
+    public function mount(): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
         $years = $this->availableYears;
@@ -177,21 +179,21 @@ class extends Component {
         }
     }
 
-    public function updatedPerPage (): void
+    public function updatedPerPage(): void
     {
         $this->resetPage('daily');
         $this->resetPage('harvester');
         $this->resetPage('prod');
     }
 
-    public function updatedSelectedYear (): void
+    public function updatedSelectedYear(): void
     {
         $this->fromDate = Carbon::create($this->selectedYear)->format('Y-m-d');
         $this->toDate = Carbon::create($this->selectedYear, 12, 31)->format('Y-m-d');
         $this->dateRange = new DateRange($this->fromDate, $this->toDate);
     }
 
-    public function toggleExpand (string $date, int $number): void
+    public function toggleExpand(string $date, int $number): void
     {
         $key = "$date-$number";
         if (isset($this->expandedRows[$key])) {
@@ -201,7 +203,7 @@ class extends Component {
         }
     }
 
-    public function getRowDetails (string $date, int $number): array
+    public function getRowDetails(string $date, int $number): array
     {
         $maxWeight = auth()->user()->company->importSettings?->max_bucket_weight;
 
@@ -210,7 +212,7 @@ class extends Component {
             ->where('harvester_number', $number)
             ->orderByDesc('weighed_at')
             ->get(['weight', 'tare', 'gross', 'weighed_at'])
-            ->map(fn($record) => [
+            ->map(fn ($record) => [
                 'weight' => round($record->weight, 3),
                 'tare' => round($record->tare, 3),
                 'gross' => round($record->gross, 3),
@@ -220,7 +222,7 @@ class extends Component {
             ->toArray();
     }
 
-    public function updatedDateRange (): void
+    public function updatedDateRange(): void
     {
         if ($this->dateRange instanceof DateRange) {
             $this->fromDate = $this->dateRange->start()->format('Y-m-d');
@@ -228,7 +230,7 @@ class extends Component {
         }
     }
 
-    public function sortDaily (string $column): void
+    public function sortDaily(string $column): void
     {
         if ($this->dailySortBy === $column) {
             $this->dailySortDirection = $this->dailySortDirection === 'asc' ? 'desc' : 'asc';
@@ -239,7 +241,7 @@ class extends Component {
         $this->resetPage('daily');
     }
 
-    public function sortHarvesters (string $column): void
+    public function sortHarvesters(string $column): void
     {
         if ($this->harvesterSortBy === $column) {
             $this->harvesterSortDirection = $this->harvesterSortDirection === 'asc' ? 'desc' : 'asc';
@@ -250,7 +252,7 @@ class extends Component {
         $this->resetPage('harvester');
     }
 
-    public function sortProducts (string $column): void
+    public function sortProducts(string $column): void
     {
         if ($this->productSortBy === $column) {
             $this->productSortDirection = $this->productSortDirection === 'asc' ? 'desc' : 'asc';
@@ -261,12 +263,12 @@ class extends Component {
         $this->resetPage('prod');
     }
 
-    private function baseQuery (): Builder
+    private function baseQuery(): Builder
     {
         $query = HarvestRecord::where('company_id', auth()->user()->company_id)
-            ->when($this->fromDate, fn($q) => $q->whereDate('weighed_at', '>=', $this->fromDate))
-            ->when($this->toDate, fn($q) => $q->whereDate('weighed_at', '<=', $this->toDate))
-            ->when($this->selectedProductId, fn($q) => $q->where('product_id', $this->selectedProductId));
+            ->when($this->fromDate, fn ($q) => $q->whereDate('weighed_at', '>=', $this->fromDate))
+            ->when($this->toDate, fn ($q) => $q->whereDate('weighed_at', '<=', $this->toDate))
+            ->when($this->selectedProductId, fn ($q) => $q->where('product_id', $this->selectedProductId));
 
         if ($this->selectedPrefix) {
             $query->whereExists(function ($sub) {
@@ -276,7 +278,7 @@ class extends Component {
                     ->whereColumn('harvester_assignments.company_id', 'harvest_records.company_id')
                     ->whereColumn('harvester_assignments.number', 'harvest_records.harvester_number');
 
-                if (\Illuminate\Support\Facades\DB::getDefaultConnection() === 'sqlite') {
+                if (DB::getDefaultConnection() === 'sqlite') {
                     $sub->whereRaw('harvester_assignments.year = CAST(strftime(\'%Y\', harvest_records.weighed_at) AS INTEGER)');
                 } else {
                     $sub->whereRaw('harvester_assignments.year = YEAR(harvest_records.weighed_at)');
@@ -292,7 +294,7 @@ class extends Component {
             $selectedYear = $this->selectedYear;
 
             $harvestersWithSearch = HarvesterAssignment::where('company_id', $companyId)
-                ->when($selectedYear > 0, fn($q) => $q->where('year', $selectedYear))
+                ->when($selectedYear > 0, fn ($q) => $q->where('year', $selectedYear))
                 ->with('harvester')
                 ->get()
                 ->filter(function ($assignment) use ($search) {
@@ -316,7 +318,7 @@ class extends Component {
         return $query;
     }
 
-    private function priceAt (?string $date): ?float
+    private function priceAt(?string $date): ?float
     {
         if (! $this->selectedProductId || ! $date) {
             return null;
@@ -325,24 +327,24 @@ class extends Component {
         return HarvestPrice::where('company_id', auth()->user()->company_id)
             ->where('product_id', $this->selectedProductId)
             ->where('effective_from', '<=', $date)
-            ->where(fn($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $date))
+            ->where(fn ($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $date))
             ->value('price_per_kg');
     }
 
-    private function harvesterNames (): array
+    private function harvesterNames(): array
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->where('year', $this->selectedYear)
             ->with('harvester')
             ->get()
-            ->mapWithKeys(fn($assignment) => [
+            ->mapWithKeys(fn ($assignment) => [
                 $assignment->number => $assignment->harvester?->name ?? "#$assignment->number",
             ])
             ->all();
     }
 
     #[Computed]
-    public function dailyData ()
+    public function dailyData()
     {
         $query = $this->baseQuery()
             ->selectRaw('DATE(weighed_at) as date, COUNT(*) as bucket_count, SUM(weight) as total_weight')
@@ -350,14 +352,14 @@ class extends Component {
             ->orderBy($this->dailySortBy, $this->dailySortDirection);
 
         if ($this->perPage === 0) {
-            return $query->get()->map(fn($row) => [
+            return $query->get()->map(fn ($row) => [
                 'date' => $row->date,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
             ]);
         }
 
-        return $query->paginate($this->perPage, pageName: 'daily')->through(fn($row) => [
+        return $query->paginate($this->perPage, pageName: 'daily')->through(fn ($row) => [
             'date' => $row->date,
             'bucket_count' => $row->bucket_count,
             'total_weight' => round($row->total_weight, 3),
@@ -365,7 +367,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function dailyTotals (): array
+    public function dailyTotals(): array
     {
         $data = $this->baseQuery()
             ->selectRaw('COUNT(*) as bucket_count, SUM(weight) as total_weight')
@@ -378,7 +380,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function harvesterData ()
+    public function harvesterData()
     {
         $names = $this->harvesterNames();
         $price = $this->priceAt($this->fromDate);
@@ -388,7 +390,7 @@ class extends Component {
             ->orderBy($this->harvesterSortBy, $this->harvesterSortDirection);
 
         if ($this->perPage === 0) {
-            return $query->get()->map(fn($row) => [
+            return $query->get()->map(fn ($row) => [
                 'number' => $row->harvester_number,
                 'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
                 'bucket_count' => $row->bucket_count,
@@ -397,7 +399,7 @@ class extends Component {
             ]);
         }
 
-        return $query->paginate($this->perPage, pageName: 'harvester')->through(fn($row) => [
+        return $query->paginate($this->perPage, pageName: 'harvester')->through(fn ($row) => [
             'number' => $row->harvester_number,
             'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
             'bucket_count' => $row->bucket_count,
@@ -407,7 +409,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function harvesterTotals (): array
+    public function harvesterTotals(): array
     {
         $data = $this->baseQuery()
             ->selectRaw('COUNT(*) as bucket_count, SUM(weight) as total_weight')
@@ -422,7 +424,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function productData ()
+    public function productData()
     {
         $price = $this->priceAt($this->fromDate);
         $query = $this->baseQuery()
@@ -432,7 +434,7 @@ class extends Component {
             ->orderBy($this->productSortBy, $this->productSortDirection);
 
         if ($this->perPage === 0) {
-            return $query->get()->map(fn($row) => [
+            return $query->get()->map(fn ($row) => [
                 'name' => $row->product->name,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
@@ -441,7 +443,7 @@ class extends Component {
             ]);
         }
 
-        return $query->paginate($this->perPage, pageName: 'prod')->through(fn($row) => [
+        return $query->paginate($this->perPage, pageName: 'prod')->through(fn ($row) => [
             'name' => $row->product->name,
             'bucket_count' => $row->bucket_count,
             'total_weight' => round($row->total_weight, 3),
@@ -451,7 +453,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function productTotals (): array
+    public function productTotals(): array
     {
         $data = $this->baseQuery()
             ->selectRaw('COUNT(*) as bucket_count, SUM(weight) as total_weight')
@@ -466,7 +468,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function overLimitCount (): int
+    public function overLimitCount(): int
     {
         $maxWeight = auth()->user()->company->importSettings?->max_bucket_weight;
         if (! $maxWeight) {
@@ -482,7 +484,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function overLimitRows ()
+    public function overLimitRows(): LengthAwarePaginator
     {
         $maxWeight = auth()->user()->company->importSettings?->max_bucket_weight;
 
@@ -492,56 +494,58 @@ class extends Component {
 
         $names = $this->harvesterNames();
         $companyId = auth()->user()->company_id;
-        $query = $this->baseQuery()
+
+        // Prvo dohvati sve preko limite redove i grupiraj ih
+        $overLimitQuery = $this->baseQuery()
             ->where('weight', '>', $maxWeight)
-            ->selectRaw("
+            ->selectRaw('
                 DATE(weighed_at) as date,
                 harvester_number,
                 COUNT(*) as over_limit_count,
-                AVG(weight) as over_limit_avg_weight,
-                (SELECT COUNT(*) FROM harvest_records hr2
-                 WHERE hr2.company_id = $companyId
-                   AND DATE(hr2.weighed_at) = DATE(harvest_records.weighed_at)
-                   AND hr2.harvester_number = harvest_records.harvester_number
-                ) as total_bucket_count,
-                (SELECT AVG(hr2.weight) FROM harvest_records hr2
-                 WHERE hr2.company_id = $companyId
-                   AND DATE(hr2.weighed_at) = DATE(harvest_records.weighed_at)
-                   AND hr2.harvester_number = harvest_records.harvester_number
-                ) as avg_weight,
-                (SELECT SUM(hr2.weight) FROM harvest_records hr2
-                 WHERE hr2.company_id = $companyId
-                   AND DATE(hr2.weighed_at) = DATE(harvest_records.weighed_at)
-                   AND hr2.harvester_number = harvest_records.harvester_number
-                ) as total_weight,
-                MAX(weighed_at) as max_weighed_at
-            ")
+                AVG(weight) as over_limit_avg_weight
+            ')
             ->groupByRaw('DATE(weighed_at), harvester_number')
             ->orderByRaw('DATE(weighed_at) desc')
             ->orderByDesc('over_limit_count');
 
-        if ($this->perPage === 0) {
-            return $query->get()->map(fn($row) => [
+        // Proces rezultata u PHP gde MySQL ne sprečava
+        $results = $overLimitQuery->get();
+
+        // Za svaki redak, dohvati dodatne podatke
+        $enriched = $results->map(function ($row) use ($companyId, $names) {
+            $allBucketsForDay = HarvestRecord::where('company_id', $companyId)
+                ->whereDate('weighed_at', $row->date)
+                ->where('harvester_number', $row->harvester_number)
+                ->get();
+
+            return [
                 'date' => $row->date,
                 'number' => $row->harvester_number,
                 'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
                 'over_limit_count' => $row->over_limit_count,
-                'total_bucket_count' => $row->total_bucket_count,
+                'total_bucket_count' => $allBucketsForDay->count(),
                 'over_limit_avg_weight' => round($row->over_limit_avg_weight, 3),
-                'avg_weight' => round($row->avg_weight, 3),
-                'total_weight' => round($row->total_weight, 3),
+                'avg_weight' => round($allBucketsForDay->avg('weight'), 3),
+                'total_weight' => round($allBucketsForDay->sum('weight'), 3),
+            ];
+        });
+
+        // Paginacija
+        if ($this->perPage === 0) {
+            return new LengthAwarePaginator($enriched, $enriched->count(), 99999, 1, [
+                'path' => '#',
+                'pageName' => 'over_limit',
             ]);
         }
 
-        return $query->paginate($this->perPage, pageName: 'over_limit')->through(fn($row) => [
-            'date' => $row->date,
-            'number' => $row->harvester_number,
-            'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
-            'over_limit_count' => $row->over_limit_count,
-            'total_bucket_count' => $row->total_bucket_count,
-            'over_limit_avg_weight' => round($row->over_limit_avg_weight, 3),
-            'avg_weight' => round($row->avg_weight, 3),
-            'total_weight' => round($row->total_weight, 3),
+        $page = request()->integer('over_limit', 1);
+        $total = $enriched->count();
+        $start = ($page - 1) * $this->perPage;
+        $items = $enriched->slice($start, $this->perPage)->values();
+
+        return new LengthAwarePaginator($items, $total, $this->perPage, $page, [
+            'path' => '#',
+            'pageName' => 'over_limit',
         ]);
     }
 }; ?>
