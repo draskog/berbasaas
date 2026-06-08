@@ -191,6 +191,10 @@ class extends Component
         $this->fromDate = Carbon::create($this->selectedYear)->format('Y-m-d');
         $this->toDate = Carbon::create($this->selectedYear, 12, 31)->format('Y-m-d');
         $this->dateRange = new DateRange($this->fromDate, $this->toDate);
+        $this->resetPage('daily');
+        $this->resetPage('harvester');
+        $this->resetPage('prod');
+        $this->resetPage('over_limit');
     }
 
     public function toggleExpand(string $date, int $number): void
