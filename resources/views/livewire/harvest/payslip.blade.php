@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\HarvestRecord;
 use App\Models\HarvesterAssignment;
+use App\Models\HarvestRecord;
 use Carbon\Carbon;
 use Flux\DateRange;
 use Illuminate\Support\Collection;
@@ -94,6 +94,13 @@ class extends Component
         $companyId = auth()->user()->company_id;
         $selectedYear = $this->selectedYear;
 
+        // Ako počinje sa #, traži exact harvester number
+        if (str_starts_with($search, '#')) {
+            $number = (int) substr($search, 1);
+
+            return $harvesterNumbers->filter(fn ($n) => $n === $number)->values();
+        }
+
         return $harvesterNumbers->filter(function ($number) use ($search, $companyId, $selectedYear) {
             $assignment = HarvesterAssignment::where('company_id', $companyId)
                 ->where('number', $number);
@@ -155,7 +162,7 @@ class extends Component
             ->where('harvest_records.company_id', auth()->user()->company_id)
             ->join('harvester_assignments', function ($join) {
                 $join->on('harvester_assignments.company_id', '=', 'harvest_records.company_id')
-                     ->on('harvester_assignments.number', '=', 'harvest_records.harvester_number');
+                    ->on('harvester_assignments.number', '=', 'harvest_records.harvester_number');
 
                 if (DB::getDefaultConnection() === 'sqlite') {
                     $join->whereRaw('harvester_assignments.year = CAST(strftime(\'%Y\', harvest_records.weighed_at) AS INTEGER)');
@@ -242,6 +249,7 @@ class extends Component
         if ($this->selectedYear === 0) {
             $this->dateFrom = now()->subDays(7)->format('Y-m-d');
             $this->dateTo = now()->format('Y-m-d');
+
             return;
         }
 
