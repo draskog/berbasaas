@@ -39,6 +39,8 @@ class extends Component {
     #[Url]
     public string $selectedPrefix = '';
 
+    public array $expandedRows = [];
+
     #[Url]
     public string $searchHarvesterName = '';
 
@@ -187,6 +189,35 @@ class extends Component {
         $this->fromDate = Carbon::create($this->selectedYear)->format('Y-m-d');
         $this->toDate = Carbon::create($this->selectedYear, 12, 31)->format('Y-m-d');
         $this->dateRange = new DateRange($this->fromDate, $this->toDate);
+    }
+
+    public function toggleExpand (string $date, int $number): void
+    {
+        $key = "$date-$number";
+        if (isset($this->expandedRows[$key])) {
+            unset($this->expandedRows[$key]);
+        } else {
+            $this->expandedRows[$key] = true;
+        }
+    }
+
+    public function getRowDetails (string $date, int $number): array
+    {
+        $maxWeight = auth()->user()->company->importSettings?->max_bucket_weight;
+
+        return HarvestRecord::where('company_id', auth()->user()->company_id)
+            ->whereDate('weighed_at', $date)
+            ->where('harvester_number', $number)
+            ->orderByDesc('weighed_at')
+            ->get(['weight', 'tare', 'gross', 'weighed_at'])
+            ->map(fn($record) => [
+                'weight' => round($record->weight, 3),
+                'tare' => round($record->tare, 3),
+                'gross' => round($record->gross, 3),
+                'time' => $record->weighed_at?->format('H:i:s'),
+                'over_limit' => $maxWeight && $record->weight > $maxWeight,
+            ])
+            ->toArray();
     }
 
     public function updatedDateRange (): void
@@ -446,6 +477,7 @@ class extends Component {
             ->where('weight', '>', $maxWeight)
             ->selectRaw('DATE(weighed_at) as date, harvester_number')
             ->groupByRaw('DATE(weighed_at), harvester_number')
+            ->get()
             ->count();
     }
 
@@ -459,15 +491,31 @@ class extends Component {
         }
 
         $names = $this->harvesterNames();
+        $companyId = auth()->user()->company_id;
         $query = $this->baseQuery()
             ->where('weight', '>', $maxWeight)
-            ->selectRaw('
+            ->selectRaw("
                 DATE(weighed_at) as date,
                 harvester_number,
                 COUNT(*) as over_limit_count,
-                MAX(weight) as max_weight,
-                SUM(weight) as total_weight
-            ')
+                AVG(weight) as over_limit_avg_weight,
+                (SELECT COUNT(*) FROM harvest_records hr2
+                 WHERE hr2.company_id = $companyId
+                   AND DATE(hr2.weighed_at) = DATE(harvest_records.weighed_at)
+                   AND hr2.harvester_number = harvest_records.harvester_number
+                ) as total_bucket_count,
+                (SELECT AVG(hr2.weight) FROM harvest_records hr2
+                 WHERE hr2.company_id = $companyId
+                   AND DATE(hr2.weighed_at) = DATE(harvest_records.weighed_at)
+                   AND hr2.harvester_number = harvest_records.harvester_number
+                ) as avg_weight,
+                (SELECT SUM(hr2.weight) FROM harvest_records hr2
+                 WHERE hr2.company_id = $companyId
+                   AND DATE(hr2.weighed_at) = DATE(harvest_records.weighed_at)
+                   AND hr2.harvester_number = harvest_records.harvester_number
+                ) as total_weight,
+                MAX(weighed_at) as max_weighed_at
+            ")
             ->groupByRaw('DATE(weighed_at), harvester_number')
             ->orderByRaw('DATE(weighed_at) desc')
             ->orderByDesc('over_limit_count');
@@ -478,7 +526,9 @@ class extends Component {
                 'number' => $row->harvester_number,
                 'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
                 'over_limit_count' => $row->over_limit_count,
-                'max_weight' => round($row->max_weight, 3),
+                'total_bucket_count' => $row->total_bucket_count,
+                'over_limit_avg_weight' => round($row->over_limit_avg_weight, 3),
+                'avg_weight' => round($row->avg_weight, 3),
                 'total_weight' => round($row->total_weight, 3),
             ]);
         }
@@ -488,7 +538,9 @@ class extends Component {
             'number' => $row->harvester_number,
             'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
             'over_limit_count' => $row->over_limit_count,
-            'max_weight' => round($row->max_weight, 3),
+            'total_bucket_count' => $row->total_bucket_count,
+            'over_limit_avg_weight' => round($row->over_limit_avg_weight, 3),
+            'avg_weight' => round($row->avg_weight, 3),
             'total_weight' => round($row->total_weight, 3),
         ]);
     }
@@ -719,25 +771,69 @@ class extends Component {
                 @else
                     <flux:table :paginate="$this->perPage > 0 ? $this->overLimitRows : null">
                         <flux:table.columns>
+                            <flux:table.column></flux:table.column>
                             <flux:table.column>{{ __('Date') }}</flux:table.column>
                             <flux:table.column>{{ __('Harvester') }}</flux:table.column>
-                            <flux:table.column>{{ __('Over Limit Count') }}</flux:table.column>
-                            <flux:table.column>{{ __('Max Weight (kg)') }}</flux:table.column>
-                            <flux:table.column>{{ __('Total Weight (kg)') }}</flux:table.column>
+                            <flux:table.column>{{ __('Gajbice preko limita') }}</flux:table.column>
+                            <flux:table.column>{{ __('Avg težina preko (kg)') }}</flux:table.column>
+                            <flux:table.column>{{ __('Avg težina (kg)') }}</flux:table.column>
+                            <flux:table.column>{{ __('Ukupna težina (kg)') }}</flux:table.column>
                         </flux:table.columns>
 
                         <flux:table.rows>
                             @forelse ($this->overLimitRows as $row)
                                 <flux:table.row>
+                                    <flux:table.cell>
+                                        <button
+                                            wire:click="toggleExpand('{{ $row['date'] }}', {{ $row['number'] }})"
+                                            class="text-zinc-500 hover:text-zinc-700"
+                                        >
+                                            <svg class="size-5 transition-transform {{ isset($expandedRows["{$row['date']}-{$row['number']}"]) ? 'rotate-90' : '' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
+                                    </flux:table.cell>
                                     <flux:table.cell>{{ Carbon::parse($row['date'])->format('d.m.Y') }}</flux:table.cell>
                                     <flux:table.cell>#{{ $row['number'] }} - {{ $row['name'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ $row['over_limit_count'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($row['max_weight'], 3, ',', '.') }}</flux:table.cell>
+                                    <flux:table.cell>{{ $row['over_limit_count'] }} od {{ $row['total_bucket_count'] }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($row['over_limit_avg_weight'], 3, ',', '.') }}</flux:table.cell>
+                                    <flux:table.cell>{{ number_format($row['avg_weight'], 3, ',', '.') }}</flux:table.cell>
                                     <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
                                 </flux:table.row>
+
+                                @if (isset($expandedRows["{$row['date']}-{$row['number']}"]))
+                                    <flux:table.row class="bg-zinc-50 dark:bg-zinc-800/50">
+                                        <flux:table.cell colspan="7" class="px-0 py-4">
+                                            <div class="px-6">
+                                                <table class="w-full text-sm">
+                                                    <thead class="border-b border-zinc-200 dark:border-zinc-700">
+                                                        <tr>
+                                                            <th class="text-left py-2">{{ __('Vreme') }}</th>
+                                                            <th class="text-left py-2">{{ __('Tara (kg)') }}</th>
+                                                            <th class="text-left py-2">{{ __('Bruto (kg)') }}</th>
+                                                            <th class="text-left py-2">{{ __('Neto (kg)') }}</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach ($this->getRowDetails($row['date'], $row['number']) as $detail)
+                                                            <tr class="border-b border-zinc-100 dark:border-zinc-700/50">
+                                                                <td class="py-2">{{ $detail['time'] }}</td>
+                                                                <td class="py-2">{{ number_format($detail['tare'], 3, ',', '.') }}</td>
+                                                                <td class="py-2">{{ number_format($detail['gross'], 3, ',', '.') }}</td>
+                                                                <td class="py-2 {{ $detail['over_limit'] ? 'text-red-600 dark:text-red-400 font-semibold' : '' }}">
+                                                                    {{ number_format($detail['weight'], 3, ',', '.') }}
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </flux:table.cell>
+                                    </flux:table.row>
+                                @endif
                             @empty
                                 <flux:table.row>
-                                    <flux:table.cell colspan="5" class="text-center text-gray-500">{{ __('No data') }}</flux:table.cell>
+                                    <flux:table.cell colspan="7" class="text-center text-gray-500">{{ __('No data') }}</flux:table.cell>
                                 </flux:table.row>
                             @endforelse
                         </flux:table.rows>
