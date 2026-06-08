@@ -46,7 +46,6 @@ class extends Component
     #[Url]
     public string $searchHarvesterName = '';
 
-    #[Url]
     public string $activeTab = 'daily';
 
     public int $perPage = 25;
@@ -178,6 +177,9 @@ class extends Component
             $this->dateRange = new DateRange($this->fromDate, $this->toDate);
         }
 
+        // Učitaj activeTab iz sesije ako postoji
+        $this->activeTab = session('harvest_reports_active_tab', 'daily');
+
         // Resetuj sve pagination stranice nakon inicijalizacije
         $this->resetPage('daily');
         $this->resetPage('harvester');
@@ -190,6 +192,11 @@ class extends Component
         $this->resetPage('daily');
         $this->resetPage('harvester');
         $this->resetPage('prod');
+    }
+
+    public function updatedActiveTab(): void
+    {
+        session(['harvest_reports_active_tab' => $this->activeTab]);
     }
 
     public function updatedSelectedYear(): void
