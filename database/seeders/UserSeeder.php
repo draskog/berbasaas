@@ -24,8 +24,8 @@ class UserSeeder extends Seeder
             'name' => 'Serbian Blueberry Farms',
             'address' => 'Čumićevo Sokače, Svileuva',
             'tax_number' => '12345678',
-            'longitude' => 44.4839,
             'latitude' => 44.5001898,
+            'longitude' => 19.7938633,
         ]);
 
         User::create([
