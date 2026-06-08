@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
         $this->call(HarvestImportSettingsSeeder::class);
         $this->call(HarvesterAssignmentSeeder::class);
         Artisan::call('holidays:import');
+        Artisan::call('weather:fetch');
         // $this->call(HarvestRecordSeeder::class);
     }
 }
