@@ -12,8 +12,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Session;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 
@@ -24,26 +24,26 @@ class extends Component
 {
     use WithPagination;
 
-    #[Url]
+    #[Session]
     public int $selectedYear = 0;
 
-    #[Url]
+    #[Session]
     public ?string $fromDate = null;
 
-    #[Url]
+    #[Session]
     public ?string $toDate = null;
 
-    #[Url]
+    #[Session]
     public int $selectedProductId = 0;
 
     public ?DateRange $dateRange = null;
 
-    #[Url]
+    #[Session]
     public string $selectedPrefix = '';
 
     public array $expandedRows = [];
 
-    #[Url]
+    #[Session]
     public string $searchHarvesterName = '';
 
     public string $activeTab = 'daily';
