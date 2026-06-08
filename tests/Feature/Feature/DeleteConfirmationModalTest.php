@@ -27,7 +27,7 @@ test('delete confirmation modal appears on harvesters page', function () {
     $response->assertSee($this->trans('Are you sure you want to delete this harvester assignment? This cannot be undone.'));
 });
 
-test('delete confirmation modal appears on prices page', function () {
+test('delete confirmation modal appears on prices settings page', function () {
     $company = Company::create(['name' => 'Test Company']);
     $user = User::factory()->create(['company_id' => $company->id]);
     $product = Product::create([
@@ -45,7 +45,7 @@ test('delete confirmation modal appears on prices page', function () {
     ]);
 
     $response = $this->actingAs($user)
-        ->get(route('harvest.prices'));
+        ->get(route('prices.settings'));
 
     $response->assertStatus(200);
     $response->assertSee('confirm-delete-price');
