@@ -177,6 +177,12 @@ class extends Component
         if ($this->fromDate && $this->toDate) {
             $this->dateRange = new DateRange($this->fromDate, $this->toDate);
         }
+
+        // Resetuj sve pagination stranice nakon inicijalizacije
+        $this->resetPage('daily');
+        $this->resetPage('harvester');
+        $this->resetPage('prod');
+        $this->resetPage('over_limit');
     }
 
     public function updatedPerPage(): void
