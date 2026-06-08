@@ -63,7 +63,7 @@ class WeatherService
         }
     }
 
-    public function geocodeAddress(string $query): ?array
+    public function geocodeAddress(string $query, ?Company $company = null): ?array
     {
         try {
             $response = Http::get(self::PHOTON_URL, [
@@ -73,13 +73,13 @@ class WeatherService
             ]);
 
             if (! $response->successful()) {
-                return null;
+                return $this->getCompanyCoordinatesFallback($company);
             }
 
             $data = $response->json();
 
             if (empty($data['features'])) {
-                return null;
+                return $this->getCompanyCoordinatesFallback($company);
             }
 
             $feature = $data['features'][0];
@@ -91,8 +91,22 @@ class WeatherService
                 'label' => $this->buildLabel($feature['properties']),
             ];
         } catch (\Exception) {
-            return null;
+            return $this->getCompanyCoordinatesFallback($company);
         }
+    }
+
+    private function getCompanyCoordinatesFallback(?Company $company): ?array
+    {
+        if ($company && $company->latitude && $company->longitude) {
+            return [
+                'lat' => $company->latitude,
+                'lon' => $company->longitude,
+                'label' => $this->buildLabel(['name' => __('Company location')]),
+                'is_fallback' => true,
+            ];
+        }
+
+        return null;
     }
 
     private function extractHourlyPrecipitation(array $times, array $precipitation, string $date): array

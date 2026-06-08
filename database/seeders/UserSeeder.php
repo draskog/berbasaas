@@ -22,8 +22,10 @@ class UserSeeder extends Seeder
     {
         $company = Company::create([
             'name' => 'Serbian Blueberry Farms',
-            'address' => 'Mačva region',
+            'address' => 'Čumićevo Sokače, Svileuva',
             'tax_number' => '12345678',
+            'longitude' => 44.4839,
+            'latitude' => 44.5001898,
         ]);
 
         User::create([
