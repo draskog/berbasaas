@@ -14,14 +14,14 @@ beforeEach(function () {
 
 describe('Prices Page', function () {
     it('renders the page', function () {
-        $response = $this->get(route('harvest.prices'));
+        $response = $this->get(route('prices.settings'));
         $response->assertStatus(200);
     });
 
     it('displays products in selector', function () {
         $product = Product::factory()->for($this->company)->create(['name' => 'Apples']);
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->assertSee('Apples');
     });
 
@@ -32,7 +32,7 @@ describe('Prices Page', function () {
             ->for($product)
             ->create(['price_per_kg' => 2.5]);
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('selectedProduct', $product->id)
             ->assertSee('3');
     });
@@ -40,7 +40,7 @@ describe('Prices Page', function () {
     it('creates new price', function () {
         $product = Product::factory()->for($this->company)->create();
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product->id)
             ->set('newPricePerKg', '3.75')
             ->set('newEffectiveFrom', '2026-01-01')
@@ -58,7 +58,7 @@ describe('Prices Page', function () {
     it('validates price is required', function () {
         $product = Product::factory()->for($this->company)->create();
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product->id)
             ->set('newPricePerKg', null)
             ->set('newEffectiveFrom', '2026-01-01')
@@ -69,7 +69,7 @@ describe('Prices Page', function () {
     it('validates price is numeric', function () {
         $product = Product::factory()->for($this->company)->create();
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product->id)
             ->set('newPricePerKg', 'invalid')
             ->set('newEffectiveFrom', '2026-01-01')
@@ -80,7 +80,7 @@ describe('Prices Page', function () {
     it('validates price is not negative', function () {
         $product = Product::factory()->for($this->company)->create();
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product->id)
             ->set('newPricePerKg', '-1.5')
             ->set('newEffectiveFrom', '2026-01-01')
@@ -91,7 +91,7 @@ describe('Prices Page', function () {
     it('validates effective from date is required', function () {
         $product = Product::factory()->for($this->company)->create();
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product->id)
             ->set('newPricePerKg', '2.5')
             ->set('newEffectiveFrom', null)
@@ -102,7 +102,7 @@ describe('Prices Page', function () {
     it('validates effective to is after or equal effective from', function () {
         $product = Product::factory()->for($this->company)->create();
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product->id)
             ->set('newPricePerKg', '2.5')
             ->set('newEffectiveFrom', '2026-12-31')
@@ -118,7 +118,7 @@ describe('Prices Page', function () {
             ->for($product)
             ->create();
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('selectedProductId', $product->id)
             ->call('confirmDeletePrice', $price->id)
             ->call('deletePrice')
@@ -130,7 +130,7 @@ describe('Prices Page', function () {
     it('resets form after creating price', function () {
         $product = Product::factory()->for($this->company)->create();
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product->id)
             ->set('newPricePerKg', '2.5')
             ->set('newEffectiveFrom', '2026-01-01')
@@ -151,7 +151,7 @@ describe('Prices Page', function () {
             ->for($otherProduct)
             ->create(['price_per_kg' => 9.99]);
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->assertDontSee('9.99');
     });
 
@@ -162,7 +162,7 @@ describe('Prices Page', function () {
             ->for($product)
             ->create(['price_per_kg' => 2.5]);
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->call('editPrice', $price->id)
             ->assertSet('editingPriceId', $price->id)
             ->assertSet('showEditPriceModal', true);
@@ -175,7 +175,7 @@ describe('Prices Page', function () {
             ->for($product)
             ->create(['price_per_kg' => 2.5]);
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->call('editPrice', $price->id)
             ->set('editPricePerKg', '3.99')
             ->set('editEffectiveFrom', '2026-06-01')
@@ -197,7 +197,7 @@ describe('Prices Page', function () {
             ->for($product)
             ->create();
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->call('editPrice', $price->id)
             ->set('editPricePerKg', 'invalid')
             ->set('editEffectiveFrom', '2026-01-01')
@@ -212,7 +212,7 @@ describe('Prices Page', function () {
             ->for($product)
             ->create();
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->call('editPrice', $price->id)
             ->set('editPricePerKg', '2.5')
             ->set('editEffectiveFrom', '2026-12-31')
@@ -229,7 +229,7 @@ describe('Prices Page', function () {
             ->for($product)
             ->create();
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->call('editPrice', $price->id)
             ->set('editPricePerKg', '3.5')
             ->set('editEffectiveFrom', '2026-01-01')
@@ -250,7 +250,7 @@ describe('Prices Page', function () {
                 'effective_to' => null,
             ]);
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product->id)
             ->set('newPricePerKg', '5.00')
             ->set('newEffectiveFrom', '2026-06-01')
@@ -283,7 +283,7 @@ describe('Prices Page', function () {
                 'effective_to' => '2026-04-30',
             ]);
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->call('editPrice', $editedPrice->id)
             ->set('editEffectiveFrom', '2026-06-01')
             ->set('editEffectiveDateRange', null)
@@ -305,7 +305,7 @@ describe('Prices Page', function () {
                 'effective_to' => '2026-03-31',
             ]);
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product->id)
             ->set('newPricePerKg', '5.00')
             ->set('newEffectiveFrom', '2026-06-01')
@@ -327,7 +327,7 @@ describe('Prices Page', function () {
                 'effective_to' => null,
             ]);
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->call('editPrice', $price->id)
             ->set('editEffectiveFrom', '2026-01-01')
             ->set('editEffectiveTo', null)
