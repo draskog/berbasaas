@@ -3,6 +3,7 @@
 use App\Models\ReligiousHoliday;
 use App\Models\WeatherRecord;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 
@@ -33,6 +34,14 @@ new class extends Component {
         96 => ['emoji' => '⛈️', 'label' => 'Thunderstorm with hail'],
         99 => ['emoji' => '⛈️', 'label' => 'Thunderstorm with hail'],
     ];
+
+    #[Computed]
+    public function isLocationConfigured (): bool
+    {
+        $company = Auth::user()->company;
+
+        return $company && $company->latitude && $company->longitude;
+    }
 
     #[Computed]
     public function weatherDays (): Collection
@@ -102,14 +111,20 @@ new class extends Component {
             {{ __('Vremenska prognoza - narednih 6 dana') }}
         </h3>
 
-        @if ($this->weatherDays->isEmpty())
+        @if (! $this->isLocationConfigured)
             <flux:card class="text-center py-8">
                 <p class="text-zinc-600 dark:text-zinc-400 mb-4">
-                    {{ __('Meteorološki podaci još nisu dostupni') }}
+                    {{ __('Lokacija nije konfigurisana. Postavi je u podešavanjima kompanije.') }}
                 </p>
                 <a href="{{ route('company.edit') }}" class="text-blue-600 hover:text-blue-700 dark:text-blue-400">
                     {{ __('Postavi lokaciju kompanije') }}
                 </a>
+            </flux:card>
+        @elseif ($this->weatherDays->isEmpty())
+            <flux:card class="text-center py-8">
+                <p class="text-zinc-600 dark:text-zinc-400 mb-4">
+                    {{ __('Meteorološki podaci još nisu dostupni') }}
+                </p>
             </flux:card>
         @else
             <div class="grid grid-cols-3 gap-4">

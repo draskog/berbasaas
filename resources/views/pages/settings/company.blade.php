@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Company;
-use App\Services\WeatherService;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
@@ -28,8 +27,6 @@ class extends Component {
 
     public array $geocodeSuggestions = [];
 
-    public bool $addressSearchNoResults = false;
-
     public function mount (): void
     {
         $company = Auth::user()->company;
@@ -52,36 +49,25 @@ class extends Component {
             return;
         }
 
-        $weatherService = new WeatherService();
-        $result = $weatherService->geocodeAddress($this->geocodeSearch, Auth::user()->company);
+        try {
+            $response = \Illuminate\Support\Facades\Http::get('https://photon.komoot.io/api', [
+                'q' => $this->geocodeSearch,
+                'limit' => 5,
+                'lang' => 'sr',
+            ]);
 
-        if ($result) {
-            $this->geocodeSuggestions = [$result];
-            if (isset($result['is_fallback']) && $result['is_fallback']) {
-                Flux::toast(text: __('Using company location as fallback'), variant: 'warning');
+            if ($response->successful()) {
+                $data = $response->json();
+                $this->geocodeSuggestions = collect($data['features'] ?? [])
+                    ->map(fn ($feature) => [
+                        'lat' => $feature['geometry']['coordinates'][1],
+                        'lon' => $feature['geometry']['coordinates'][0],
+                        'label' => $this->buildLabel($feature['properties']),
+                    ])
+                    ->toArray();
             }
-        }
-    }
-
-    public function findLocationFromAddress(): void
-    {
-        $this->geocodeSuggestions = [];
-        $this->addressSearchNoResults = false;
-
-        if (strlen($this->address ?? '') < 2) {
-            return;
-        }
-
-        $weatherService = new WeatherService();
-        $result = $weatherService->geocodeAddress($this->address, Auth::user()->company);
-
-        if ($result) {
-            $this->geocodeSuggestions = [$result];
-            if (isset($result['is_fallback']) && $result['is_fallback']) {
-                Flux::toast(text: __('Using company location as fallback. Please set location manually if needed.'), variant: 'info');
-            }
-        } else {
-            $this->addressSearchNoResults = true;
+        } catch (\Exception) {
+            $this->geocodeSuggestions = [];
         }
     }
 
@@ -91,6 +77,22 @@ class extends Component {
         $this->longitude = $lon;
         $this->geocodeSearch = '';
         $this->geocodeSuggestions = [];
+    }
+
+    private function buildLabel(array $properties): string
+    {
+        $parts = [];
+        if (isset($properties['name'])) {
+            $parts[] = $properties['name'];
+        }
+        if (isset($properties['city'])) {
+            $parts[] = $properties['city'];
+        }
+        if (isset($properties['country'])) {
+            $parts[] = $properties['country'];
+        }
+
+        return implode(', ', $parts);
     }
 
     public function updateCompanyInformation (): void
