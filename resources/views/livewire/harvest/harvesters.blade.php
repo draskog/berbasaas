@@ -1,8 +1,8 @@
 <?php
 
 use App\Models\Harvester;
-use App\Models\HarvestImportSettings;
 use App\Models\HarvesterAssignment;
+use App\Models\HarvestImportSettings;
 use Flux\Flux;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -119,10 +119,18 @@ class extends Component
             $query->where('harvesters.prefix', $this->selectedPrefix);
         }
 
-        $query->when($this->search !== '', fn ($q) => $q->where(fn ($q) => $q
-            ->where('harvesters.name', 'like', "%$this->search%")
-            ->orWhere(DB::raw('CAST(harvester_assignments.number AS CHAR)'), 'like', "%$this->search%")
-        ));
+        if ($this->search !== '') {
+            // Ako počinje sa #, traži exact harvester number
+            if (str_starts_with($this->search, '#')) {
+                $number = (int) substr($this->search, 1);
+                $query->where('harvester_assignments.number', $number);
+            } else {
+                $query->where(fn ($q) => $q
+                    ->where('harvesters.name', 'like', "%$this->search%")
+                    ->orWhere(DB::raw('CAST(harvester_assignments.number AS CHAR)'), 'like', "%$this->search%")
+                );
+            }
+        }
 
         $sortColumn = match ($this->sortBy) {
             'prefix' => 'harvesters.prefix',

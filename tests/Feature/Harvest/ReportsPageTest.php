@@ -181,7 +181,6 @@ describe('Reports Page', function () {
             ->create(['harvester_number' => 2, 'weight' => 50, 'weighed_at' => now()]);
 
         Livewire::test('harvest.reports')
-            ->set('selectedHarvesterNumber', 1)
             ->set('activeTab', 'harvesters')
             ->assertStatus(200);
     });
