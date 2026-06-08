@@ -18,7 +18,7 @@ use Livewire\WithPagination;
 
 new
 #[Layout('layouts.app')]
-#[Title('Reports')]
+#[Title('Harvest Reports')]
 class extends Component {
     use WithPagination;
 
@@ -497,19 +497,10 @@ class extends Component {
 
 <flux:main>
     <flux:header heading="{{ __('Harvest Reports') }}">
+        {{ __('Harvest Reports') }}
     </flux:header>
 
     <div class="p-6">
-        <!-- Records Per Page -->
-        <div class="flex justify-end mb-4">
-            <flux:select wire:model.live="perPage" size="sm" class="w-28">
-                <flux:select.option value="25">25</flux:select.option>
-                <flux:select.option value="50">50</flux:select.option>
-                <flux:select.option value="100">100</flux:select.option>
-                <flux:select.option value="0">{{ __('All') }}</flux:select.option>
-            </flux:select>
-        </div>
-
         <!-- Filter Pills -->
         <div class="space-y-4 mb-6">
             <div>
