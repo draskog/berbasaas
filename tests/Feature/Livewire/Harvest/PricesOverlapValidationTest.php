@@ -26,7 +26,7 @@ describe('Prices Overlap Validation', function () {
             ]);
 
         // Try to create overlapping price: 10.06.2026 to 30.06.2026
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product->id)
             ->set('newPricePerKg', '100')
             ->set('newEffectiveDateRange', [
@@ -50,7 +50,7 @@ describe('Prices Overlap Validation', function () {
             ]);
 
         // Creating overlapping price is allowed - open-ended prices are auto-closed
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product->id)
             ->set('newPricePerKg', '100')
             ->set('newEffectiveDateRange', [
@@ -73,7 +73,7 @@ describe('Prices Overlap Validation', function () {
             ]);
 
         // Create price starting the day after the previous one ends
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product->id)
             ->set('newPricePerKg', '100')
             ->set('newEffectiveDateRange', [
@@ -95,7 +95,7 @@ describe('Prices Overlap Validation', function () {
                 'effective_to' => '2026-06-23',
             ]);
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product->id)
             ->set('newPricePerKg', '100')
             ->set('newEffectiveDateRange', [
@@ -118,7 +118,7 @@ describe('Prices Overlap Validation', function () {
                 'effective_to' => '2026-06-23',
             ]);
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product2->id)
             ->set('newPricePerKg', '100')
             ->set('newEffectiveDateRange', [
@@ -140,7 +140,7 @@ describe('Prices Overlap Validation', function () {
                 'effective_to' => '2026-06-23',
             ]);
 
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->call('editPrice', $price->id)
             ->set('editPricePerKg', '150')
             ->set('editEffectiveDateRange', [
@@ -171,7 +171,7 @@ describe('Prices Overlap Validation', function () {
             ]);
 
         // Try to extend first price to overlap with second
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->call('editPrice', $price1->id)
             ->set('editPricePerKg', '150')
             ->set('editEffectiveDateRange', [
@@ -196,7 +196,7 @@ describe('Prices Overlap Validation', function () {
             ]);
 
         // Different company can have overlapping dates for similar product
-        Livewire::test('harvest.prices')
+        Livewire::test('pages::settings.prices')
             ->set('newProductId', $product1->id)
             ->set('newPricePerKg', '100')
             ->set('newEffectiveDateRange', [
