@@ -9,10 +9,7 @@ class Kernel extends ConsoleKernel
 {
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('weather:fetch')
-            ->cron('0 5,8,11,14 * * *')
-            ->name('weather-fetch')
-            ->withoutOverlapping();
+        //
     }
 
     protected function commands(): void
