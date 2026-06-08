@@ -617,7 +617,7 @@ class extends Component {
             @endif
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-4">
-                    <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search"
+                    <flux:input type="search" size="sm" wire:model.live.debounce.300ms="searchHarvesterName"
                                 placeholder="{{ __('Search by harvester number or name...') }}"
                                 icon="magnifying-glass" class="w-72!"/>
                 </div>
