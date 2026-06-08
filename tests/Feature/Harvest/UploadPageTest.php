@@ -154,7 +154,8 @@ describe('Upload Page', function () {
             ->for($this->user, 'uploadedBy')
             ->create();
 
-        Livewire::test('harvest.upload')
+        $this->actingAs($this->user)
+            ->get('/harvest/upload')
             ->assertSee($this->user->name);
     });
 
