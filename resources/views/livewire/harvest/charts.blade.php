@@ -500,7 +500,7 @@ class extends Component
         $names = $this->harvesterNames();
 
         return $this->baseQuery()
-            ->selectRaw('harvester_number, COUNT(*) as bucket_count, SUM(weight) as total_weight')
+            ->selectRaw('harvester_number, COUNT(*) as bucket_count, SUM(weight) as total_weight, MIN(weight) as min_weight, MAX(weight) as max_weight')
             ->groupBy('harvester_number')
             ->orderByDesc('total_weight')
             ->limit(20)
@@ -511,6 +511,9 @@ class extends Component
                 'label' => ($names[$row->harvester_number] ?? "#$row->harvester_number")."\n#".$row->harvester_number,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 2),
+                'avg_weight' => $row->bucket_count > 0 ? round($row->total_weight / $row->bucket_count, 3) : 0,
+                'min_weight' => round($row->min_weight, 3),
+                'max_weight' => round($row->max_weight, 3),
             ]);
     }
 }; ?>
@@ -671,6 +674,9 @@ class extends Component
                                 <flux:chart.tooltip.heading field="label" />
                                 <flux:chart.tooltip.value field="total_weight" label="{{__('Total weight')}}" :format="['useGrouping' => true]" suffix=" kg" />
                                 <flux:chart.tooltip.value field="bucket_count" label="{{__('Buckets')}}" :format="['useGrouping' => true]" suffix=" kom"/>
+                                <flux:chart.tooltip.value field="min_weight" label="{{ __('validation.attributes.Min per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
+                                <flux:chart.tooltip.value field="avg_weight" label="{{ __('validation.attributes.Avg per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
+                                <flux:chart.tooltip.value field="max_weight" label="{{ __('validation.attributes.Max per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
                             </flux:chart.tooltip>
                         </flux:chart>
                     </flux:card>
