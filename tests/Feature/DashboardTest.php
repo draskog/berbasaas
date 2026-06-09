@@ -27,6 +27,15 @@ test('top harvester link navigates to harvest reports with harvesters tab', func
         ->assertSee(route('harvest.reports', ['tab' => 'harvesters']));
 });
 
+test('over limit link navigates to harvest reports with over_limit tab', function () {
+    $company = Company::factory()->create();
+    $user = User::factory()->create(['company_id' => $company->id]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertSee(route('harvest.reports', ['tab' => 'over_limit']));
+});
+
 test('top harvester shows daily data when last harvest is within 5 days', function () {
     $company = Company::factory()->create();
     $user = User::factory()->create(['company_id' => $company->id]);

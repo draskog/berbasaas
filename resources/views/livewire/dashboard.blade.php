@@ -139,6 +139,47 @@ class extends Component
     }
 
     #[Computed]
+    public function overLimitCountDaily(): int
+    {
+        $year = now()->year;
+        $today = now()->startOfDay();
+        $maxWeight = auth()->user()?->company?->importSettings?->max_bucket_weight;
+
+        if (! $maxWeight) {
+            return 0;
+        }
+
+        // Dohvati poslednji dan sa podacima
+        $lastDate = HarvestRecord::where('company_id', auth()->user()->company_id)
+            ->whereYear('weighed_at', $year)
+            ->selectRaw('DATE(weighed_at) as record_date')
+            ->distinct()
+            ->orderByDesc('record_date')
+            ->value('record_date');
+
+        if (! $lastDate) {
+            return 0;
+        }
+
+        $lastDateObj = Carbon::createFromFormat('Y-m-d', $lastDate);
+        $daysSinceLast = $today->diffInDays($lastDateObj);
+
+        // Ako je poslednji dan < 5 dana, broj over limit buckets-a za taj dan
+        // Inače broj over limit buckets-a za godinu
+        if ($daysSinceLast < 5) {
+            return HarvestRecord::where('company_id', auth()->user()->company_id)
+                ->whereDate('weighed_at', $lastDate)
+                ->where('weight', '>', $maxWeight)
+                ->count();
+        } else {
+            return HarvestRecord::where('company_id', auth()->user()->company_id)
+                ->whereYear('weighed_at', $year)
+                ->where('weight', '>', $maxWeight)
+                ->count();
+        }
+    }
+
+    #[Computed]
     public function activeProducts(): Collection
     {
         return Product::where('company_id', auth()->user()->company_id)
@@ -210,22 +251,16 @@ class extends Component
                 </flux:card>
             </a>
 
-            <!-- Best Single Bucket -->
-            <a href="{{ route('harvest.reports') }}" wire:navigate class="block">
+            <!-- Over Limit Buckets -->
+            <a href="{{ route('harvest.reports', ['tab' => 'over_limit']) }}" wire:navigate class="block">
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
-                    <flux:heading size="sm">{{ __('Best Single Bucket') }}</flux:heading>
-                    @if($this->bestBucket)
-                        <flux:text class="text-2xl font-bold mt-2">
-                            {{ number_format($this->bestBucket['weight'], 1) }} kg
-                        </flux:text>
-                        <flux:text size="sm" class="text-gray-500 mt-1">
-                            {{ $this->bestBucket['harvester_name'] }}<br/>
-                            {{ $this->bestBucket['date']->format('d.m.Y') }}
-                        </flux:text>
-                    @else
-                        <flux:text class="text-2xl font-bold mt-2 text-gray-400">—</flux:text>
-                        <flux:text size="sm" class="text-gray-500 mt-1">{{ __('No data') }}</flux:text>
-                    @endif
+                    <flux:heading size="sm">{{ __('Over Limit') }}</flux:heading>
+                    <flux:text class="text-2xl font-bold mt-2">
+                        {{ $this->overLimitCountDaily }}
+                    </flux:text>
+                    <flux:text size="sm" class="text-gray-500 mt-1">
+                        {{ __('Gajbice preko limita') }}
+                    </flux:text>
                 </flux:card>
             </a>
 
