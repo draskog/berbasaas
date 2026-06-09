@@ -298,8 +298,5 @@ return [
         'bulkHarvesterNumber' => 'broj berača',
         'bulkTare' => 'tara',
         'importYear' => 'sezona berbe',
-        'Min per bucket' => 'Min po gajbici',
-        'Avg per bucket' => 'Prosek po gajbici',
-        'Max per bucket' => 'Maks po gajbici',
     ],
 ];

@@ -639,9 +639,9 @@ class extends Component
                                 <flux:chart.tooltip.heading field="date" />
                                 <flux:chart.tooltip.value field="total_weight" label="{{__('Total weight')}}" :format="['useGrouping' => true]" suffix=" kg" />
                                 <flux:chart.tooltip.value field="bucket_count" label="{{__('Buckets')}}" :format="['useGrouping' => true]" suffix=" kom"/>
-                                <flux:chart.tooltip.value field="min_weight" label="{{ __('validation.attributes.Min per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
-                                <flux:chart.tooltip.value field="avg_weight" label="{{ __('validation.attributes.Avg per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
-                                <flux:chart.tooltip.value field="max_weight" label="{{ __('validation.attributes.Max per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
+                                <flux:chart.tooltip.value field="min_weight" label="{{ __('Min per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
+                                <flux:chart.tooltip.value field="avg_weight" label="{{ __('Avg per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
+                                <flux:chart.tooltip.value field="max_weight" label="{{ __('Max per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
                             </flux:chart.tooltip>
                         </flux:chart>
                     </flux:card>
@@ -674,9 +674,9 @@ class extends Component
                                 <flux:chart.tooltip.heading field="label" />
                                 <flux:chart.tooltip.value field="total_weight" label="{{__('Total weight')}}" :format="['useGrouping' => true]" suffix=" kg" />
                                 <flux:chart.tooltip.value field="bucket_count" label="{{__('Buckets')}}" :format="['useGrouping' => true]" suffix=" kom"/>
-                                <flux:chart.tooltip.value field="min_weight" label="{{ __('validation.attributes.Min per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
-                                <flux:chart.tooltip.value field="avg_weight" label="{{ __('validation.attributes.Avg per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
-                                <flux:chart.tooltip.value field="max_weight" label="{{ __('validation.attributes.Max per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
+                                <flux:chart.tooltip.value field="min_weight" label="{{ __('Min per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
+                                <flux:chart.tooltip.value field="avg_weight" label="{{ __('Avg per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
+                                <flux:chart.tooltip.value field="max_weight" label="{{ __('Max per bucket') }}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
                             </flux:chart.tooltip>
                         </flux:chart>
                     </flux:card>

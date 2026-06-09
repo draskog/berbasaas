@@ -834,5 +834,8 @@
     "Maximum Bucket Weight": "Maksimalna težina gajbice",
     "Set the maximum acceptable weight per bucket (gajbica). Buckets exceeding this weight will be flagged in the over-limit report.": "Postavite maksimalnu dozvoljenu težinu po gajbici. Gajbice koje prekorače ovu težinu će biti označene u izveštaju o prekoračenju.",
     "Maximum bucket weight limit is not configured.": "Limit maksimalne težine gajbice nije konfigurisan.",
-    "Configure in settings": "Konfiguriši u podešavanjima"
+    "Configure in settings": "Konfiguriši u podešavanjima",
+    "Min per bucket": "Min po gajbici",
+    "Avg per bucket": "Prosek po gajbici",
+    "Max per bucket": "Maks po gajbici"
 }
