@@ -180,31 +180,60 @@ class extends Component
     }
 
     #[Computed]
-    public function activeHarvestersCount(): int
+    public function lastHarvestDate(): ?string
     {
         $year = now()->year;
-        $today = now()->startOfDay();
 
-        // Dohvati poslednji dan sa podacima
-        $lastDate = HarvestRecord::where('company_id', auth()->user()->company_id)
+        return HarvestRecord::where('company_id', auth()->user()->company_id)
             ->whereYear('weighed_at', $year)
             ->selectRaw('DATE(weighed_at) as record_date')
             ->distinct()
             ->orderByDesc('record_date')
             ->value('record_date');
+    }
 
-        if (! $lastDate) {
+    #[Computed]
+    public function daysSinceLastHarvest(): int
+    {
+        if (! $this->lastHarvestDate) {
+            return PHP_INT_MAX;
+        }
+
+        $today = now()->startOfDay();
+        $lastDateObj = Carbon::createFromFormat('Y-m-d', $this->lastHarvestDate);
+
+        return $today->diffInDays($lastDateObj);
+    }
+
+    #[Computed]
+    public function chartsUrlWithDates(): string
+    {
+        $year = now()->year;
+
+        if ($this->daysSinceLastHarvest < 5) {
+            // Link sa datumom postavljenim na poslednji dan sa podacima
+            return route('harvest.charts', ['tab' => 'harvesters', 'from' => $this->lastHarvestDate, 'to' => $this->lastHarvestDate]);
+        } else {
+            // Link sa datumima za celu godinu
+            $fromDate = Carbon::create($year, 1, 1)->format('Y-m-d');
+            $toDate = Carbon::create($year, 12, 31)->format('Y-m-d');
+
+            return route('harvest.charts', ['tab' => 'harvesters', 'from' => $fromDate, 'to' => $toDate]);
+        }
+    }
+
+    #[Computed]
+    public function activeHarvestersCount(): int
+    {
+        $year = now()->year;
+
+        if (! $this->lastHarvestDate) {
             return 0;
         }
 
-        $lastDateObj = Carbon::createFromFormat('Y-m-d', $lastDate);
-        $daysSinceLast = $today->diffInDays($lastDateObj);
-
-        // Ako je poslednji dan < 5 dana, broj berača za taj dan
-        // Inače broj berača za godinu
-        if ($daysSinceLast < 5) {
+        if ($this->daysSinceLastHarvest < 5) {
             return HarvestRecord::where('company_id', auth()->user()->company_id)
-                ->whereDate('weighed_at', $lastDate)
+                ->whereDate('weighed_at', $this->lastHarvestDate)
                 ->distinct('harvester_number')
                 ->count();
         } else {
@@ -301,7 +330,7 @@ class extends Component
             </a>
 
             <!-- Active Harvesters -->
-            <a href="{{ route('harvest.reports', ['tab' => 'harvesters']) }}" wire:navigate class="block">
+            <a href="{{ $this->chartsUrlWithDates }}" wire:navigate class="block">
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
                     <flux:heading size="sm">{{ __('Active Harvesters') }}</flux:heading>
                     <flux:text class="text-2xl font-bold mt-2">
