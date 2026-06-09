@@ -16,8 +16,7 @@ use Livewire\WithPagination;
 new
 #[Layout('layouts.app')]
 #[Title('Harvesters')]
-class extends Component
-{
+class extends Component {
     use WithFileUploads, WithPagination;
 
     #[Session]
@@ -84,7 +83,7 @@ class extends Component
     public mixed $importedFile = null;
 
     #[Computed]
-    public function availableYears(): Collection
+    public function availableYears (): Collection
     {
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
             ->distinct()
@@ -95,7 +94,7 @@ class extends Component
     }
 
     #[Computed]
-    public function harvesters(): Collection
+    public function harvesters (): Collection
     {
         return Harvester::where('company_id', auth()->user()->company_id)
             ->where('active', true)
@@ -104,7 +103,7 @@ class extends Component
     }
 
     #[Computed]
-    public function allAssignments()
+    public function allAssignments ()
     {
         $query = HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
             ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
@@ -125,7 +124,7 @@ class extends Component
                 $number = (int) substr($this->search, 1);
                 $query->where('harvester_assignments.number', $number);
             } else {
-                $query->where(fn ($q) => $q
+                $query->where(fn($q) => $q
                     ->where('harvesters.name', 'like', "%$this->search%")
                     ->orWhere(DB::raw('CAST(harvester_assignments.number AS CHAR)'), 'like', "%$this->search%")
                 );
@@ -147,7 +146,7 @@ class extends Component
     }
 
     #[Computed]
-    public function availablePrefixes(): Collection
+    public function availablePrefixes (): Collection
     {
         $query = HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
             ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
@@ -165,7 +164,7 @@ class extends Component
     }
 
     #[Computed]
-    public function printAssignments()
+    public function printAssignments ()
     {
         $query = HarvesterAssignment::where('harvester_assignments.company_id', auth()->user()->company_id)
             ->join('harvesters', 'harvester_assignments.harvester_id', '=', 'harvesters.id')
@@ -176,28 +175,29 @@ class extends Component
             $query->where('harvester_assignments.year', $this->selectedYear);
         }
 
-        return $query->when($this->selectedPrefix !== '', fn ($q) => $q->where('harvesters.prefix', $this->selectedPrefix))
+        return $query->when($this->selectedPrefix !== '', fn($q) => $q->where('harvesters.prefix', $this->selectedPrefix))
             ->orderBy('harvester_assignments.number')
             ->get();
     }
 
-    public function mount(): void
+    public function mount (): void
     {
         $this->perPage = auth()->user()->userSettings?->default_per_page ?? 25;
         $years = $this->availableYears;
+        $this->importYear = now()->year;
     }
 
-    public function updatedPerPage(): void
+    public function updatedPerPage (): void
     {
         $this->resetPage();
     }
 
-    public function updatedSearch(): void
+    public function updatedSearch (): void
     {
         $this->resetPage();
     }
 
-    public function sort(string $column): void
+    public function sort (string $column): void
     {
         if ($this->sortBy === $column) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -208,7 +208,7 @@ class extends Component
         $this->resetPage();
     }
 
-    public function createAssignment(): void
+    public function createAssignment (): void
     {
         $this->validate([
             'newNumber' => 'required|integer|min:1|max:200',
@@ -249,13 +249,13 @@ class extends Component
         Flux::toast(text: __('Assignment added.'), variant: 'success');
     }
 
-    public function confirmDeleteAssignment(int $id): void
+    public function confirmDeleteAssignment (int $id): void
     {
         $this->deletingAssignmentId = $id;
         $this->showDeleteModal = true;
     }
 
-    public function deleteAssignment(): void
+    public function deleteAssignment (): void
     {
         HarvesterAssignment::find($this->deletingAssignmentId)?->delete();
         $this->deletingAssignmentId = null;
@@ -263,7 +263,7 @@ class extends Component
         Flux::toast(text: __('Assignment deleted.'), variant: 'warning');
     }
 
-    public function createHarvester(): void
+    public function createHarvester (): void
     {
         $this->validate([
             'newHarvesterName' => 'required|string|max:255',
@@ -282,7 +282,7 @@ class extends Component
         Flux::toast(text: __('Harvester added.'), variant: 'success');
     }
 
-    public function editHarvester(int $id): void
+    public function editHarvester (int $id): void
     {
         $harvester = Harvester::where('company_id', auth()->user()->company_id)->findOrFail($id);
         $this->editingHarvesterId = $id;
@@ -292,7 +292,7 @@ class extends Component
         $this->showEditHarvesterModal = true;
     }
 
-    public function updateHarvester(): void
+    public function updateHarvester (): void
     {
         $this->validate([
             'editHarvesterName' => 'required|string|max:255',
@@ -311,7 +311,7 @@ class extends Component
         Flux::toast(text: __('Harvester updated.'), variant: 'success');
     }
 
-    public function editAssignment(int $id): void
+    public function editAssignment (int $id): void
     {
         $assignment = HarvesterAssignment::where('company_id', auth()->user()->company_id)->findOrFail($id);
         $this->editingAssignmentId = $id;
@@ -319,7 +319,7 @@ class extends Component
         $this->showEditAssignmentModal = true;
     }
 
-    public function updateAssignment(): void
+    public function updateAssignment (): void
     {
         $this->validate([
             'editAssignmentNumber' => 'required|integer|min:1|max:200',
@@ -333,19 +333,19 @@ class extends Component
         Flux::toast(text: 'Assignment updated.', variant: 'success');
     }
 
-    public function updatedSelectedYear(): void
+    public function updatedSelectedYear (): void
     {
         $this->reset('selectedPrefix');
         $this->resetPage();
     }
 
-    public function downloadHarvesters(): void
+    public function downloadHarvesters (): void
     {
         $url = route('harvest.harvesters.download');
         $this->redirect($url);
     }
 
-    public function importHarvesters(): void
+    public function importHarvesters (): void
     {
         $this->validate([
             'importYear' => 'required|integer|min:2000|max:2099',

@@ -297,5 +297,6 @@ return [
         'editPricePerKg' => 'cena po kg',
         'bulkHarvesterNumber' => 'broj berača',
         'bulkTare' => 'tara',
+        'importYear' => 'sezona berbe',
     ],
 ];
