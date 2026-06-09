@@ -469,7 +469,7 @@ class extends Component
     public function dailyChartRows()
     {
         $data = $this->baseQuery()
-            ->selectRaw('DATE(weighed_at) as date, COUNT(*) as bucket_count, SUM(weight) as total_weight')
+            ->selectRaw('DATE(weighed_at) as date, COUNT(*) as bucket_count, SUM(weight) as total_weight, MIN(weight) as min_weight, MAX(weight) as max_weight')
             ->groupBy('date')
             ->orderBy('date')
             ->get()
@@ -478,6 +478,8 @@ class extends Component
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 2),
                 'avg_weight' => $row->bucket_count > 0 ? round($row->total_weight / $row->bucket_count, 3) : 0,
+                'min_weight' => round($row->min_weight, 3),
+                'max_weight' => round($row->max_weight, 3),
             ]);
 
         if ($data->count() === 1) {
@@ -634,7 +636,9 @@ class extends Component
                                 <flux:chart.tooltip.heading field="date" />
                                 <flux:chart.tooltip.value field="total_weight" label="{{__('Total weight')}}" :format="['useGrouping' => true]" suffix=" kg" />
                                 <flux:chart.tooltip.value field="bucket_count" label="{{__('Buckets')}}" :format="['useGrouping' => true]" suffix=" kom"/>
+                                <flux:chart.tooltip.value field="min_weight" label="{{__('Min per bucket')}}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
                                 <flux:chart.tooltip.value field="avg_weight" label="{{__('Avg per bucket')}}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
+                                <flux:chart.tooltip.value field="max_weight" label="{{__('Max per bucket')}}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
                             </flux:chart.tooltip>
                         </flux:chart>
                     </flux:card>
