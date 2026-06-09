@@ -145,7 +145,16 @@ class extends Component
             $this->selectedYear = $years->isNotEmpty() ? $years->first() : now()->year;
         }
 
-        $this->updateDatesForSelectedYear();
+        // Učitaj activeTab iz URL query parametra, pa tek onda iz sesije
+        $this->activeTab = request()->query('tab', session('harvest_charts_active_tab', 'daily'));
+
+        // Učitaj datume iz URL query parametara
+        if (request()->has('from') && request()->has('to')) {
+            $this->fromDate = request()->query('from');
+            $this->toDate = request()->query('to');
+        } else {
+            $this->updateDatesForSelectedYear();
+        }
 
         if ($this->fromDate && $this->toDate) {
             $this->dateRange = new DateRange($this->fromDate, $this->toDate);
