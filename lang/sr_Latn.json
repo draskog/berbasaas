@@ -837,5 +837,7 @@
     "Configure in settings": "Konfiguriši u podešavanjima",
     "Min per bucket": "Min po gajbici",
     "Avg per bucket": "Prosek po gajbici",
-    "Max per bucket": "Maks po gajbici"
+    "Max per bucket": "Maks po gajbici",
+    "Active Harvesters": "Aktivni berači",
+    "Berači koji su aktivno učestvovali": "Berači koji su aktivno učestvovali"
 }
