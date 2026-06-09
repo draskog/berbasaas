@@ -46,6 +46,7 @@ class extends Component
     #[Session]
     public string $searchHarvesterName = '';
 
+    #[Session]
     public string $activeTab = 'daily';
 
     public int $perPage = 25;
