@@ -178,8 +178,8 @@ class extends Component
             $this->dateRange = new DateRange($this->fromDate, $this->toDate);
         }
 
-        // Učitaj activeTab iz sesije ako postoji
-        $this->activeTab = session('harvest_reports_active_tab', 'daily');
+        // Učitaj activeTab iz URL query parametra, pa tek onda iz sesije
+        $this->activeTab = request()->query('tab', session('harvest_reports_active_tab', 'daily'));
 
         // Resetuj sve pagination stranice nakon inicijalizacije
         $this->resetPage('daily');

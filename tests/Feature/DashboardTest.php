@@ -19,6 +19,14 @@ test('authenticated users can visit the dashboard', function () {
         ->assertOk();
 });
 
+test('top harvester link navigates to harvest reports with harvesters tab', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertSee(route('harvest.reports', ['tab' => 'harvesters']));
+});
+
 test('top harvester shows daily data when last harvest is within 5 days', function () {
     $company = Company::factory()->create();
     $user = User::factory()->create(['company_id' => $company->id]);

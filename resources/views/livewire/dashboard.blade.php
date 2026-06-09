@@ -193,7 +193,7 @@ class extends Component
         <!-- Row 2: Highlights -->
         <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <!-- Top Harvester -->
-            <a href="{{ route('harvest.reports') }}" wire:navigate class="block">
+            <a href="{{ route('harvest.reports', ['tab' => 'harvesters']) }}" wire:navigate class="block">
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
                     <flux:heading size="sm">{{ __('Top Harvester') }}</flux:heading>
                     @if($this->topHarvester)
