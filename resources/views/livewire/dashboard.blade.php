@@ -180,6 +180,42 @@ class extends Component
     }
 
     #[Computed]
+    public function activeHarvestersCount(): int
+    {
+        $year = now()->year;
+        $today = now()->startOfDay();
+
+        // Dohvati poslednji dan sa podacima
+        $lastDate = HarvestRecord::where('company_id', auth()->user()->company_id)
+            ->whereYear('weighed_at', $year)
+            ->selectRaw('DATE(weighed_at) as record_date')
+            ->distinct()
+            ->orderByDesc('record_date')
+            ->value('record_date');
+
+        if (! $lastDate) {
+            return 0;
+        }
+
+        $lastDateObj = Carbon::createFromFormat('Y-m-d', $lastDate);
+        $daysSinceLast = $today->diffInDays($lastDateObj);
+
+        // Ako je poslednji dan < 5 dana, broj berača za taj dan
+        // Inače broj berača za godinu
+        if ($daysSinceLast < 5) {
+            return HarvestRecord::where('company_id', auth()->user()->company_id)
+                ->whereDate('weighed_at', $lastDate)
+                ->distinct('harvester_number')
+                ->count();
+        } else {
+            return HarvestRecord::where('company_id', auth()->user()->company_id)
+                ->whereYear('weighed_at', $year)
+                ->distinct('harvester_number')
+                ->count();
+        }
+    }
+
+    #[Computed]
     public function activeProducts(): Collection
     {
         return Product::where('company_id', auth()->user()->company_id)
@@ -264,25 +300,18 @@ class extends Component
                 </flux:card>
             </a>
 
-            <!-- Active Products -->
-            <a href="{{ route('products.settings') }}" wire:navigate class="block">
+            <!-- Active Harvesters -->
+            <a href="{{ route('harvest.reports', ['tab' => 'harvesters']) }}" wire:navigate class="block">
                 <flux:card class="h-full hover:border-blue-300 transition-colors">
-                    <flux:heading size="sm">{{ __('Active Products') }}</flux:heading>
+                    <flux:heading size="sm">{{ __('Active Harvesters') }}</flux:heading>
                     <flux:text class="text-2xl font-bold mt-2">
-                        {{ $this->activeProducts->count() }}
+                        {{ $this->activeHarvestersCount }}
                     </flux:text>
-                    @if($this->activeProducts->count() > 0)
-                        <flux:text size="sm" class="text-gray-500 mt-1">
-                            {{ $this->activeProducts->take(3)->pluck('name')->join(', ') }}
-                            @if($this->activeProducts->count() > 3)
-                                <span class="text-gray-400">...</span>
-                            @endif
-                        </flux:text>
-                    @else
-                        <flux:text size="sm" class="text-gray-500 mt-1">{{ __('None configured') }}</flux:text>
-                    @endif
-                    </flux:card>
-                </a>
+                    <flux:text size="sm" class="text-gray-500 mt-1">
+                        {{ __('Berači koji su aktivno učestvovali') }}
+                    </flux:text>
+                </flux:card>
+            </a>
             </div>
 
         <!-- Weather Forecast Widget -->
