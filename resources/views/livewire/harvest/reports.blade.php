@@ -644,7 +644,7 @@ class extends Component
 
         <!-- Tab Navigation -->
         <flux:tab.group>
-            <flux:tabs wire:model="activeTab" class="mb-6">
+            <flux:tabs wire:model.live="activeTab" class="mb-6">
                 <flux:tab name="daily">{{ __('Daily Summary') }}</flux:tab>
                 <flux:tab name="harvesters">{{ __('Harvesters') }}</flux:tab>
                 <flux:tab name="products">{{ __('Products') }}</flux:tab>
