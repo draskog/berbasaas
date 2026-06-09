@@ -10,14 +10,15 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
 use Livewire\Attributes\Session;
+use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
 new
 #[Layout('layouts.app')]
 #[Title('Charts')]
-class extends Component {
+class extends Component
+{
     #[Session]
     public int $selectedYear = 0;
 
@@ -51,11 +52,11 @@ class extends Component {
     public string $chartProductSortDirection = 'desc';
 
     #[Computed]
-    public function availableYears (): Collection
+    public function availableYears(): Collection
     {
         return HarvestRecord::where('company_id', auth()->user()->company_id)
             ->get()
-            ->map(fn($record) => $record->weighed_at->year)
+            ->map(fn ($record) => $record->weighed_at->year)
             ->unique()
             ->sort()
             ->reverse()
@@ -63,10 +64,10 @@ class extends Component {
     }
 
     #[Computed]
-    public function products (): Collection
+    public function products(): Collection
     {
         return Product::where('company_id', auth()->user()->company_id)
-            ->whereHas('harvestRecords', fn($q) => $q
+            ->whereHas('harvestRecords', fn ($q) => $q
                 ->where('company_id', auth()->user()->company_id)
                 ->whereYear('weighed_at', $this->selectedYear))
             ->orderBy('name')
@@ -74,7 +75,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function harvesterNumbers (): Collection
+    public function harvesterNumbers(): Collection
     {
         $query = HarvesterAssignment::where('company_id', auth()->user()->company_id);
 
@@ -89,7 +90,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function datesWithData (): array
+    public function datesWithData(): array
     {
         $query = HarvestRecord::query()
             ->where('company_id', auth()->user()->company_id);
@@ -105,7 +106,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function unavailableDates (): array
+    public function unavailableDates(): array
     {
         $start = Carbon::create($this->selectedYear);
         $end = Carbon::create($this->selectedYear, 12, 31);
@@ -122,20 +123,22 @@ class extends Component {
     }
 
     #[Computed]
-    public function minDate (): string
+    public function minDate(): string
     {
         $year = $this->selectedYear ?: $this->availableYears->first() ?? now()->year;
+
         return Carbon::create($year)->format('Y-m-d');
     }
 
     #[Computed]
-    public function maxDate (): string
+    public function maxDate(): string
     {
         $year = $this->selectedYear ?: $this->availableYears->first() ?? now()->year;
+
         return Carbon::create($year, 12, 31)->format('Y-m-d');
     }
 
-    public function mount (): void
+    public function mount(): void
     {
         $years = $this->availableYears;
         if (! $this->selectedYear) {
@@ -149,7 +152,7 @@ class extends Component {
         }
     }
 
-    public function updatedSelectedYear (): void
+    public function updatedSelectedYear(): void
     {
         $this->updateDatesForSelectedYear();
         if ($this->fromDate && $this->toDate) {
@@ -157,7 +160,7 @@ class extends Component {
         }
     }
 
-    public function updatedDateRange (): void
+    public function updatedDateRange(): void
     {
         if ($this->dateRange instanceof DateRange) {
             $this->fromDate = $this->dateRange->start()->format('Y-m-d');
@@ -165,7 +168,7 @@ class extends Component {
         }
     }
 
-    private function updateDatesForSelectedYear (): void
+    private function updateDatesForSelectedYear(): void
     {
         if ($this->fromDate) {
             $fromCarbon = Carbon::parse($this->fromDate);
@@ -182,7 +185,7 @@ class extends Component {
         }
     }
 
-    public function sortChartDaily (string $column): void
+    public function sortChartDaily(string $column): void
     {
         if ($this->chartDailySortBy === $column) {
             $this->chartDailySortDirection = $this->chartDailySortDirection === 'asc' ? 'desc' : 'asc';
@@ -192,7 +195,7 @@ class extends Component {
         }
     }
 
-    public function sortChartHarvesters (string $column): void
+    public function sortChartHarvesters(string $column): void
     {
         if ($this->chartHarvesterSortBy === $column) {
             $this->chartHarvesterSortDirection = $this->chartHarvesterSortDirection === 'asc' ? 'desc' : 'asc';
@@ -202,7 +205,7 @@ class extends Component {
         }
     }
 
-    public function sortChartProducts (string $column): void
+    public function sortChartProducts(string $column): void
     {
         if ($this->chartProductSortBy === $column) {
             $this->chartProductSortDirection = $this->chartProductSortDirection === 'asc' ? 'desc' : 'asc';
@@ -212,16 +215,16 @@ class extends Component {
         }
     }
 
-    private function baseQuery (): Builder
+    private function baseQuery(): Builder
     {
         return HarvestRecord::where('company_id', auth()->user()->company_id)
-            ->when($this->fromDate, fn($q) => $q->whereDate('weighed_at', '>=', $this->fromDate))
-            ->when($this->toDate, fn($q) => $q->whereDate('weighed_at', '<=', $this->toDate))
-            ->when($this->selectedProductId, fn($q) => $q->where('product_id', $this->selectedProductId))
-            ->when($this->selectedHarvesterNumber, fn($q) => $q->where('harvester_number', $this->selectedHarvesterNumber));
+            ->when($this->fromDate, fn ($q) => $q->whereDate('weighed_at', '>=', $this->fromDate))
+            ->when($this->toDate, fn ($q) => $q->whereDate('weighed_at', '<=', $this->toDate))
+            ->when($this->selectedProductId, fn ($q) => $q->where('product_id', $this->selectedProductId))
+            ->when($this->selectedHarvesterNumber, fn ($q) => $q->where('harvester_number', $this->selectedHarvesterNumber));
     }
 
-    private function harvesterNames (): array
+    private function harvesterNames(): array
     {
         // Get all harvester names, grouped by number (latest year wins)
         return HarvesterAssignment::where('company_id', auth()->user()->company_id)
@@ -234,14 +237,14 @@ class extends Component {
     }
 
     #[Computed]
-    public function dailyData ()
+    public function dailyData()
     {
         return $this->baseQuery()
             ->selectRaw('DATE(weighed_at) as date, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('date')
             ->orderBy($this->chartDailySortBy, $this->chartDailySortDirection)
             ->get()
-            ->map(fn(object $row) => [
+            ->map(fn (object $row) => [
                 'date' => $row->date,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
@@ -249,7 +252,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function dailyTotals (): array
+    public function dailyTotals(): array
     {
         $data = $this->dailyData;
         if ($data->isEmpty()) {
@@ -263,7 +266,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function dailyWeightDisplay (): array
+    public function dailyWeightDisplay(): array
     {
         $kg = $this->dailyTotals['weight'];
         if ($kg >= 1000) {
@@ -280,7 +283,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function harvesterData ()
+    public function harvesterData()
     {
         $names = $this->harvesterNames();
 
@@ -300,7 +303,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function harvesterTotals (): array
+    public function harvesterTotals(): array
     {
         $data = $this->harvesterData;
         if ($data->isEmpty()) {
@@ -314,24 +317,24 @@ class extends Component {
     }
 
     #[Computed]
-    public function productData (): Collection
+    public function productData(): Collection
     {
         return $this->baseQuery()
             ->selectRaw('product_id, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('product_id')
             ->with('product')
             ->get()
-            ->map(fn(HarvestRecord $row) => [
+            ->map(fn (HarvestRecord $row) => [
                 'name' => $row->product->name,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 3),
             ])
-            ->sortBy(fn($row) => $row[$this->chartProductSortBy], SORT_REGULAR, $this->chartProductSortDirection === 'desc')
+            ->sortBy(fn ($row) => $row[$this->chartProductSortBy], SORT_REGULAR, $this->chartProductSortDirection === 'desc')
             ->values();
     }
 
     #[Computed]
-    public function productTotals (): array
+    public function productTotals(): array
     {
         $data = $this->productData;
         if ($data->isEmpty()) {
@@ -345,7 +348,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function dailyKgChartData (): array
+    public function dailyKgChartData(): array
     {
         $data = $this->baseQuery()
             ->selectRaw('DATE(weighed_at) as date, SUM(weight) as total_weight')
@@ -354,11 +357,11 @@ class extends Component {
             ->get();
 
         return [
-            'labels' => $data->map(fn($row) => Carbon::parse($row->date)->format('d.m'))->values()->toArray(),
+            'labels' => $data->map(fn ($row) => Carbon::parse($row->date)->format('d.m'))->values()->toArray(),
             'datasets' => [
                 [
                     'label' => __('Total kg'),
-                    'data' => $data->map(fn($row) => round($row->total_weight, 2))->values()->toArray(),
+                    'data' => $data->map(fn ($row) => round($row->total_weight, 2))->values()->toArray(),
                     'backgroundColor' => 'rgba(59, 130, 246, 0.8)',
                     'borderColor' => 'rgba(59, 130, 246, 1)',
                     'borderWidth' => 1,
@@ -368,7 +371,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function harvesterComparisonChartData (): array
+    public function harvesterComparisonChartData(): array
     {
         $names = $this->harvesterNames();
         $data = $this->baseQuery()
@@ -379,11 +382,11 @@ class extends Component {
             ->get();
 
         return [
-            'labels' => $data->map(fn(object $row) => $names[$row->harvester_number] ?? "#$row->harvester_number")->values()->toArray(),
+            'labels' => $data->map(fn (object $row) => $names[$row->harvester_number] ?? "#$row->harvester_number")->values()->toArray(),
             'datasets' => [
                 [
                     'label' => __('Total kg'),
-                    'data' => $data->map(fn(object $row) => round($row->total_weight, 2))->values()->toArray(),
+                    'data' => $data->map(fn (object $row) => round($row->total_weight, 2))->values()->toArray(),
                     'backgroundColor' => 'rgba(34, 197, 94, 0.8)',
                     'borderColor' => 'rgba(34, 197, 94, 1)',
                     'borderWidth' => 1,
@@ -393,7 +396,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function hourlyDistributionChartData (): array
+    public function hourlyDistributionChartData(): array
     {
         $data = $this->baseQuery()
             ->selectRaw('HOUR(weighed_at) as hour, COUNT(*) as bucket_count')
@@ -401,13 +404,13 @@ class extends Component {
             ->orderBy('hour')
             ->get();
 
-        $allHours = collect(range(0, 23))->mapWithKeys(fn($h) => [$h => 0]);
+        $allHours = collect(range(0, 23))->mapWithKeys(fn ($h) => [$h => 0]);
         foreach ($data as $row) {
             $allHours[$row->hour] = $row->bucket_count;
         }
 
         return [
-            'labels' => $allHours->keys()->map(fn($h) => sprintf('%02dh', $h))->values()->toArray(),
+            'labels' => $allHours->keys()->map(fn ($h) => sprintf('%02dh', $h))->values()->toArray(),
             'datasets' => [
                 [
                     'label' => __('Buckets'),
@@ -421,7 +424,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function cumulativeKgChartData (): array
+    public function cumulativeKgChartData(): array
     {
         $records = $this->baseQuery()
             ->selectRaw('weighed_at, weight')
@@ -442,8 +445,8 @@ class extends Component {
         // Limit to every 50th point to avoid overcrowding
         if (count($labels) > 50) {
             $step = ceil(count($labels) / 50);
-            $labels = collect($labels)->filter(fn($_, $i) => $i % $step === 0)->values()->toArray();
-            $data = collect($data)->filter(fn($_, $i) => $i % $step === 0)->values()->toArray();
+            $labels = collect($labels)->filter(fn ($_, $i) => $i % $step === 0)->values()->toArray();
+            $data = collect($data)->filter(fn ($_, $i) => $i % $step === 0)->values()->toArray();
         }
 
         return [
@@ -463,17 +466,18 @@ class extends Component {
     }
 
     #[Computed]
-    public function dailyChartRows ()
+    public function dailyChartRows()
     {
         $data = $this->baseQuery()
             ->selectRaw('DATE(weighed_at) as date, COUNT(*) as bucket_count, SUM(weight) as total_weight')
             ->groupBy('date')
             ->orderBy('date')
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'date' => Carbon::parse($row->date)->format('d.m.Y'),
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 2),
+                'avg_weight' => $row->bucket_count > 0 ? round($row->total_weight / $row->bucket_count, 3) : 0,
             ]);
 
         if ($data->count() === 1) {
@@ -489,7 +493,7 @@ class extends Component {
     }
 
     #[Computed]
-    public function harvesterChartRows ()
+    public function harvesterChartRows()
     {
         $names = $this->harvesterNames();
 
@@ -499,10 +503,10 @@ class extends Component {
             ->orderByDesc('total_weight')
             ->limit(20)
             ->get()
-            ->map(fn(object $row) => [
+            ->map(fn (object $row) => [
                 'number' => $row->harvester_number,
                 'name' => $names[$row->harvester_number] ?? "#$row->harvester_number",
-                'label' => ($names[$row->harvester_number] ?? "#$row->harvester_number") . "\n#" . $row->harvester_number,
+                'label' => ($names[$row->harvester_number] ?? "#$row->harvester_number")."\n#".$row->harvester_number,
                 'bucket_count' => $row->bucket_count,
                 'total_weight' => round($row->total_weight, 2),
             ]);
@@ -630,6 +634,7 @@ class extends Component {
                                 <flux:chart.tooltip.heading field="date" />
                                 <flux:chart.tooltip.value field="total_weight" label="{{__('Total weight')}}" :format="['useGrouping' => true]" suffix=" kg" />
                                 <flux:chart.tooltip.value field="bucket_count" label="{{__('Buckets')}}" :format="['useGrouping' => true]" suffix=" kom"/>
+                                <flux:chart.tooltip.value field="avg_weight" label="{{__('Avg per bucket')}}" :format="['minimumFractionDigits' => 3, 'maximumFractionDigits' => 3]" suffix=" kg"/>
                             </flux:chart.tooltip>
                         </flux:chart>
                     </flux:card>
