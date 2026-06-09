@@ -4,6 +4,7 @@ use App\Models\HarvesterAssignment;
 use App\Models\HarvestRecord;
 use App\Models\HarvestRecordStaging;
 use App\Models\Product;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -60,12 +61,40 @@ class extends Component
     public function topHarvester(): ?array
     {
         $year = now()->year;
-        $record = HarvestRecord::where('company_id', auth()->user()->company_id)
+        $today = now()->startOfDay();
+
+        // Dohvati poslednji dan sa podacima
+        $lastDate = HarvestRecord::where('company_id', auth()->user()->company_id)
             ->whereYear('weighed_at', $year)
-            ->selectRaw('harvester_number, SUM(weight) as total_weight')
-            ->groupBy('harvester_number')
-            ->orderByDesc('total_weight')
-            ->first();
+            ->selectRaw('DATE(weighed_at) as record_date')
+            ->distinct()
+            ->orderByDesc('record_date')
+            ->value('record_date');
+
+        if (! $lastDate) {
+            return null;
+        }
+
+        $lastDateObj = Carbon::createFromFormat('Y-m-d', $lastDate);
+        $daysSinceLast = $today->diffInDays($lastDateObj);
+
+        // Ako je poslednji dan < 5 dana, prikaži top berača za taj dan
+        // Inače prikaži top berača za godinu
+        if ($daysSinceLast < 5) {
+            $record = HarvestRecord::where('company_id', auth()->user()->company_id)
+                ->whereDate('weighed_at', $lastDate)
+                ->selectRaw('harvester_number, SUM(weight) as total_weight')
+                ->groupBy('harvester_number')
+                ->orderByDesc('total_weight')
+                ->first();
+        } else {
+            $record = HarvestRecord::where('company_id', auth()->user()->company_id)
+                ->whereYear('weighed_at', $year)
+                ->selectRaw('harvester_number, SUM(weight) as total_weight')
+                ->groupBy('harvester_number')
+                ->orderByDesc('total_weight')
+                ->first();
+        }
 
         if (! $record) {
             return null;
