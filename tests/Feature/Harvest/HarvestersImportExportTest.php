@@ -2,8 +2,8 @@
 
 use App\Models\Company;
 use App\Models\Harvester;
-use App\Models\HarvestImportSettings;
 use App\Models\HarvesterAssignment;
+use App\Models\HarvestImportSettings;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Livewire\Livewire;
@@ -87,6 +87,7 @@ describe('Harvesters Import/Export', function () {
         $file = UploadedFile::fake()->createWithContent('harvesters.csv', $csv);
 
         Livewire::test('harvest.harvesters')
+            ->set('importYear', null)
             ->set('importedFile', $file)
             ->call('importHarvesters')
             ->assertHasErrors('importYear');
@@ -110,10 +111,65 @@ describe('Harvesters Import/Export', function () {
             ->assertHasErrors('importYear');
     });
 
-    it('prevents duplicate year imports', function () {
+    it('adds new assignments when importing into an existing year', function () {
+        $harvester = Harvester::factory()
+            ->for($this->company)
+            ->create(['name' => 'John Doe', 'prefix' => 'A']);
         HarvesterAssignment::factory()
             ->for($this->company)
-            ->create(['year' => 2025]);
+            ->create(['harvester_id' => $harvester->id, 'year' => 2025, 'number' => 1]);
+
+        $csv = "Redni broj;Ime i prezime berača;Prefiks\n1;John Doe;A\n2;Jane Smith;B\n";
+        $file = UploadedFile::fake()->createWithContent('harvesters.csv', $csv);
+
+        Livewire::test('harvest.harvesters')
+            ->set('importYear', 2025)
+            ->set('importedFile', $file)
+            ->call('importHarvesters')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseCount('harvester_assignments', 2);
+        $this->assertDatabaseHas('harvester_assignments', [
+            'company_id' => $this->company->id,
+            'year' => 2025,
+            'number' => 2,
+        ]);
+        expect($this->company->harvesters()->where('name', 'Jane Smith')->exists())->toBeTrue();
+    });
+
+    it('updates harvester name and prefix when assignment number already exists', function () {
+        $harvester = Harvester::factory()
+            ->for($this->company)
+            ->create(['name' => 'John Doe', 'prefix' => 'A']);
+        HarvesterAssignment::factory()
+            ->for($this->company)
+            ->create(['harvester_id' => $harvester->id, 'year' => 2025, 'number' => 1]);
+
+        $csv = "Redni broj;Ime i prezime berača;Prefiks\n1;Johnny Doe;B\n";
+        $file = UploadedFile::fake()->createWithContent('harvesters.csv', $csv);
+
+        Livewire::test('harvest.harvesters')
+            ->set('importYear', 2025)
+            ->set('importedFile', $file)
+            ->call('importHarvesters')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseCount('harvesters', 1);
+        $this->assertDatabaseCount('harvester_assignments', 1);
+        $this->assertDatabaseHas('harvesters', [
+            'id' => $harvester->id,
+            'name' => 'Johnny Doe',
+            'prefix' => 'B',
+        ]);
+    });
+
+    it('skips assignments with unchanged harvester data on re-import', function () {
+        $harvester = Harvester::factory()
+            ->for($this->company)
+            ->create(['name' => 'John Doe', 'prefix' => 'A']);
+        HarvesterAssignment::factory()
+            ->for($this->company)
+            ->create(['harvester_id' => $harvester->id, 'year' => 2025, 'number' => 1]);
 
         $csv = "Redni broj;Ime i prezime berača;Prefiks\n1;John Doe;A\n";
         $file = UploadedFile::fake()->createWithContent('harvesters.csv', $csv);
@@ -121,9 +177,16 @@ describe('Harvesters Import/Export', function () {
         Livewire::test('harvest.harvesters')
             ->set('importYear', 2025)
             ->set('importedFile', $file)
-            ->call('importHarvesters');
+            ->call('importHarvesters')
+            ->assertHasNoErrors();
 
-        expect($this->company->harvesters()->where('name', 'John Doe')->exists())->toBeFalse();
+        $this->assertDatabaseCount('harvesters', 1);
+        $this->assertDatabaseCount('harvester_assignments', 1);
+        $this->assertDatabaseHas('harvesters', [
+            'id' => $harvester->id,
+            'name' => 'John Doe',
+            'prefix' => 'A',
+        ]);
     });
 
     it('rejects file with missing required name field', function () {

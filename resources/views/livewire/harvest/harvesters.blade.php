@@ -355,19 +355,6 @@ class extends Component {
         $year = $this->importYear;
         $companyId = auth()->user()->company_id;
 
-        $exists = HarvesterAssignment::where('company_id', $companyId)
-            ->where('year', $year)
-            ->exists();
-
-        if ($exists) {
-            Flux::toast(
-                text: __('Harvester list for year :year already exists.', ['year' => $year]),
-                variant: 'danger'
-            );
-
-            return;
-        }
-
         try {
             $path = $this->importedFile->getRealPath();
             $file = fopen($path, 'rb');
@@ -381,7 +368,9 @@ class extends Component {
             $settings = HarvestImportSettings::where('company_id', $companyId)->first();
             $delimiter = $settings?->csv_delimiter ?? ',';
 
-            $createdCount = 0;
+            $addedCount = 0;
+            $updatedCount = 0;
+            $skippedCount = 0;
             $line = 0;
 
             while (($data = fgetcsv($file, 0, $delimiter)) !== false) {
@@ -402,6 +391,26 @@ class extends Component {
                     );
 
                     return;
+                }
+
+                $assignment = HarvesterAssignment::where([
+                    'company_id' => $companyId,
+                    'year' => $year,
+                    'number' => $number,
+                ])->with('harvester')->first();
+
+                if ($assignment?->harvester) {
+                    if ($assignment->harvester->name === $name && $assignment->harvester->prefix === $prefix) {
+                        $skippedCount++;
+                    } else {
+                        $assignment->harvester->update([
+                            'name' => $name,
+                            'prefix' => $prefix,
+                        ]);
+                        $updatedCount++;
+                    }
+
+                    continue;
                 }
 
                 $harvester = Harvester::firstOrCreate(
@@ -426,7 +435,7 @@ class extends Component {
                     ]
                 );
 
-                $createdCount++;
+                $addedCount++;
             }
 
             fclose($file);
@@ -436,9 +445,10 @@ class extends Component {
             $this->showImportHarvestersModal = false;
 
             Flux::toast(
-                text: __('Successfully imported :count harvesters for year :year.', [
-                    'count' => $createdCount,
-                    'year' => $year,
+                text: __('Import finished: :added added, :updated updated, :skipped skipped.', [
+                    'added' => $addedCount,
+                    'updated' => $updatedCount,
+                    'skipped' => $skippedCount,
                 ]),
                 variant: 'success'
             );
