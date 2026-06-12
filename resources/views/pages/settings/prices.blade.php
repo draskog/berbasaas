@@ -269,7 +269,7 @@ class extends Component
 
         <x-pages::settings.layout :heading="__('Harvest Prices')" :subheading="__('Manage harvest prices for products')">
             <div class="w-full space-y-6">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-wrap items-center justify-between gap-2">
                     <div class="flex-1">
                         <flux:radio.group wire:model.live="selectedProduct" label="{{ __('Product') }}" variant="pills">
                             <flux:radio label="{{ __('All') }}" value="all"/>
@@ -293,8 +293,8 @@ class extends Component
                     <flux:table.columns>
                         <flux:table.column sortable :sorted="$sortBy === 'product_id'" :direction="$sortDirection" wire:click="sort('product_id')">{{ __('Product') }}</flux:table.column>
                         <flux:table.column sortable :sorted="$sortBy === 'price_per_kg'" :direction="$sortDirection" wire:click="sort('price_per_kg')">{{ __('Price (per kg)') }}</flux:table.column>
-                        <flux:table.column sortable :sorted="$sortBy === 'effective_from'" :direction="$sortDirection" wire:click="sort('effective_from')">{{ __('Effective From') }}</flux:table.column>
-                        <flux:table.column sortable :sorted="$sortBy === 'effective_to'" :direction="$sortDirection" wire:click="sort('effective_to')">{{ __('Effective To') }}</flux:table.column>
+                        <flux:table.column class="hidden md:table-cell" sortable :sorted="$sortBy === 'effective_from'" :direction="$sortDirection" wire:click="sort('effective_from')">{{ __('Effective From') }}</flux:table.column>
+                        <flux:table.column class="hidden md:table-cell" sortable :sorted="$sortBy === 'effective_to'" :direction="$sortDirection" wire:click="sort('effective_to')">{{ __('Effective To') }}</flux:table.column>
                         <flux:table.column align="center">{{ __('Actions') }}</flux:table.column>
                     </flux:table.columns>
 
@@ -303,8 +303,8 @@ class extends Component
                             <flux:table.row>
                                 <flux:table.cell>{{ $price->product->name }}</flux:table.cell>
                                 <flux:table.cell>{{ number_format($price->price_per_kg, 0, ',', '.') }} <span class="text-sm">RSD</span></flux:table.cell>
-                                <flux:table.cell>{{ $price->effective_from->format('d.m.Y') }}</flux:table.cell>
-                                <flux:table.cell>{{ $price->effective_to?->format('d.m.Y') ?? __('Current') }}</flux:table.cell>
+                                <flux:table.cell class="hidden md:table-cell">{{ $price->effective_from->format('d.m.Y') }}</flux:table.cell>
+                                <flux:table.cell class="hidden md:table-cell">{{ $price->effective_to?->format('d.m.Y') ?? __('Current') }}</flux:table.cell>
                                 <flux:table.cell align="end" class="space-x-2">
                                     <flux:button size="sm" wire:click="editPrice({{ $price->id }})">{{ __('Edit') }}</flux:button>
                                     <flux:button variant="danger" size="sm" wire:click="confirmDeletePrice({{ $price->id }})">{{ __('Delete') }}</flux:button>

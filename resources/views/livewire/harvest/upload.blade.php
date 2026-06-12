@@ -807,8 +807,8 @@ class extends Component {
                     </flux:radio.group>
                 </div>
             @endif
-            <div class="flex justify-between items-center">
-                <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search" :placeholder="__('Search by filename...')" icon="magnifying-glass" class="w-72!"/>
+            <div class="flex flex-wrap justify-between items-center gap-2">
+                <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search" :placeholder="__('Search by filename...')" icon="magnifying-glass" class="w-full sm:w-72!"/>
                 <flux:select wire:model.live="perPage" size="sm" class="w-28">
                     <flux:select.option value="25">25</flux:select.option>
                     <flux:select.option value="50">50</flux:select.option>
@@ -821,14 +821,14 @@ class extends Component {
         <flux:table :paginate="$this->perPage > 0 ? $this->recentUploads : null">
             <flux:table.columns>
                 <flux:table.column sortable :sorted="$sortBy === 'original_filename'" :direction="$sortDirection" wire:click="sort('original_filename')">{{ __('Filename') }}</flux:table.column>
-                <flux:table.column>{{ __('Product') }}</flux:table.column>
-                <flux:table.column>{{ __('Total') }}</flux:table.column>
-                <flux:table.column>{{ __('Valid') }}</flux:table.column>
-                <flux:table.column>{{ __('Duplicates') }}</flux:table.column>
-                <flux:table.column>{{ __('Invalid') }}</flux:table.column>
+                <flux:table.column class="hidden lg:table-cell">{{ __('Product') }}</flux:table.column>
+                <flux:table.column class="hidden lg:table-cell">{{ __('Total') }}</flux:table.column>
+                <flux:table.column class="hidden xl:table-cell">{{ __('Valid') }}</flux:table.column>
+                <flux:table.column class="hidden xl:table-cell">{{ __('Duplicates') }}</flux:table.column>
+                <flux:table.column class="hidden xl:table-cell">{{ __('Invalid') }}</flux:table.column>
                 <flux:table.column>{{ __('Status') }}</flux:table.column>
-                <flux:table.column>{{ __('Tip uvoza') }}</flux:table.column>
-                <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">{{ __('Date Range') }}</flux:table.column>
+                <flux:table.column class="hidden xl:table-cell">{{ __('Tip uvoza') }}</flux:table.column>
+                <flux:table.column class="hidden lg:table-cell" sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">{{ __('Date Range') }}</flux:table.column>
                 <flux:table.column align="center">{{ __('Actions') }}</flux:table.column>
             </flux:table.columns>
 
@@ -836,17 +836,17 @@ class extends Component {
                 @forelse($this->recentUploads as $upload)
                     <flux:table.row>
                         <flux:table.cell>{{ $upload->original_filename }}</flux:table.cell>
-                        <flux:table.cell>{{ $upload->product->name }}</flux:table.cell>
-                        <flux:table.cell>{{ $upload->record_count }}</flux:table.cell>
-                        <flux:table.cell>{{ $upload->valid_count }}</flux:table.cell>
-                        <flux:table.cell>
+                        <flux:table.cell class="hidden lg:table-cell">{{ $upload->product->name }}</flux:table.cell>
+                        <flux:table.cell class="hidden lg:table-cell">{{ $upload->record_count }}</flux:table.cell>
+                        <flux:table.cell class="hidden xl:table-cell">{{ $upload->valid_count }}</flux:table.cell>
+                        <flux:table.cell class="hidden xl:table-cell">
                             @if($upload->db_duplicate_count > 0)
                                 <flux:badge color="yellow">{{ $upload->db_duplicate_count }}</flux:badge>
                             @else
                                 {{ $upload->db_duplicate_count }}
                             @endif
                         </flux:table.cell>
-                        <flux:table.cell>
+                        <flux:table.cell class="hidden xl:table-cell">
                             @if($upload->valid_count === 0 && $upload->invalid_count === 0 && $upload->record_count > 0)
                                 <flux:badge color="zinc">{{ $upload->record_count }}</flux:badge>
                             @elseif($upload->invalid_count > 0)
@@ -866,7 +866,7 @@ class extends Component {
                                 <flux:badge color="orange">{{ __('Partially Valid') }}</flux:badge>
                             @endif
                         </flux:table.cell>
-                        <flux:table.cell>
+                        <flux:table.cell class="hidden xl:table-cell">
                             @if($upload->import_type)
                                 @php
                                     $icons = [
@@ -887,7 +887,7 @@ class extends Component {
                                 </div>
                             @endif
                         </flux:table.cell>
-                        <flux:table.cell>
+                        <flux:table.cell class="hidden lg:table-cell">
                             @if($upload->date_from->isSameDay($upload->date_to))
                                 {{ $upload->date_from->format('d.m.Y') }}
                             @else

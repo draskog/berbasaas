@@ -714,8 +714,8 @@ class extends Component
                     {{ __('No records match this filter. Switch the filter above to see remaining errors.') }}
                 </flux:callout>
             @else
-                <div class="flex items-center justify-between gap-4">
-                    <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search by harvester number...') }}" icon="magnifying-glass" class="w-72!"/>
+                <div class="flex flex-wrap items-center justify-between gap-2 sm:gap-4">
+                    <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search by harvester number...') }}" icon="magnifying-glass" class="w-full sm:w-72!"/>
                     <flux:select wire:model.live="perPage" size="sm" class="w-28">
                         <flux:select.option value="25">25</flux:select.option>
                         <flux:select.option value="50">50</flux:select.option>
@@ -780,15 +780,15 @@ class extends Component
                     <flux:table.column class="w-12">
                         <flux:checkbox wire:model.live="selectAll"/>
                     </flux:table.column>
-                    <flux:table.column class="w-20">{{ __('Record #') }}</flux:table.column>
+                    <flux:table.column class="w-20 hidden md:table-cell">{{ __('Record #') }}</flux:table.column>
                     <flux:table.column sortable :sorted="$sortBy === 'weighed_at'" :direction="$sortDirection" wire:click="sort('weighed_at')">{{ __('Date / Time') }}</flux:table.column>
                     <flux:table.column sortable :sorted="$sortBy === 'weight'" :direction="$sortDirection" wire:click="sort('weight')">{{ __('Weight (kg)') }}</flux:table.column>
-                    <flux:table.column>{{ __('Tare (kg)') }}</flux:table.column>
+                    <flux:table.column class="hidden md:table-cell">{{ __('Tare (kg)') }}</flux:table.column>
                     <flux:table.column>{{ __('Corrected Tare') }}</flux:table.column>
-                    <flux:table.column>{{ __('Gross (kg)') }}</flux:table.column>
-                    <flux:table.column>{{ __('Original #') }}</flux:table.column>
+                    <flux:table.column class="hidden lg:table-cell">{{ __('Gross (kg)') }}</flux:table.column>
+                    <flux:table.column class="hidden md:table-cell">{{ __('Original #') }}</flux:table.column>
                     <flux:table.column>{{ __('Corrected #') }}</flux:table.column>
-                    <flux:table.column>{{ __('Reason') }}</flux:table.column>
+                    <flux:table.column class="hidden lg:table-cell">{{ __('Reason') }}</flux:table.column>
                     <flux:table.column>{{ __('Action') }}</flux:table.column>
                 </flux:table.columns>
 
@@ -798,7 +798,7 @@ class extends Component
                             <flux:table.cell class="w-12">
                                 <flux:checkbox wire:model.live="selectedIds" value="{{ $record->id }}"/>
                             </flux:table.cell>
-                            <flux:table.cell class="w-20">
+                            <flux:table.cell class="w-20 hidden md:table-cell">
                                 <span class="text-sm font-medium">{{ $record->sequence_number }}</span>
                             </flux:table.cell>
                             <flux:table.cell>
@@ -807,7 +807,7 @@ class extends Component
                             <flux:table.cell>
                                 {{ number_format($record->weight, 3, ',', '.') }}
                             </flux:table.cell>
-                            <flux:table.cell>
+                            <flux:table.cell class="hidden md:table-cell">
                                 @php $reasons = (array) $record->validation_reason; @endphp
                                 {{ number_format($record->tare, 3, ',', '.') }}
                             </flux:table.cell>
@@ -850,10 +850,10 @@ class extends Component
                                     @enderror
                                 @endif
                             </flux:table.cell>
-                            <flux:table.cell>
+                            <flux:table.cell class="hidden lg:table-cell">
                                 {{ number_format($record->gross, 3, ',', '.') }}
                             </flux:table.cell>
-                            <flux:table.cell>
+                            <flux:table.cell class="hidden md:table-cell">
                                 @if(in_array('harvester_not_found', $reasons, true))
                                     <flux:badge color="amber">{{ $record->harvester_number }}</flux:badge>
                                 @else
@@ -883,7 +883,7 @@ class extends Component
                                     @endif
                                 @endif
                             </flux:table.cell>
-                            <flux:table.cell>
+                            <flux:table.cell class="hidden lg:table-cell">
                                 @foreach($reasons as $reason)
                                     @if($reason === 'harvester_not_found')
                                         <flux:badge color="amber" size="sm">{{ __('Harvester not found') }}</flux:badge>

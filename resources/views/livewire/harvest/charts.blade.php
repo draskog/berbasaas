@@ -630,7 +630,7 @@ class extends Component
             <flux:tab.panel name="daily">
                 @if ($this->dailyChartRows->isNotEmpty())
                     <flux:card>
-                        <flux:chart :value="$this->dailyChartRows->toArray()" class="aspect-3/1">
+                        <flux:chart :value="$this->dailyChartRows->toArray()" class="aspect-square sm:aspect-2/1 lg:aspect-3/1">
                             <flux:chart.svg>
                                 <flux:chart.bar field="total_weight" class="text-blue-500" stacked/>
                                 <flux:chart.bar field="bucket_count" class="text-amber-500" stacked/>
@@ -665,7 +665,7 @@ class extends Component
             <flux:tab.panel name="harvesters">
                 @if ($this->harvesterChartRows->isNotEmpty())
                     <flux:card>
-                        <flux:chart :value="$this->harvesterChartRows->toArray()" class="aspect-3/1">
+                        <flux:chart :value="$this->harvesterChartRows->toArray()" class="aspect-square sm:aspect-2/1 lg:aspect-3/1">
                             <flux:chart.svg>
                                 <flux:chart.bar field="total_weight" class="text-blue-500" stacked/>
                                 <flux:chart.bar field="bucket_count" class="text-amber-500" stacked/>

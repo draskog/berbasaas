@@ -491,11 +491,11 @@ class extends Component {
                     </flux:radio.group>
                 </div>
             @endif
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <div class="flex items-center gap-4 w-full sm:w-auto">
                     <flux:input type="search" size="sm" wire:model.live.debounce.300ms="search"
                                 placeholder="{{ __('Search by harvester number or name...') }}"
-                                icon="magnifying-glass" class="w-72!"/>
+                                icon="magnifying-glass" class="w-full sm:w-72!"/>
                 </div>
                 <flux:select wire:model.live="perPage" size="sm" class="w-28">
                     <flux:select.option value="25">25</flux:select.option>
@@ -509,9 +509,9 @@ class extends Component {
         <flux:table :paginate="$this->perPage > 0 ? $this->allAssignments : null">
             <flux:table.columns>
                 <flux:table.column sortable :sorted="$sortBy === 'number'" :direction="$sortDirection" wire:click="sort('number')">{{ __('Number') }}</flux:table.column>
-                <flux:table.column sortable :sorted="$sortBy === 'prefix'" :direction="$sortDirection" wire:click="sort('prefix')">{{ __('Prefix') }}</flux:table.column>
+                <flux:table.column class="hidden sm:table-cell" sortable :sorted="$sortBy === 'prefix'" :direction="$sortDirection" wire:click="sort('prefix')">{{ __('Prefix') }}</flux:table.column>
                 <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">{{ __('Name') }}</flux:table.column>
-                <flux:table.column>{{ __('Harvest Year') }}</flux:table.column>
+                <flux:table.column class="hidden sm:table-cell">{{ __('Harvest Year') }}</flux:table.column>
                 <flux:table.column align="center">{{ __('Actions') }}</flux:table.column>
             </flux:table.columns>
 
@@ -519,9 +519,9 @@ class extends Component {
                 @forelse($this->allAssignments as $assignment)
                     <flux:table.row>
                         <flux:table.cell>{{ $assignment->number }}</flux:table.cell>
-                        <flux:table.cell>{{ $assignment->harvester?->prefix ?? '—' }}</flux:table.cell>
+                        <flux:table.cell class="hidden sm:table-cell">{{ $assignment->harvester?->prefix ?? '—' }}</flux:table.cell>
                         <flux:table.cell>{{ $assignment->harvester?->name }}</flux:table.cell>
-                        <flux:table.cell>{{ $assignment->year }}</flux:table.cell>
+                        <flux:table.cell class="hidden sm:table-cell">{{ $assignment->year }}</flux:table.cell>
                         <flux:table.cell align="end" class="space-x-2">
                             <flux:button size="sm" wire:click="editHarvester({{ $assignment->harvester_id }})">{{ __('Edit Harvester') }}</flux:button>
                             <flux:button size="sm" wire:click="editAssignment({{ $assignment->id }})">{{ __('Edit Assignment') }}</flux:button>

@@ -347,7 +347,7 @@ class extends Component
                 placeholder="{{ __('Search by harvester name...') }}"
                 icon="magnifying-glass"
                 clearable
-                class="w-72!"
+                class="w-full sm:w-72!"
             />
         </div>
         @if($this->harvesterNumbers->isEmpty())

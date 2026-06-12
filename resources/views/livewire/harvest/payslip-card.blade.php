@@ -191,15 +191,15 @@ new class extends Component {
 
         return match ($count) {
             1 => 'grid-cols-1',
-            2 => 'grid-cols-2',
-            default => 'grid-cols-3',
+            2 => 'grid-cols-1 sm:grid-cols-2',
+            default => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
         };
     }
 
     #[Computed]
     public function summaryGridClass (): string
     {
-        return count($this->priceBreakdown) === 1 ? 'grid-cols-4' : 'grid-cols-3';
+        return count($this->priceBreakdown) === 1 ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 sm:grid-cols-3';
     }
 
     public function placeholder (): string

@@ -627,11 +627,11 @@ class extends Component
                     </flux:radio.group>
                 </div>
             @endif
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <div class="flex items-center gap-4 w-full sm:w-auto">
                     <flux:input type="search" size="sm" wire:model.live.debounce.300ms="searchHarvesterName"
                                 placeholder="{{ __('Search by harvester number or name...') }}"
-                                icon="magnifying-glass" class="w-72!"/>
+                                icon="magnifying-glass" class="w-full sm:w-72!"/>
                 </div>
                 <flux:select wire:model.live="perPage" size="sm" class="w-28">
                     <flux:select.option value="25">25</flux:select.option>
@@ -695,7 +695,7 @@ class extends Component
                     <flux:table.columns>
                         <flux:table.column sortable :sorted="$harvesterSortBy === 'harvester_number'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('harvester_number')">#</flux:table.column>
                         <flux:table.column>{{ __('Name') }}</flux:table.column>
-                        <flux:table.column sortable :sorted="$harvesterSortBy === 'bucket_count'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('bucket_count')">{{ __('Buckets') }}</flux:table.column>
+                        <flux:table.column class="hidden sm:table-cell" sortable :sorted="$harvesterSortBy === 'bucket_count'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('bucket_count')">{{ __('Buckets') }}</flux:table.column>
                         <flux:table.column sortable :sorted="$harvesterSortBy === 'total_weight'" :direction="$harvesterSortDirection" wire:click="sortHarvesters('total_weight')">{{ __('Total kg') }}</flux:table.column>
                         <flux:table.column>{{ __('Earnings') }}</flux:table.column>
                     </flux:table.columns>
@@ -705,7 +705,7 @@ class extends Component
                             <flux:table.row>
                                 <flux:table.cell>{{ $row['number'] }}</flux:table.cell>
                                 <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
-                                <flux:table.cell>{{ $row['bucket_count'] }}</flux:table.cell>
+                                <flux:table.cell class="hidden sm:table-cell">{{ $row['bucket_count'] }}</flux:table.cell>
                                 <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
                                 <flux:table.cell>
                                     @if ($row['earnings'] !== null)
@@ -724,7 +724,7 @@ class extends Component
                         @if ($this->harvesterData->isNotEmpty())
                             <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
                                 <flux:table.cell colspan="2">{{ __('Total') }}</flux:table.cell>
-                                <flux:table.cell>{{ $this->harvesterTotals['buckets'] }}</flux:table.cell>
+                                <flux:table.cell class="hidden sm:table-cell">{{ $this->harvesterTotals['buckets'] }}</flux:table.cell>
                                 <flux:table.cell>{{ number_format($this->harvesterTotals['weight'], 3, ',', '.') }}</flux:table.cell>
                                 <flux:table.cell>€{{ number_format($this->harvesterTotals['earnings'], 2, ',', '.') }}</flux:table.cell>
                             </flux:table.row>
@@ -739,7 +739,7 @@ class extends Component
                     <flux:table.columns>
                         <flux:table.column>{{ __('Product') }}</flux:table.column>
                         <flux:table.column sortable :sorted="$productSortBy === 'bucket_count'" :direction="$productSortDirection" wire:click="sortProducts('bucket_count')">{{ __('Total kg') }}</flux:table.column>
-                        <flux:table.column>{{ __('Price/kg') }}</flux:table.column>
+                        <flux:table.column class="hidden sm:table-cell">{{ __('Price/kg') }}</flux:table.column>
                         <flux:table.column sortable :sorted="$productSortBy === 'total_weight'" :direction="$productSortDirection" wire:click="sortProducts('total_weight')">{{ __('Total earnings') }}</flux:table.column>
                     </flux:table.columns>
 
@@ -748,7 +748,7 @@ class extends Component
                             <flux:table.row>
                                 <flux:table.cell>{{ $row['name'] }}</flux:table.cell>
                                 <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
-                                <flux:table.cell>
+                                <flux:table.cell class="hidden sm:table-cell">
                                     @if ($row['price_per_kg'])
                                         €{{ number_format($row['price_per_kg'], 3, ',', '.') }}
                                     @else
@@ -773,7 +773,7 @@ class extends Component
                             <flux:table.row class="border-t-2 border-gray-200 font-semibold dark:border-zinc-700">
                                 <flux:table.cell>{{ __('Total') }}</flux:table.cell>
                                 <flux:table.cell>{{ number_format($this->productTotals['weight'], 3, ',', '.') }}</flux:table.cell>
-                                <flux:table.cell>—</flux:table.cell>
+                                <flux:table.cell class="hidden sm:table-cell">—</flux:table.cell>
                                 <flux:table.cell>€{{ number_format($this->productTotals['earnings'], 2, ',', '.') }}</flux:table.cell>
                             </flux:table.row>
                         @endif
@@ -803,9 +803,9 @@ class extends Component
                             <flux:table.column>{{ __('Date') }}</flux:table.column>
                             <flux:table.column>{{ __('Harvester') }}</flux:table.column>
                             <flux:table.column>{{ __('Gajbice preko limita') }}</flux:table.column>
-                            <flux:table.column>{{ __('Avg težina preko (kg)') }}</flux:table.column>
-                            <flux:table.column>{{ __('Avg težina (kg)') }}</flux:table.column>
-                            <flux:table.column>{{ __('Ukupna težina (kg)') }}</flux:table.column>
+                            <flux:table.column class="hidden md:table-cell">{{ __('Avg težina preko (kg)') }}</flux:table.column>
+                            <flux:table.column class="hidden md:table-cell">{{ __('Avg težina (kg)') }}</flux:table.column>
+                            <flux:table.column class="hidden lg:table-cell">{{ __('Ukupna težina (kg)') }}</flux:table.column>
                         </flux:table.columns>
 
                         <flux:table.rows>
@@ -824,15 +824,15 @@ class extends Component
                                     <flux:table.cell>{{ Carbon::parse($row['date'])->format('d.m.Y') }}</flux:table.cell>
                                     <flux:table.cell>#{{ $row['number'] }} - {{ $row['name'] }}</flux:table.cell>
                                     <flux:table.cell>{{ $row['over_limit_count'] }} od {{ $row['total_bucket_count'] }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($row['over_limit_avg_weight'], 3, ',', '.') }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($row['avg_weight'], 3, ',', '.') }}</flux:table.cell>
-                                    <flux:table.cell>{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
+                                    <flux:table.cell class="hidden md:table-cell">{{ number_format($row['over_limit_avg_weight'], 3, ',', '.') }}</flux:table.cell>
+                                    <flux:table.cell class="hidden md:table-cell">{{ number_format($row['avg_weight'], 3, ',', '.') }}</flux:table.cell>
+                                    <flux:table.cell class="hidden lg:table-cell">{{ number_format($row['total_weight'], 3, ',', '.') }}</flux:table.cell>
                                 </flux:table.row>
 
                                 @if (isset($expandedRows["{$row['date']}-{$row['number']}"]))
                                     <flux:table.row class="bg-zinc-50 dark:bg-zinc-800/50">
                                         <flux:table.cell colspan="7" class="px-0 py-4">
-                                            <div class="px-6">
+                                            <div class="px-2 sm:px-6 overflow-x-auto">
                                                 <table class="w-full text-sm">
                                                     <thead class="border-b border-zinc-200 dark:border-zinc-700">
                                                         <tr>
